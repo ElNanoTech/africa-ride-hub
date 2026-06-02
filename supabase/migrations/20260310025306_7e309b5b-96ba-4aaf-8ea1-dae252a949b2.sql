@@ -1,0 +1,2 @@
+ALTER TABLE public.notifications DROP CONSTRAINT notifications_notification_type_check;
+ALTER TABLE public.notifications ADD CONSTRAINT notifications_notification_type_check CHECK (notification_type = ANY (ARRAY['score_update','payment_reminder','loan_status','rental_status','safety_tip','announcement','kyc_approved','kyc_rejected','income_status','accident_report_submitted','accident_report_closed']));

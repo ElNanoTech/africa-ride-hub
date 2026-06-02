@@ -1,0 +1,1 @@
+ALTER VIEW public.wallet_balance_view SET (security_invoker = true);

@@ -1,0 +1,2 @@
+ALTER TABLE public.income_records DROP CONSTRAINT income_records_source_check;
+ALTER TABLE public.income_records ADD CONSTRAINT income_records_source_check CHECK (source = ANY (ARRAY['yango'::text, 'wave'::text, 'driver_declared'::text]));

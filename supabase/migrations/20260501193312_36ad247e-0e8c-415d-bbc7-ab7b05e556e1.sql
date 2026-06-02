@@ -1,0 +1,1 @@
+DELETE FROM public.vehicles WHERE license_plate = 'TEST-NLT-99';

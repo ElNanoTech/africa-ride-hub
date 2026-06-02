@@ -1,0 +1,2 @@
+DELETE FROM public.driver_wallet_transactions WHERE reference LIKE 'TEST_OVERPAYMENT_SIM%';
+UPDATE public.driver_wallets SET balance = 0, updated_at = now() WHERE driver_id='72e18f9e-fb56-499d-8ff2-5b519e46daee';
