@@ -16,40 +16,56 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     let parkId = body.park_id || Deno.env.get("YANGO_PARK_ID") || "";
     parkId = parkId.replace(/^taxi\/park\//, "");
-    console.log(JSON.stringify({
-      api_key_len: apiKey.length,
-      api_key_prefix: apiKey.slice(0, 4),
-      park_id_len: parkId.length,
-      park_id_prefix: parkId.slice(0, 4),
-      client_id: `taxi/park/${parkId}`,
-    }));
+    const partnerId = (body.partner_id || Deno.env.get("YANGO_PARTNER_ID") || "")
+      .replace(/^taxi\/(park|clid)\//, "");
     const includeIncome = body.include_income !== false;
 
     const now = new Date();
     const dateFrom = body.date_from || new Date(now.getTime() - 7 * 86400000).toISOString().split("T")[0];
     const dateTo = body.date_to || now.toISOString().split("T")[0];
 
-    // 1. List drivers
-    const listRes = await fetch(`${YANGO_API_URL}/v1/parks/driver-profiles/list`, {
-      method: "POST",
-      headers: {
-        "X-API-Key": apiKey,
-        "X-Client-ID": `taxi/park/${parkId}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: { park: { id: parkId } },
-        limit: 1000,
-        sort_order: [{ field: "driver_profile.created_date", direction: "desc" }],
-      }),
-    });
-    const listText = await listRes.text();
-    if (!listRes.ok) {
-      return new Response(JSON.stringify({ success: false, stage: "list", status: listRes.status, error: listText }), {
+    // Try several X-Client-ID variants until one works (Yango docs are inconsistent
+    // across regions/contracts: taxi/park/{park_id}, taxi/clid/{partner_id}, or
+    // the raw partner/park id).
+    const candidates: Array<{ label: string; clientId: string; queryParkId: string }> = [];
+    if (parkId) candidates.push({ label: "park/parkId", clientId: `taxi/park/${parkId}`, queryParkId: parkId });
+    if (partnerId) candidates.push({ label: "clid/partnerId", clientId: `taxi/clid/${partnerId}`, queryParkId: parkId || partnerId });
+    if (partnerId) candidates.push({ label: "park/partnerId", clientId: `taxi/park/${partnerId}`, queryParkId: partnerId });
+    if (parkId) candidates.push({ label: "clid/parkId", clientId: `taxi/clid/${parkId}`, queryParkId: parkId });
+
+    const attempts: Array<Record<string, unknown>> = [];
+    let listData: Record<string, unknown> | null = null;
+    let chosen: { clientId: string; queryParkId: string } | null = null;
+
+    for (const c of candidates) {
+      const r = await fetch(`${YANGO_API_URL}/v1/parks/driver-profiles/list`, {
+        method: "POST",
+        headers: {
+          "X-API-Key": apiKey,
+          "X-Client-ID": c.clientId,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: { park: { id: c.queryParkId } },
+          limit: 1000,
+          sort_order: [{ field: "driver_profile.created_date", direction: "desc" }],
+        }),
+      });
+      const txt = await r.text();
+      attempts.push({ variant: c.label, client_id: c.clientId, status: r.status, body: txt.slice(0, 200) });
+      if (r.ok) {
+        listData = JSON.parse(txt);
+        chosen = c;
+        break;
+      }
+    }
+
+    if (!listData || !chosen) {
+      return new Response(JSON.stringify({ success: false, stage: "list", attempts }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const listData = JSON.parse(listText);
+    console.log("Yango list OK via", chosen.clientId);
     const profiles: Array<Record<string, unknown>> = listData?.driver_profiles || [];
 
     const drivers = profiles.map((p) => {
@@ -66,7 +82,9 @@ serve(async (req) => {
       };
     });
 
-    let incomeByDriver: Record<string, { gross: number; net: number; trips: number }> = {};
+    const effectiveParkId = chosen.queryParkId;
+    const effectiveClientId = chosen.clientId;
+    const incomeByDriver: Record<string, { gross: number; net: number; trips: number }> = {};
     if (includeIncome) {
       for (const d of drivers) {
         if (!d.id) continue;
@@ -75,13 +93,13 @@ serve(async (req) => {
             method: "POST",
             headers: {
               "X-API-Key": apiKey,
-              "X-Client-ID": `taxi/park/${parkId}`,
+              "X-Client-ID": effectiveClientId,
               "Content-Type": "application/json",
             },
             body: JSON.stringify({
               query: {
                 park: {
-                  id: parkId,
+                  id: effectiveParkId,
                   driver_profile: { id: d.id },
                   transaction: {
                     event_at: { from: `${dateFrom}T00:00:00+00:00`, to: `${dateTo}T23:59:59+00:00` },
@@ -116,7 +134,8 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({
       success: true,
-      park_id: parkId,
+      park_id: effectiveParkId,
+      client_id: effectiveClientId,
       date_range: { from: dateFrom, to: dateTo },
       total_drivers: result.length,
       drivers: result,
