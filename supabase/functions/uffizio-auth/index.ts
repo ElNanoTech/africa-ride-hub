@@ -24,7 +24,17 @@ interface CachedToken {
 function normalizeBaseUrl(raw: string): string {
   let u = raw.trim()
   if (!/^https?:\/\//i.test(u)) u = `http://${u}`
-  return u.replace(/\/+$/, '')
+  try {
+    // Strip any path/query/hash — only origin is the API base.
+    const parsed = new URL(u)
+    // Bare-IP Uffizio servers ship without a TLS cert; force http to avoid
+    // "invalid peer certificate" errors when the secret was pasted as https://.
+    const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)
+    const protocol = isIp ? 'http:' : parsed.protocol
+    return `${protocol}//${parsed.host}`
+  } catch {
+    return u.replace(/\/+$/, '')
+  }
 }
 
 async function fetchFreshToken(baseUrl: string, username: string, password: string): Promise<string> {

@@ -141,9 +141,17 @@ Deno.serve(async (req) => {
       )
     }
 
-    let baseUrl = serverUrl.replace(/\/+$/, '')
-    if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
-      baseUrl = 'http://' + baseUrl
+    let baseUrl = serverUrl.trim()
+    if (!/^https?:\/\//i.test(baseUrl)) baseUrl = 'http://' + baseUrl
+    try {
+      const parsed = new URL(baseUrl)
+      // Bare-IP Uffizio servers have no TLS cert — force http to avoid
+      // "invalid peer certificate" failures when secret was pasted as https://.
+      const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)
+      const protocol = isIp ? 'http:' : parsed.protocol
+      baseUrl = `${protocol}//${parsed.host}`
+    } catch {
+      baseUrl = baseUrl.replace(/\/+$/, '')
     }
 
     const body = await req.json().catch(() => ({}))
