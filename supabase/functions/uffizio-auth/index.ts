@@ -24,7 +24,13 @@ interface CachedToken {
 function normalizeBaseUrl(raw: string): string {
   let u = raw.trim()
   if (!/^https?:\/\//i.test(u)) u = `http://${u}`
-  return u.replace(/\/+$/, '')
+  try {
+    // Strip any path/query/hash — only origin is the API base.
+    const parsed = new URL(u)
+    return `${parsed.protocol}//${parsed.host}`
+  } catch {
+    return u.replace(/\/+$/, '')
+  }
 }
 
 async function fetchFreshToken(baseUrl: string, username: string, password: string): Promise<string> {
