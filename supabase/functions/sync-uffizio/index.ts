@@ -175,7 +175,7 @@ Deno.serve(async (req) => {
       const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
       const supabase = createClient(supabaseUrl, serviceRoleKey)
 
-      const { vehicles, rawResponse, method } = await fetchLiveVehicles(baseUrl, accessToken, username, password)
+      const { vehicles, rawResponse, method, rateLimited } = await fetchLiveVehicles(baseUrl, accessToken, username, password)
       console.log(`Found ${vehicles.length} vehicles via ${method || 'none'}`)
 
       const mapped = vehicles.map(normalizeVehicle)
@@ -293,6 +293,7 @@ Deno.serve(async (req) => {
           count: cachedMapped.length, 
           method: 'cache',
           source: 'cache',
+          rate_limited: rateLimited,
           cache_age_seconds: cachedData[0]?.synced_at 
             ? Math.floor((Date.now() - new Date(cachedData[0].synced_at).getTime()) / 1000) 
             : null,
