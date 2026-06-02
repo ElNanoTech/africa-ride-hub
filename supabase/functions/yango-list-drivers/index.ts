@@ -16,6 +16,13 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     let parkId = body.park_id || Deno.env.get("YANGO_PARK_ID") || "";
     parkId = parkId.replace(/^taxi\/park\//, "");
+    console.log(JSON.stringify({
+      api_key_len: apiKey.length,
+      api_key_prefix: apiKey.slice(0, 4),
+      park_id_len: parkId.length,
+      park_id_prefix: parkId.slice(0, 4),
+      client_id: `taxi/park/${parkId}`,
+    }));
     const includeIncome = body.include_income !== false;
 
     const now = new Date();
