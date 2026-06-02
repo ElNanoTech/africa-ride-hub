@@ -27,7 +27,11 @@ function normalizeBaseUrl(raw: string): string {
   try {
     // Strip any path/query/hash — only origin is the API base.
     const parsed = new URL(u)
-    return `${parsed.protocol}//${parsed.host}`
+    // Bare-IP Uffizio servers ship without a TLS cert; force http to avoid
+    // "invalid peer certificate" errors when the secret was pasted as https://.
+    const isIp = /^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname)
+    const protocol = isIp ? 'http:' : parsed.protocol
+    return `${protocol}//${parsed.host}`
   } catch {
     return u.replace(/\/+$/, '')
   }
