@@ -25,6 +25,7 @@ async function fetchLiveVehicles(baseUrl: string, accessToken: string, username:
   let vehicles: any[] = []
   let rawResponse = ''
   let method = ''
+  let rateLimited = false
 
   // Strategy 1: getVTSVehicleLiveInformation with auth-code header (primary, with retry)
   for (let attempt = 0; attempt < 3 && vehicles.length === 0; attempt++) {
@@ -39,6 +40,12 @@ async function fetchLiveVehicles(baseUrl: string, accessToken: string, username:
       })
       rawResponse = await res.text()
       console.log(`Strategy 1 attempt ${attempt} status=${res.status} responseLen=${rawResponse.length} preview=${rawResponse.substring(0, 300)}`)
+      // CRITICAL: Uffizio enforces a 3-minute cooldown on this endpoint and
+      // RE-ARMS the timer on every hit. Bail immediately so we don't extend it.
+      if (/wait for 3 minutes|rate limit|throttle/i.test(rawResponse)) {
+        rateLimited = true
+        break
+      }
       if (!rawResponse.includes('Deprecated') && !rawResponse.includes('deprecated')) {
         const data = JSON.parse(rawResponse)
         console.log(`Strategy 1 parsed keys: ${Object.keys(data).join(',')} result=${data.result} root_keys=${data.root ? Object.keys(data.root).join(',') : 'none'}`)
@@ -54,7 +61,7 @@ async function fetchLiveVehicles(baseUrl: string, accessToken: string, username:
   }
 
   // Strategy 2: /tracking endpoint
-  if (vehicles.length === 0) {
+  if (vehicles.length === 0 && !rateLimited) {
     try {
       const res = await fetch(`${baseUrl}/tracking`, {
         method: 'POST',
@@ -75,7 +82,7 @@ async function fetchLiveVehicles(baseUrl: string, accessToken: string, username:
   }
 
   // Strategy 3: getLiveData with access_token param
-  if (vehicles.length === 0) {
+  if (vehicles.length === 0 && !rateLimited) {
     try {
       const url = `${baseUrl}/webservice?token=getLiveData&user=${encodeURIComponent(username)}&pass=${encodeURIComponent(password)}&access_token=${encodeURIComponent(accessToken)}&format=json`
       const res = await fetch(url, { method: 'GET' })
@@ -92,7 +99,7 @@ async function fetchLiveVehicles(baseUrl: string, accessToken: string, username:
     } catch (e) { console.log(`Strategy 3 error: ${e.message}`) }
   }
 
-  return { vehicles, rawResponse, method }
+  return { vehicles, rawResponse, method, rateLimited }
 }
 
 function normalizeVehicle(v: any) {
