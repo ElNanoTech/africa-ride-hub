@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Play } from 'lucide-react';
 import damFlotteLogo from '@/assets/dam-flotte-logo.png';
@@ -9,6 +10,14 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>DAM Flotte — Gestion de flotte et crédit conducteur</title>
+        <meta name="description" content="Plateforme intelligente de gestion de flotte, scoring de crédit et location-vente de véhicules pour conducteurs en Côte d'Ivoire." />
+        <link rel="canonical" href="https://damafricahub.com/" />
+        <meta property="og:title" content="DAM Flotte — Gestion de flotte et crédit conducteur" />
+        <meta property="og:description" content="Scoring, location-vente et micro-prêts pour les conducteurs en Afrique de l'Ouest." />
+        <meta property="og:url" content="https://damafricahub.com/" />
+      </Helmet>
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
@@ -50,7 +59,7 @@ const Landing = () => {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5" />
         <div className="container mx-auto px-4 py-20 md:py-32">
-          <div className="mx-auto max-w-3xl text-center">
+          <main className="mx-auto max-w-3xl text-center">
             {/* Animated Logo with Subtle Glow */}
             <div className="relative mb-8 animate-fade-in-up">
               <div className="relative mx-auto h-28 w-28 animate-float md:h-36 md:w-36">
@@ -70,7 +79,7 @@ const Landing = () => {
             </div>
             
             <h1 className="mb-6 animate-fade-in-up text-4xl font-bold tracking-tight text-foreground md:text-5xl lg:text-6xl stagger-1">
-              DAM Flotte
+              DAM Flotte — Gestion de flotte et crédit conducteur
             </h1>
             <p className="mb-4 animate-fade-in-up text-xl font-medium text-foreground/90 md:text-2xl stagger-2">
               La plateforme intelligente pour la gestion des conducteurs et de la confiance.
@@ -89,7 +98,7 @@ const Landing = () => {
                 Espace équipe (Admin)
               </Link>
             </div>
-          </div>
+          </main>
         </div>
       </section>
 

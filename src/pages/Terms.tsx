@@ -1,10 +1,19 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 
 const Terms = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Conditions d'utilisation — DAM Flotte</title>
+        <meta name="description" content="Conditions générales d'utilisation de DAM Flotte : éligibilité, scoring, locations, prêts, résiliation et responsabilités." />
+        <link rel="canonical" href="https://damafricahub.com/terms" />
+        <meta property="og:title" content="Conditions d'utilisation — DAM Flotte" />
+        <meta property="og:description" content="Règles d'éligibilité, scoring, locations et prêts sur la plateforme DAM Flotte." />
+        <meta property="og:url" content="https://damafricahub.com/terms" />
+      </Helmet>
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
