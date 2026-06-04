@@ -2,47 +2,71 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Public Pages -->
   <url>
-    <loc>https://dam-africa-connect.lovable.app/</loc>
+    <loc>https://damafricahub.com/</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://dam-africa-connect.lovable.app/privacy</loc>
+    <loc>https://damafricahub.com/privacy</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://dam-africa-connect.lovable.app/terms</loc>
+    <loc>https://damafricahub.com/terms</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://dam-africa-connect.lovable.app/support</loc>
+    <loc>https://damafricahub.com/support</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://dam-africa-connect.lovable.app/install</loc>
+    <loc>https://damafricahub.com/install</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
-  
+  <url>
+    <loc>https://damafricahub.com/login</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://damafricahub.com/customer-journey</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://damafricahub.com/test-guide</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://damafricahub.com/test-loans</loc>
+    <lastmod>2026-01-02</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+
   <!-- Driver Portal -->
   <url>
-    <loc>https://dam-africa-connect.lovable.app/driver/login</loc>
+    <loc>https://damafricahub.com/driver/login</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-  
+
   <!-- Admin Portal -->
   <url>
-    <loc>https://dam-africa-connect.lovable.app/admin/login</loc>
+    <loc>https://damafricahub.com/admin/login</loc>
     <lastmod>2026-01-02</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

@@ -1,0 +1,18 @@
+# DAM Flotte
+
+> Plateforme intelligente de gestion de flotte, scoring de crédit conducteur, location-vente et micro-prêts pour les chauffeurs en Côte d'Ivoire et en Afrique de l'Ouest.
+
+DAM Flotte est une plateforme SaaS multi-tenant qui aide les opérateurs de flotte à gérer leurs conducteurs, suivre les paiements via Mobile Money (Wave), distribuer des véhicules en location-vente sur 156 semaines, et accorder des micro-prêts basés sur un score de crédit comportemental (DAM Score). Les conducteurs interagissent via une PWA mobile-first conçue pour des utilisateurs à faible littératie.
+
+## Pages
+
+- [Accueil](/): Présentation de la plateforme DAM Flotte.
+- [Confidentialité](/privacy): Politique de confidentialité et traitement des données personnelles.
+- [Conditions d'utilisation](/terms): Conditions générales d'utilisation de la plateforme.
+- [Support](/support): Contact, FAQ et canaux d'assistance (email, téléphone, WhatsApp).
+- [Installer l'application](/install): Instructions pour installer la PWA sur iOS et Android.
+- [Connexion conducteur](/login): Page de connexion pour les chauffeurs (téléphone + code PIN).
+
+## Optional
+
+- [Parcours client](/customer-journey): Présentation visuelle du parcours utilisateur conducteur et admin.
