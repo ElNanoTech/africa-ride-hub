@@ -616,6 +616,14 @@ export default function TestGuide() {
 
   return (
     <div className="min-h-screen bg-background p-6">
+      <Helmet>
+        <title>Guide de tests DAM Flotte — Parcours conducteur et admin</title>
+        <meta name="description" content="Guide de tests pas-à-pas du parcours conducteur et admin de DAM Flotte : KYC, location, paiements, prêts, scoring et support." />
+        <link rel="canonical" href="https://damafricahub.com/test-guide" />
+        <meta property="og:title" content="Guide de tests DAM Flotte" />
+        <meta property="og:description" content="Scénarios de test conducteur et admin pour DAM Flotte." />
+        <meta property="og:url" content="https://damafricahub.com/test-guide" />
+      </Helmet>
       {/* Fixed Export Buttons */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         <Button 
