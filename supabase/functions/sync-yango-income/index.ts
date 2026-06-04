@@ -9,7 +9,9 @@ const corsHeaders = {
 
 // Yango API configuration
 // Update YANGO_API_URL to your actual Yango/Yango Pro fleet API endpoint
-const YANGO_API_URL = "https://fleet-api.taxi.yandex.net";
+// Yango migrated from fleet-api.taxi.yandex.net to fleet-api.yango.tech.
+// Old host now responds with HTTP 410 "bad request host".
+const YANGO_API_URL = "https://fleet-api.yango.tech";
 
 interface YangoDriverIncome {
   driver_id: string;
