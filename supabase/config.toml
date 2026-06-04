@@ -1,1 +1,4 @@
 project_id = "fihrjavcdwpttvnlqqxc"
+
+[functions.setup-test-driver]
+verify_jwt = false
