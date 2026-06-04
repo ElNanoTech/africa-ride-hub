@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowLeft, Mail, Phone, MessageCircle, ChevronDown } from 'lucide-react';
@@ -9,9 +10,43 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
+const FAQ_ITEMS = [
+  {
+    q: 'Comment me connecter ?',
+    a: "Vous devez être chauffeur Yango. Utilisez vos identifiants Yango pour vous connecter.",
+  },
+  {
+    q: 'Comment améliorer mon score ?',
+    a: "Conduisez prudemment, effectuez vos paiements à temps, et restez actif.",
+  },
+  {
+    q: 'Comment contacter mon gestionnaire ?',
+    a: "Créez un ticket depuis l'application dans la section Support.",
+  },
+];
+
+const FAQ_JSONLD = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
 const Support = () => {
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Support DAM Flotte — Aide, contact et FAQ</title>
+        <meta name="description" content="Contactez le support DAM Flotte par email, téléphone ou WhatsApp et consultez les réponses aux questions fréquentes." />
+        <link rel="canonical" href="https://damafricahub.com/support" />
+        <meta property="og:title" content="Support DAM Flotte — Aide, contact et FAQ" />
+        <meta property="og:description" content="Email, téléphone, WhatsApp et FAQ pour les conducteurs DAM Flotte." />
+        <meta property="og:url" content="https://damafricahub.com/support" />
+        <script type="application/ld+json">{JSON.stringify(FAQ_JSONLD)}</script>
+      </Helmet>
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">

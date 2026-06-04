@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://dam-africa-connect.lovable.app/sitemap.xml
+Sitemap: https://damafricahub.com/sitemap.xml

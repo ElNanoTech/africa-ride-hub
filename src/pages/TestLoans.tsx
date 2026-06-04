@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -172,10 +173,18 @@ export default function TestLoans() {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Tests Module Prêts — DAM Flotte</title>
+        <meta name="description" content="Guide de tests fonctionnels du module Prêts de DAM Flotte : scénarios, problèmes connus et couverture." />
+        <link rel="canonical" href="https://damafricahub.com/test-loans" />
+        <meta property="og:title" content="Tests Module Prêts — DAM Flotte" />
+        <meta property="og:description" content="Scénarios de tests pour le module Prêts DAM Flotte." />
+        <meta property="og:url" content="https://damafricahub.com/test-loans" />
+      </Helmet>
       {/* Header */}
       <div className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 items-center gap-4 px-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" aria-label="Retour" onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div className="flex-1">

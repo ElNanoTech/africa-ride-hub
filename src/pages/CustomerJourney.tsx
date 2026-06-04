@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { Helmet } from "react-helmet-async";
 import { Car, CreditCard, FileText, Home, MessageSquare, Shield, Smartphone, TrendingUp, User, Users, Wallet, MapPin, Bell, Settings, ClipboardList, BarChart3, Download, Loader2, Presentation, Play } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -223,6 +224,14 @@ const CustomerJourney = () => {
 
   return (
     <div className="min-h-screen bg-white text-gray-900 print:text-black">
+      <Helmet>
+        <title>Dam Flotte — Customer Journey et aperçu de l'application</title>
+        <meta name="description" content="Parcours utilisateur visuel de Dam Flotte : captures d'écran de l'app conducteur et du dashboard admin, et export PDF/PPTX." />
+        <link rel="canonical" href="https://damafricahub.com/customer-journey" />
+        <meta property="og:title" content="Dam Flotte — Customer Journey" />
+        <meta property="og:description" content="Présentation visuelle du parcours conducteur et admin de Dam Flotte." />
+        <meta property="og:url" content="https://damafricahub.com/customer-journey" />
+      </Helmet>
       {/* Demo Mode */}
       <AnimatePresence>
         {showDemo && (
@@ -282,7 +291,7 @@ const CustomerJourney = () => {
         {/* Cover Page */}
         <section className="min-h-screen flex flex-col items-center justify-center p-8 border-b-4 border-primary print:break-after-page">
           <img src={logo} alt="Dam Flotte" className="h-24 mb-8" />
-          <h1 className="text-5xl font-bold text-center mb-4">Dam Flotte</h1>
+          <h1 className="text-5xl font-bold text-center mb-4">Dam Flotte — Plateforme de gestion de flotte et crédit conducteur</h1>
           <p className="text-2xl text-muted-foreground text-center mb-8">
             Plateforme de Gestion de Flotte & Crédit Chauffeur
           </p>
@@ -329,7 +338,7 @@ const CustomerJourney = () => {
           <div>
             <h3 className="text-xl font-semibold mb-4">Vehicle Catalog</h3>
             <p className="text-muted-foreground mb-4">Browse available vehicles with pricing and availability status.</p>
-            <img src={driverVehiclesMockup} alt="Vehicles" className="rounded-lg shadow-lg border w-full" />
+            <img src={driverVehiclesMockup} alt="Catalogue de véhicules disponibles avec prix et statut" className="rounded-lg shadow-lg border w-full" />
           </div>
           
           <div>

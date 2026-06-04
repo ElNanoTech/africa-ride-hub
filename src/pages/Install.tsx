@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePWA } from "@/hooks/usePWA";
@@ -22,10 +23,18 @@ const Install = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Installer l'application DAM Flotte sur iPhone ou Android</title>
+        <meta name="description" content="Installez la PWA DAM Flotte sur votre téléphone pour un accès rapide hors ligne. Instructions iOS Safari et Android Chrome." />
+        <link rel="canonical" href="https://damafricahub.com/install" />
+        <meta property="og:title" content="Installer DAM Flotte sur votre téléphone" />
+        <meta property="og:description" content="Guide d'installation PWA DAM Flotte pour iOS et Android." />
+        <meta property="og:url" content="https://damafricahub.com/install" />
+      </Helmet>
       {/* Header */}
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link to="/driver" className="text-muted-foreground hover:text-foreground">
+          <Link to="/driver" aria-label="Retour à l'application" className="text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="flex items-center gap-3">
