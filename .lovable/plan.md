@@ -1,95 +1,69 @@
-# Live Financial Center — Event-Driven + Realtime UI
 
-## Current state (verified)
+# Align Lovable app to the KIRA design
 
-Backend is already near-real-time. These DB triggers exist and run inside the same transaction as the event:
+After reviewing both surfaces of the customer's reference app (admin at kira.damafrica.com and the KIRA Driver mobile app), the look-and-feel is clearly defined and very different from what we ship today. Functionality stays the same — this is a visual/structural refresh of the existing routes, not a rebuild.
 
-- `trg_invoice_auto_apply` on `invoice` INSERT / UPDATE of `status, total_ttc, amount_paid` → calls `apply_wallet_credit_to_open_invoices(driver_id)`. **A newly issued invoice already consumes existing wallet credit immediately, oldest-first.**
-- `trg_wallet_txn_auto_apply` on wallet credit insert → auto-applies to open invoices.
-- `trg_receipt_auto_apply` on `payment_receipts` insert → auto-applies (catches Wave overpayments).
-- `trg_invoice_cancellation_refund` on `invoice.status → cancelled` → reverses to wallet.
-- Safety net cron `sweep_wallet_auto_apply` runs every 15 minutes.
+## What the reference establishes
 
-What's missing is on the **UI side**: only `payments` is in `supabase_realtime`. The driver wallet/invoice pages and admin billing pages currently rely on focus refetch + post-checkout polling, which is why the user perceives delay.
+**Admin (desktop)**
+- Dark navy sidebar (`#0B1020`-ish) with grouped nav: OPÉRATIONS / GESTION, a highlighted active item with subtle inner glow, a separate purple "KIRA Driver — APP" shortcut button, user chip + Paramètres + Déconnexion at the bottom.
+- Light slate canvas with a global top bar: breadcrumb (Section → Page), centered global search, date, dark-mode toggle, notifications, user avatar.
+- A signature gradient "hero card" at the top of every page: dark navy background, eyebrow label (e.g. "SUIVI EN TEMPS RÉEL"), big page title, subtitle, right-side status pills (Uffizio GPS, Yango Fleet, Wave API) and primary CTAs (Actualiser, Analyse IA, Nouveau …).
+- KPI strip: 5–6 pastel tinted tiles (green/orange/blue/yellow/grey), small uppercase label + large number.
+- Pill tab filters with counts (Tous 56 / Actif 56 / Suspendu 0 …) and a wide rounded search.
+- Data tables with avatar circles, colored 4px left-border per row, status badges ("Vérifié", "Lié"), no horizontal scroll.
+- Finance: KPI cards w/ tiny circular icons, big amount, helper text; tabbed sub-nav (KPI / Facturation / Paiements / KiraPay); chart + donut by fleet category.
+- Vehicles: fleet-segment pill tabs with counts, consolidated stats card, vehicle photo grid with "Actif" status chip.
 
-## Goal
+**Driver (mobile)**
+- Full-bleed vibrant purple gradient hero (top ~55% of screen) with a soft white shield badge, "KIRA Driver" title and tagline.
+- White rounded-top sheet at the bottom with the form: uppercase micro-label, input with CI flag chip prefix, big rounded purple "Suivant" CTA with chevron, helper text under.
+- Same purple + white sheet pattern carries through PIN, home, etc. (assumed; behind unrecognized-number wall).
 
-When money moves anywhere in the system, every relevant screen (driver wallet, driver invoices, driver home financial widget, admin billing, admin wallets, admin reconciliation) updates within ~1 second without a manual refresh. Cron and polling remain only as a safety net.
+## Approach
 
-## Plan
+Do this as a **token + shell refresh first**, then page-by-page reskin. Functionality, data, routes and copy stay intact.
 
-### 1. Backend: enable realtime on financial tables (migration)
+### Phase 1 — Design tokens & shell (foundation)
+1. `src/index.css` + `tailwind.config.ts`: rework HSL tokens to match KIRA:
+   - New `--sidebar-background` deep navy, `--primary` electric blue `#2563EB`, `--driver-primary` vibrant purple `#7C3AED`, pastel surface tokens for KPI tiles (`--kpi-green/orange/blue/yellow/slate`), `--hero-gradient` (navy 135°), `--driver-hero-gradient` (purple 160°).
+   - Radius bumped to `0.875rem`, softer `--shadow-card`, accent ring.
+2. New shared components:
+   - `HeroCard` (eyebrow, title, subtitle, status pills slot, actions slot).
+   - `KpiTile` (variant by color token).
+   - `PillTabs` with counts.
+   - `StatusPill` (Connecté / Hors-ligne / Vérifié / Lié).
+   - `PageHeader` with breadcrumb + global search.
+3. `AdminLayout`: rebuild sidebar with grouped sections, active-state styling, "KIRA Driver" purple shortcut, bottom profile chip + Paramètres + Déconnexion; new top bar with breadcrumb + search + theme toggle + notifications + avatar.
+4. Driver shell: shared `DriverHero` (purple gradient + brand badge) and bottom `SheetCard` wrapper used by Login, PIN, and other auth/onboarding screens.
 
-Add the missing tables to `supabase_realtime` and set `REPLICA IDENTITY FULL` so update payloads carry old rows:
+### Phase 2 — Admin pages reskin
+Wrap each existing page in `HeroCard` + KPI strip + the new pill tabs/table styling. No data/logic changes.
+- Dashboard
+- Drivers (Chauffeurs) — KPI tiles (Actifs / Suspendus / KYC Vérifié / Yango Lié / Sans véhicule), pill tabs, table with avatar + colored left-border + Vérifié/Lié badges.
+- Vehicles (Véhicules) — fleet-segment pill tabs, consolidated stats card, vehicle card grid with "Actif" chip.
+- Finance — sub-tab nav (KPI / Facturation / Paiements / KiraPay), KPI cards with circular icons, line chart + donut.
+- Loans (Crédit & Prêts), Sinistres, Contraventions, Maintenance, Fleet Control, Paramètres — same hero + KPI pattern applied.
 
-```text
-driver_wallets
-driver_wallet_transactions
-invoice
-payment_receipts
-invoice_audit
-invoice_payment_link
-```
+### Phase 3 — Driver app reskin
+- `pages/driver/Login.tsx`: purple gradient hero with shield badge, white bottom sheet, uppercase label, flag-prefixed input, big purple CTA, helper line.
+- PIN entry, Profile/KYC required, Onboarding, Home, Score, Wallet, Factures, Loans, Settings — apply the same purple-hero + white-card pattern; replace current green primary with `--driver-primary` purple on driver routes only (admin keeps blue).
+- Preserve gamification (ScoreGauge, badges, leaderboard) but recolor to the new palette.
 
-`payments` is already published — leave it.
+### Phase 4 — Polish
+- Dark-mode pass on the new tokens.
+- Mobile responsiveness on admin (sidebar collapses).
+- QA: log in as admin + driver, walk every route, take screenshots, fix layout regressions.
 
-Also confirm/add (idempotent) the auto-apply trigger on `payments` INSERT in case admin inserts a payment shell after the invoice exists, so existing wallet credit is consumed against it immediately. Triggers stay `SECURITY DEFINER`.
+## Out of scope
+- No backend, DB, RLS, edge-function or business-logic changes.
+- No new features (KiraPay sub-tab will be a placeholder if no data hook exists yet — confirm before adding).
+- No copy changes beyond renaming "DAM Flotte" → "KIRA Fleet" in shell chrome if you want that (see Q1).
 
-No business logic changes — the auto-apply RPC, cancellation reversal RPC, and the 15-min sweep are already correct and idempotent.
+## Open questions
 
-### 2. Shared hook for realtime financial invalidation
+1. **Brand name**: should the visible app name change from "DAM Flotte" to "KIRA Fleet" everywhere (logo, login, footer), or keep DAM Flotte branding with KIRA's *visual* language only?
+2. **Driver primary color**: keep current green for driver gamification (score tiers depend on it), or fully switch driver app to the purple palette as shown in the reference?
+3. **Scope confirmation**: do you want me to start with **Phase 1 + the Drivers page + driver Login** as a first deliverable so you can validate the direction before I roll it across every page?
 
-New file `src/hooks/useFinancialRealtime.ts`:
-
-- Subscribes to postgres_changes on the 6 financial tables, filtered by `driver_id` when the caller is a driver (or unfiltered for admin).
-- On any event, invalidates the relevant React Query keys: `driver-wallet-self`, `driverPayments`, `driverInvoices`, `invoice-detail`, `admin-billing-*`, `admin-wallets-*`, `admin-reconciliation-*`.
-- Uses one channel per scope (driver vs admin) to keep socket count low.
-- Cleans up subscriptions on unmount; reconnects automatically via the existing `RealtimeConnectionBanner`.
-
-### 3. Wire the hook into the screens
-
-Driver:
-- `src/pages/driver/Wallet.tsx` — replace the post-checkout 0/3/8/20s polling with the realtime hook (keep a single safety refetch on `?topup=success` return for the case where the webhook lags Wave's redirect).
-- `src/pages/driver/Factures.tsx` and `src/pages/driver/FactureDetail.tsx` — subscribe so paid/partial status flips live.
-- `src/pages/driver/Home.tsx` financial summary widget — subscribe to wallet + invoice changes.
-
-Admin:
-- `src/pages/admin/Billing.tsx` (Invoices + À résoudre tabs)
-- `src/pages/admin/Wallets.tsx`
-- `src/pages/admin/Payments.tsx`
-- `src/pages/admin/BillingAudit.tsx`
-
-Each screen just calls `useFinancialRealtime({ scope: 'driver' | 'admin', driverId? })`; query keys are already stable.
-
-### 4. Driver UX surface (small additions only)
-
-- On the wallet page, when a realtime debit of type `rental_invoice_applied` arrives, show a one-shot toast: *"Crédit appliqué automatiquement à la facture {numéro}."*
-- On `FactureDetail`, when status flips to `paid` or `partial` via realtime, show: *"Cette facture a été payée par votre crédit DAM."* / *"Crédit DAM appliqué : {montant}. Reste à payer : {reste}."* The "Payer avec Wave" button only shows `remaining_due` (already the case — verify).
-
-### 5. Keep cron as safety net
-
-No change. `sweep_wallet_auto_apply` every 15 min and `billing-daily-rental-cron` hourly stay as-is.
-
-## Idempotency (already in place — verified, will retest)
-
-- `driver_wallet_transactions.amount > 0` CHECK constraint.
-- `apply_wallet_credit_to_open_invoices` row-locks wallet + invoice.
-- `uniq_invoice_cancellation_refund_per_source` partial unique index on reversal rows.
-- `wallet_auto_apply` audit rows are insert-only; the RPC only fires when balance > 0.
-- Realtime invalidation is read-only on the client; no write amplification.
-
-## Acceptance tests
-
-1. **Surplus visible immediately** — admin inserts a Wave receipt of 10 000 on a 4 000 invoice → driver's `/driver/portefeuille` shows the 6 000 credit within ~1s without refresh.
-2. **New invoice consumed immediately** — wallet has 5 000, admin issues a 3 000 invoice → invoice appears as `paid`, wallet drops to 2 000, both visible live on driver wallet + factures pages.
-3. **Partial coverage** — wallet 2 000, new invoice 5 000 → invoice shows `partial`, "Reste à payer 3 000 FCFA" via Wave, wallet hits 0.
-4. **Cancellation reversal live** — admin cancels a paid invoice → driver wallet credit appears within ~1s.
-5. **Idempotency** — re-run `apply_wallet_credit_to_open_invoices` and `reverse_cancelled_invoice_payments` → 0 new rows, 0 balance change.
-6. **Cron still works** — simulate a missed trigger by inserting a wallet credit with the trigger temporarily disabled, then re-enable; the 15-min sweep picks it up.
-
-## Technical notes
-
-- `ALTER PUBLICATION supabase_realtime ADD TABLE ...` and `ALTER TABLE ... REPLICA IDENTITY FULL` run in a single migration.
-- Realtime channels are named `financial:driver:{driverId}` and `financial:admin` to avoid cross-talk.
-- React Query `invalidateQueries` is debounced (~150ms) inside the hook so a burst of related events (wallet debit + invoice update + audit insert from one auto-apply call) triggers one refetch per key, not three.
-- No edits to `src/integrations/supabase/client.ts` or `types.ts`.
+I'll wait for your answers (especially #3) before implementing — this is a large surface and I'd rather land the foundation + one flagship page first, then iterate.
