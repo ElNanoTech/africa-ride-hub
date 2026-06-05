@@ -462,6 +462,28 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return sidebarItems.filter(item => hasAccess(adminUser.role_key, item.allowedRoles));
   }, [adminUser?.role_key]);
 
+  // Group filtered items by section for the new KIRA-style sidebar layout.
+  const groupedSidebarItems = useMemo(() => {
+    const groups: Record<'operations' | 'gestion' | 'analyse' | 'systeme', SidebarItem[]> = {
+      operations: [],
+      gestion: [],
+      analyse: [],
+      systeme: [],
+    };
+    for (const item of filteredSidebarItems) {
+      const key = (item.section ?? 'operations') as keyof typeof groups;
+      groups[key].push(item);
+    }
+    return groups;
+  }, [filteredSidebarItems]);
+
+  const SECTION_LABELS: Record<keyof typeof groupedSidebarItems, string> = {
+    operations: 'Opérations',
+    gestion: 'Gestion',
+    analyse: 'Analyse',
+    systeme: 'Système',
+  };
+
   const handleLogout = async () => {
     try {
       // Log logout before signing out
