@@ -832,3 +832,43 @@ export function AdminPageHeader({ title, description, action }: PageHeaderProps)
     </div>
   );
 }
+
+/**
+ * AdminHeroCard — signature dark-navy gradient header card used at the top of
+ * every admin page (KIRA-style). Slot in status pills (`pills`) and primary
+ * CTAs (`actions`). Functionality stays in the page; this only handles layout.
+ */
+interface AdminHeroCardProps {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  pills?: ReactNode;
+  actions?: ReactNode;
+  icon?: LucideIcon;
+}
+
+export function AdminHeroCard({ eyebrow, title, subtitle, pills, actions, icon: Icon }: AdminHeroCardProps) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-hero-card text-white p-5 md:p-7 mb-6 shadow-lg">
+      <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+        <div className="flex-1 min-w-0">
+          {eyebrow && (
+            <div className="flex items-center gap-2 mb-2 text-xs font-semibold tracking-[0.14em] uppercase text-primary-glow/90">
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              <span>{eyebrow}</span>
+            </div>
+          )}
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+          {subtitle && <p className="text-sm md:text-base text-white/60 mt-1">{subtitle}</p>}
+        </div>
+        {(pills || actions) && (
+          <div className="flex flex-col gap-2 md:items-end shrink-0">
+            {pills && <div className="flex flex-wrap gap-2">{pills}</div>}
+            {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
