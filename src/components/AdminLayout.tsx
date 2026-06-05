@@ -101,6 +101,7 @@ interface SidebarItem {
   exact?: boolean;
   allowedRoles: AppRole[];
   badgeKey?: 'pendingKyc'; // Key to get badge count
+  section?: 'operations' | 'gestion' | 'analyse' | 'systeme';
 }
 
 // Role-based menu configuration
