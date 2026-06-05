@@ -295,6 +295,28 @@
     background: var(--gradient-card);
   }
 
+  .bg-gradient-driver-hero {
+    background: var(--gradient-driver-hero);
+  }
+
+  .bg-gradient-hero-card {
+    background: var(--gradient-hero-card);
+  }
+
+  /* KPI pastel tiles */
+  .bg-kpi-green { background-color: hsl(var(--kpi-green)); }
+  .text-kpi-green { color: hsl(var(--kpi-green-foreground)); }
+  .bg-kpi-orange { background-color: hsl(var(--kpi-orange)); }
+  .text-kpi-orange { color: hsl(var(--kpi-orange-foreground)); }
+  .bg-kpi-blue { background-color: hsl(var(--kpi-blue)); }
+  .text-kpi-blue { color: hsl(var(--kpi-blue-foreground)); }
+  .bg-kpi-yellow { background-color: hsl(var(--kpi-yellow)); }
+  .text-kpi-yellow { color: hsl(var(--kpi-yellow-foreground)); }
+  .bg-kpi-slate { background-color: hsl(var(--kpi-slate)); }
+  .text-kpi-slate { color: hsl(var(--kpi-slate-foreground)); }
+  .bg-kpi-purple { background-color: hsl(var(--kpi-purple)); }
+  .text-kpi-purple { color: hsl(var(--kpi-purple-foreground)); }
+
   /* Glass effect */
   .glass {
     @apply bg-card/80 backdrop-blur-lg;
