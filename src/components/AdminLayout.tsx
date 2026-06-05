@@ -111,7 +111,8 @@ const sidebarItems: SidebarItem[] = [
     icon: LayoutDashboard, 
     label: ADMIN.DASHBOARD.TITLE, 
     exact: true,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/drivers', 
@@ -119,6 +120,7 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.DRIVERS,
     allowedRoles: ['super_admin', 'manager'],
     badgeKey: 'pendingKyc', // Show pending KYC count
+    section: 'operations',
   },
   { 
     to: '/admin/vehicles', 
@@ -126,126 +128,147 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.VEHICLES,
     allowedRoles: ['super_admin', 'manager'],
     exact: true,
+    section: 'operations',
   },
   { 
     to: '/admin/vehicles/gps-mapping', 
     icon: MapPin, 
     label: 'Mapping GPS',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/tracking', 
     icon: MapPin, 
     label: 'Suivi GPS',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/driving-behavior', 
     icon: Activity, 
     label: 'Conduite',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   {
     to: '/admin/platform-sync', 
     icon: RefreshCw, 
     label: 'Sync Plateformes',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/rentals', 
     icon: FileText, 
     label: NAV.RENTALS,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
     label: NAV.LOANS,
-    allowedRoles: ['super_admin', 'manager', 'agent_pret']
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'gestion',
   },
   { 
     to: '/admin/payments', 
     icon: CreditCard, 
     label: NAV.PAYMENTS,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   {
     to: '/admin/billing',
     icon: FileText,
     label: 'Facturation',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   {
     to: '/admin/billing/wallets',
     icon: Wallet,
     label: 'Portefeuilles',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   { 
     to: '/admin/support', 
     icon: MessageSquare, 
     label: NAV.SUPPORT,
-    allowedRoles: ['super_admin', 'manager', 'agent_support']
+    allowedRoles: ['super_admin', 'manager', 'agent_support'],
+    section: 'gestion',
   },
   { 
     to: '/admin/scoring', 
     icon: BarChart3, 
     label: ADMIN.SCORING.TITLE,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'analyse',
   },
   { 
     to: '/admin/analytics', 
     icon: TrendingUp, 
     label: 'Analytique',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'analyse',
   },
   { 
     to: '/admin/audit', 
     icon: Shield, 
     label: NAV.AUDIT,
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/users', 
     icon: UserCog, 
     label: 'Administrateurs',
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/settings', 
     icon: Settings, 
     label: NAV.SETTINGS,
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/feature-flags', 
     icon: Flag, 
     label: 'Feature Flags',
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/customers', 
     icon: Building2, 
     label: 'Clients',
-    allowedRoles: ['super_admin'] // Platform owners only, checked via RLS
+    allowedRoles: ['super_admin'], // Platform owners only, checked via RLS
+    section: 'systeme',
   },
   { 
     to: '/admin/income-entry', 
     icon: Banknote, 
     label: 'Saisie revenus',
-    allowedRoles: ['super_admin', 'manager'] // For Yango-independence fallback
+    allowedRoles: ['super_admin', 'manager'], // For Yango-independence fallback
+    section: 'gestion',
   },
   { 
     to: '/admin/income-approvals', 
     icon: FileText, 
     label: 'Approbations',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   {
     to: '/admin/sinistres',
     icon: ShieldAlert,
     label: 'Sinistres',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
 
 ];
