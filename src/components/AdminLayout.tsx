@@ -716,7 +716,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
+
+          {/* Breadcrumb: Section › Page */}
+          {breadcrumb.page && (
+            <div className="hidden sm:flex items-center gap-2 ml-2 text-sm min-w-0">
+              {breadcrumb.section && (
+                <>
+                  <span className="text-muted-foreground truncate">{breadcrumb.section}</span>
+                  <span className="text-muted-foreground/50">›</span>
+                </>
+              )}
+              <span className="font-semibold text-foreground truncate">{breadcrumb.page}</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 md:gap-4">
             {/* Theme Toggle */}
             <TooltipProvider>
