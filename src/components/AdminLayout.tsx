@@ -565,78 +565,110 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overscroll-contain">
-          <ul className="space-y-1 px-3">
-            {filteredSidebarItems.map((item) => (
-              <li key={item.to}>
-                <Link
-                  to={item.to}
-                  onClick={() => isMobile && setSidebarOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative',
-                    'active:scale-[0.98] touch-manipulation',
-                    isActive(item.to, item.exact)
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent'
-                  )}
-                >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
+          <div className="px-3 space-y-5">
+            {(Object.keys(groupedSidebarItems) as Array<keyof typeof groupedSidebarItems>).map((sectionKey) => {
+              const items = groupedSidebarItems[sectionKey];
+              if (items.length === 0) return null;
+              return (
+                <div key={sectionKey}>
                   {(!collapsed || isMobile) && (
-                    <span className="text-[15px] font-medium flex-1">{item.label}</span>
+                    <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.12em] uppercase text-sidebar-foreground/40">
+                      {SECTION_LABELS[sectionKey]}
+                    </p>
                   )}
-                  {/* Badge for pending items */}
-                  {item.badgeKey === 'pendingKyc' && pendingKycCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className={cn(
-                        "h-5 min-w-5 px-1.5 text-xs font-bold animate-pulse",
-                        collapsed && !isMobile && "absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
-                      )}
-                    >
-                      {pendingKycCount > 99 ? '99+' : pendingKycCount}
-                    </Badge>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  <ul className="space-y-1">
+                    {items.map((item) => (
+                      <li key={item.to}>
+                        <Link
+                          to={item.to}
+                          onClick={() => isMobile && setSidebarOpen(false)}
+                          className={cn(
+                            'flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 relative',
+                            'active:scale-[0.98] touch-manipulation',
+                            isActive(item.to, item.exact)
+                              ? 'bg-sidebar-accent text-sidebar-primary-foreground shadow-inner ring-1 ring-sidebar-primary/30 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-sidebar-primary'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:bg-sidebar-accent'
+                          )}
+                        >
+                          <item.icon className={cn(
+                            'h-[18px] w-[18px] flex-shrink-0',
+                            isActive(item.to, item.exact) && 'text-sidebar-primary'
+                          )} />
+                          {(!collapsed || isMobile) && (
+                            <span className="text-[14px] font-medium flex-1">{item.label}</span>
+                          )}
+                          {item.badgeKey === 'pendingKyc' && pendingKycCount > 0 && (
+                            <Badge
+                              variant="destructive"
+                              className={cn(
+                                "h-5 min-w-5 px-1.5 text-xs font-bold animate-pulse",
+                                collapsed && !isMobile && "absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
+                              )}
+                            >
+                              {pendingKycCount > 99 ? '99+' : pendingKycCount}
+                            </Badge>
+                          )}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </nav>
 
-        {/* User & Logout */}
-        <div className="p-4 border-t border-sidebar-border safe-bottom space-y-3">
-          {/* Mobile Role Badge */}
-          {isMobile && adminUser?.role_key && (
-            <div className="flex items-center gap-3 px-4 py-2">
-              <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-                <span className="text-sm font-semibold">
-                  {adminUser?.full_name?.charAt(0) || 'A'}
+        {/* Driver App shortcut */}
+        <div className="px-3 pb-2">
+          <Link
+            to="/driver"
+            onClick={() => isMobile && setSidebarOpen(false)}
+            className={cn(
+              'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+              'bg-gradient-to-br from-emerald-500/15 to-emerald-400/10 ring-1 ring-emerald-400/30',
+              'hover:from-emerald-500/25 hover:to-emerald-400/15 text-emerald-300'
+            )}
+          >
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Smartphone className="h-4 w-4" />
+            </div>
+            {(!collapsed || isMobile) && (
+              <>
+                <span className="text-[14px] font-semibold flex-1">DAM Driver</span>
+                <Badge className="bg-emerald-400/20 text-emerald-200 border-0 text-[10px] tracking-wide">APP</Badge>
+              </>
+            )}
+          </Link>
+        </div>
+
+        {/* User chip + Settings + Logout */}
+        <div className="p-3 border-t border-sidebar-border safe-bottom space-y-1">
+          {(!collapsed || isMobile) && adminUser && (
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sidebar-accent/40">
+              <div className="w-9 h-9 rounded-full bg-sidebar-primary/20 ring-1 ring-sidebar-primary/40 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-semibold text-sidebar-primary-foreground">
+                  {adminUser.full_name?.charAt(0) || 'A'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{adminUser?.full_name || 'Admin'}</p>
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "h-5 px-2 text-[10px] font-medium border mt-0.5",
-                    getRoleBadgeConfig(adminUser.role_key).className
-                  )}
-                >
-                  <Shield className="h-2.5 w-2.5 mr-1" />
+                <p className="text-[13px] font-semibold truncate text-sidebar-foreground">{adminUser.full_name || 'Admin'}</p>
+                <p className="text-[11px] text-sidebar-foreground/50 truncate">
                   {getRoleBadgeConfig(adminUser.role_key).label}
-                </Badge>
+                </p>
               </div>
             </div>
           )}
           <button
             onClick={handleLogout}
             className={cn(
-              'flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200',
-              'text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent',
+              'flex items-center gap-3 w-full px-4 py-2.5 rounded-xl transition-all duration-200',
+              'text-red-300/80 hover:bg-red-500/10 hover:text-red-200 active:bg-red-500/15',
               'active:scale-[0.98] touch-manipulation'
             )}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
+            <LogOut className="h-[18px] w-[18px] flex-shrink-0" />
             {(!collapsed || isMobile) && (
-              <span className="text-[15px] font-medium">{AUTH.LOGOUT}</span>
+              <span className="text-[14px] font-medium">{AUTH.LOGOUT}</span>
             )}
           </button>
         </div>
