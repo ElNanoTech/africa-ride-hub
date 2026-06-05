@@ -456,6 +456,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return location.pathname.startsWith(path);
   };
 
+  // Derive a Section › Page breadcrumb from the current route.
+  const breadcrumb = useMemo(() => {
+    const match = sidebarItems.find((item) =>
+      item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to),
+    );
+    if (!match) return { section: '', page: '' };
+    const sectionLabel = match.section ? {
+      operations: 'Opérations',
+      gestion: 'Gestion',
+      analyse: 'Analyse',
+      systeme: 'Système',
+    }[match.section] : '';
+    return { section: sectionLabel || '', page: match.label };
+  }, [location.pathname]);
+
   // Filter menu items based on user role_key
   const filteredSidebarItems = useMemo(() => {
     if (!adminUser?.role_key) return [];
