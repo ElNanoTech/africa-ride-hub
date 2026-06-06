@@ -113,6 +113,8 @@ const AdminFleetControl = lazy(() => import("./pages/admin/FleetControl"));
 const AdminMaintenance = lazy(() => import("./pages/admin/Maintenance"));
 const AdminContraventions = lazy(() => import("./pages/admin/Contraventions"));
 const AdminAlertes = lazy(() => import("./pages/admin/Alertes"));
+const AdminCommunication = lazy(() => import("./pages/admin/Communication"));
+const DriverFormation = lazy(() => import("./pages/driver/Formation"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminBillingAudit = lazy(() => import("./pages/admin/BillingAudit"));
 const DriverFactures = lazy(() => import("./pages/driver/Factures"));
@@ -213,6 +215,7 @@ const App = () => {
                     <Route path="/driver/sinistres/cases/:id" element={<DriverSinistreCaseDetail />} />
                     <Route path="/driver/sinistres/success/:id" element={<DriverSinistreSuccess />} />
                     <Route path="/driver/inspection" element={<DriverVehicleInspection />} />
+                    <Route path="/driver/formation" element={<DriverFormation />} />
                   </Route>
                   
                   {/* Admin Login — redirect to dashboard if already logged in (B2) */}
@@ -257,6 +260,7 @@ const App = () => {
                     <Route path="/admin/maintenance" element={<AdminMaintenance />} />
                     <Route path="/admin/contraventions" element={<AdminContraventions />} />
                     <Route path="/admin/alertes" element={<AdminAlertes />} />
+                    <Route path="/admin/communication" element={<AdminCommunication />} />
                     <Route path="/admin/sinistres/analytics" element={<AdminSinistresAnalytics />} />
                     <Route path="/admin/sinistres/:id" element={<AdminSinistreDetail />} />
                   </Route>
