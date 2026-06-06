@@ -152,7 +152,6 @@ export default function AdminVehicles() {
   
   const persistedFilters = useRef<PersistedFilters>(loadPersistedFilters());
   const [search, setSearch] = useState(persistedFilters.current.search ?? '');
-  const [typeFilter, setTypeFilter] = useState(persistedFilters.current.typeFilter ?? 'all');
   const [statusFilter, setStatusFilter] = useState(persistedFilters.current.statusFilter ?? 'all');
   const [gpsFilter, setGpsFilter] = useState(persistedFilters.current.gpsFilter ?? 'all');
   const [categoryFilter, setCategoryFilter] = useState(persistedFilters.current.categoryFilter ?? 'all');
@@ -164,12 +163,12 @@ export default function AdminVehicles() {
     try {
       window.localStorage.setItem(
         VEHICLES_FILTER_STORAGE_KEY,
-        JSON.stringify({ search, typeFilter, statusFilter, gpsFilter, categoryFilter }),
+        JSON.stringify({ search, statusFilter, gpsFilter, categoryFilter }),
       );
     } catch {
       // Ignore quota / privacy mode failures — filters simply won't persist.
     }
-  }, [search, typeFilter, statusFilter, gpsFilter, categoryFilter]);
+  }, [search, statusFilter, gpsFilter, categoryFilter]);
   
   // Import state
   const [showImportModal, setShowImportModal] = useState(false);
@@ -440,7 +439,6 @@ export default function AdminVehicles() {
   const filteredVehicles = mergedVehicles.filter((vehicle) => {
     const matchesSearch = vehicle.model_name.toLowerCase().includes(search.toLowerCase()) ||
                          vehicle.license_plate.toLowerCase().includes(search.toLowerCase());
-    const matchesType = typeFilter === 'all' || vehicle.vehicle_type === typeFilter;
     const matchesStatus = statusFilter === 'all' || vehicle.status === statusFilter;
 
     // Category filter — "none" matches vehicles without an assigned fleet group.
@@ -463,7 +461,7 @@ export default function AdminVehicles() {
       if (gpsFilter === 'offline' && gps?.status !== 'offline') return false;
     }
 
-    return matchesSearch && matchesType && matchesStatus && matchesCategory;
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const handleAddVehicle = async () => {
@@ -811,16 +809,6 @@ export default function AdminVehicles() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input placeholder="Rechercher plaque, modèle..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-36">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{VEHICLE.ALL}</SelectItem>
-                <SelectItem value="car">{VEHICLE.CARS}</SelectItem>
-                <SelectItem value="bike">{VEHICLE.BIKES}</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-36">
                 <SelectValue placeholder="Statut" />
