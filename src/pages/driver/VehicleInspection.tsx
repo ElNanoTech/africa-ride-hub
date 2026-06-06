@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
@@ -17,9 +17,11 @@ import { fr } from 'date-fns/locale';
 // Cast for new Phase 3 tables until types regenerate
 const supabase = _supabase as any;
 
-type Zone = 'front' | 'rear' | 'left' | 'right' | 'dash' | 'interior' | 'tires';
+type Zone =
+  | 'front' | 'rear' | 'left' | 'right' | 'dash' | 'interior' | 'tires'
+  | 'doc_vignette' | 'doc_assurance' | 'doc_carte_parking' | 'doc_carte_grise';
 
-const ZONES: { key: Zone; label: string; help: string }[] = [
+const VISUAL_ZONES: { key: Zone; label: string; help: string }[] = [
   { key: 'front', label: 'Avant', help: 'Pare-chocs et phares' },
   { key: 'rear', label: 'Arrière', help: 'Coffre et feux' },
   { key: 'left', label: 'Côté gauche', help: 'Portes côté conducteur' },
@@ -28,6 +30,15 @@ const ZONES: { key: Zone; label: string; help: string }[] = [
   { key: 'interior', label: 'Intérieur', help: 'Sièges et propreté' },
   { key: 'tires', label: 'Pneus', help: 'État et usure' },
 ];
+
+const DOC_ZONES: { key: Zone; label: string; help: string }[] = [
+  { key: 'doc_vignette', label: 'Vignette', help: 'Photo lisible de la vignette' },
+  { key: 'doc_assurance', label: 'Assurance', help: 'Attestation en cours de validité' },
+  { key: 'doc_carte_parking', label: 'Carte parking', help: 'Carte de stationnement' },
+  { key: 'doc_carte_grise', label: 'Carte grise', help: 'Recto lisible' },
+];
+
+const ZONES = [...VISUAL_ZONES, ...DOC_ZONES];
 
 interface Photo {
   id: string;
