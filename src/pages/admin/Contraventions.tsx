@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminLayout } from '@/components/AdminLayout';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
@@ -405,11 +405,10 @@ function ViolationDetailDrawer({ violation, onClose, onChanged }: { violation: a
 
   // Reset local state when violation changes
   const id = violation?.id;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useMemo(() => {
+  useEffect(() => {
     setNotes(violation?.notes || '');
     setPaymentRef(violation?.payment_reference || '');
-  }, [id]);
+  }, [id, violation?.notes, violation?.payment_reference]);
 
   if (!violation) {
     return (
@@ -532,7 +531,7 @@ function ViolationDetailDrawer({ violation, onClose, onChanged }: { violation: a
   );
 }
 
-function Row({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) {
+function Row({ icon: Icon, label, value }: { icon: any; label: string; value: ReactNode }) {
   return (
     <div className="flex items-start gap-2">
       <Icon className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
