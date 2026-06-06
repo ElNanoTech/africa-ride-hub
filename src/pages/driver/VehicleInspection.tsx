@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
@@ -17,9 +17,11 @@ import { fr } from 'date-fns/locale';
 // Cast for new Phase 3 tables until types regenerate
 const supabase = _supabase as any;
 
-type Zone = 'front' | 'rear' | 'left' | 'right' | 'dash' | 'interior' | 'tires';
+type Zone =
+  | 'front' | 'rear' | 'left' | 'right' | 'dash' | 'interior' | 'tires'
+  | 'doc_vignette' | 'doc_assurance' | 'doc_carte_parking' | 'doc_carte_grise';
 
-const ZONES: { key: Zone; label: string; help: string }[] = [
+const VISUAL_ZONES: { key: Zone; label: string; help: string }[] = [
   { key: 'front', label: 'Avant', help: 'Pare-chocs et phares' },
   { key: 'rear', label: 'Arrière', help: 'Coffre et feux' },
   { key: 'left', label: 'Côté gauche', help: 'Portes côté conducteur' },
@@ -28,6 +30,15 @@ const ZONES: { key: Zone; label: string; help: string }[] = [
   { key: 'interior', label: 'Intérieur', help: 'Sièges et propreté' },
   { key: 'tires', label: 'Pneus', help: 'État et usure' },
 ];
+
+const DOC_ZONES: { key: Zone; label: string; help: string }[] = [
+  { key: 'doc_vignette', label: 'Vignette', help: 'Photo lisible de la vignette' },
+  { key: 'doc_assurance', label: 'Assurance', help: 'Attestation en cours de validité' },
+  { key: 'doc_carte_parking', label: 'Carte parking', help: 'Carte de stationnement' },
+  { key: 'doc_carte_grise', label: 'Carte grise', help: 'Recto lisible' },
+];
+
+const ZONES = [...VISUAL_ZONES, ...DOC_ZONES];
 
 interface Photo {
   id: string;
@@ -236,6 +247,38 @@ export default function VehicleInspection() {
 
   const isLate = new Date(inspection.due_at).getTime() < Date.now() && inspection.status !== 'validated';
 
+  const renderZoneTile = (z: { key: Zone; label: string; help: string }, kind: 'camera' | 'doc') => {
+    const photo = photosByZone[z.key];
+    const busy = uploadingZone === z.key;
+    const locked = inspection.status === 'submitted' || inspection.status === 'validated';
+    const Icon = kind === 'doc' ? FileText : Camera;
+    return (
+      <button
+        key={z.key}
+        onClick={() => handlePickPhoto(z.key)}
+        disabled={busy || locked}
+        className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
+          photo ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-dashed border-muted-foreground/40 bg-card'
+        } disabled:opacity-60`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="font-medium">{z.label}</div>
+          {photo ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          ) : busy ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <Icon className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        <div className="text-xs mt-3 font-medium">
+          {photo ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo') : (kind === 'doc' ? 'Toucher pour scanner' : 'Toucher pour photographier')}
+        </div>
+      </button>
+    );
+  };
+
   return (
     <DriverLayout>
       <PageHeader title="Contrôle du véhicule" subtitle={inspection.vehicles?.license_plate || ''} />
@@ -275,37 +318,24 @@ export default function VehicleInspection() {
           </CardContent>
         </Card>
 
-        {/* Zones grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {ZONES.map((z) => {
-            const photo = photosByZone[z.key];
-            const busy = uploadingZone === z.key;
-            return (
-              <button
-                key={z.key}
-                onClick={() => handlePickPhoto(z.key)}
-                disabled={busy || inspection.status === 'submitted' || inspection.status === 'validated'}
-                className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
-                  photo ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-dashed border-muted-foreground/40 bg-card'
-                } disabled:opacity-60`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">{z.label}</div>
-                  {photo ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                  ) : busy ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  ) : (
-                    <Camera className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
-                <div className="text-xs mt-3 font-medium">
-                  {photo ? 'Modifier la photo' : 'Toucher pour photographier'}
-                </div>
-              </button>
-            );
-          })}
+        {/* Visual zones grid */}
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Photos du véhicule
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {VISUAL_ZONES.map((z) => renderZoneTile(z, 'camera'))}
+          </div>
+        </div>
+
+        {/* Documents grid */}
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Documents
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {DOC_ZONES.map((z) => renderZoneTile(z, 'doc'))}
+          </div>
         </div>
 
         {/* Notes */}
