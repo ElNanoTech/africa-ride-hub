@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { AdminLayout } from '@/components/AdminLayout';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Flag, Banknote, CheckCircle2, Car, ExternalLink, Plus, RefreshCw, Wand2, Trash2, MapPin, FileDown } from 'lucide-react';
+import { Flag, Banknote, CheckCircle2, Car, ExternalLink, Plus, RefreshCw, Wand2, Trash2, MapPin, FileDown, User, Calendar, Hash, FileText, Receipt } from 'lucide-react';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 const supabase = _supabase as any;
 import { toast } from 'sonner';
@@ -59,6 +60,7 @@ export default function Contraventions() {
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [selected, setSelected] = useState<any | null>(null);
 
   const { data: violations = [], isLoading } = useQuery<any[]>({
     queryKey: ['contraventions', 'violations'],
@@ -236,7 +238,14 @@ export default function Contraventions() {
             <div className="space-y-2">
               {isLoading && <p className="text-sm text-muted-foreground text-center py-8">Chargement…</p>}
               {!isLoading && filtered.map((v) => (
-                <div key={v.id} className="flex flex-col md:flex-row md:items-center gap-3 p-3 border border-border rounded-lg">
+                <div
+                  key={v.id}
+                  className="flex flex-col md:flex-row md:items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+                  onClick={() => setSelected(v)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setSelected(v); }}
+                >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{v.license_plate}</span>
@@ -251,7 +260,7 @@ export default function Contraventions() {
                       {v.drivers ? ` · ${v.drivers.first_name || ''} ${v.drivers.last_name || ''}` : ' · Non attribué'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <div className="text-right">
                       <p className="text-sm font-semibold">{fcfa(v.amount)}</p>
                       {v.paid_at && <p className="text-xs text-muted-foreground">Payé {format(new Date(v.paid_at), 'dd/MM', { locale: fr })}</p>}
@@ -287,6 +296,12 @@ export default function Contraventions() {
           onOpenChange={setShowAddDialog}
           vehicles={vehicles}
           onCreated={() => qc.invalidateQueries({ queryKey: ['contraventions'] })}
+        />
+
+        <ViolationDetailDrawer
+          violation={selected}
+          onClose={() => setSelected(null)}
+          onChanged={() => qc.invalidateQueries({ queryKey: ['contraventions'] })}
         />
       </div>
     </AdminLayout>
@@ -380,5 +395,148 @@ function AddViolationDialog({ open, onOpenChange, vehicles, onCreated }: any) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ViolationDetailDrawer({ violation, onClose, onChanged }: { violation: any | null; onClose: () => void; onChanged: () => void }) {
+  const [notes, setNotes] = useState('');
+  const [paymentRef, setPaymentRef] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  // Reset local state when violation changes
+  const id = violation?.id;
+  useEffect(() => {
+    setNotes(violation?.notes || '');
+    setPaymentRef(violation?.payment_reference || '');
+  }, [id, violation?.notes, violation?.payment_reference]);
+
+  if (!violation) {
+    return (
+      <Sheet open={false} onOpenChange={(o) => { if (!o) onClose(); }}>
+        <SheetContent />
+      </Sheet>
+    );
+  }
+
+  const v = violation;
+  const driverName = v.drivers ? `${v.drivers.first_name || ''} ${v.drivers.last_name || ''}`.trim() : null;
+  const vehicleLabel = v.vehicles ? `${v.vehicles.license_plate}${v.vehicles.make ? ` — ${v.vehicles.make} ${v.vehicles.model || ''}` : ''}` : null;
+
+  const setStatus = async (status: ViolationStatus) => {
+    setSaving(true);
+    const patch: any = { status };
+    if (status === 'paid' || status === 'liquidated') patch.paid_at = new Date().toISOString();
+    const { error } = await supabase.from('traffic_violations').update(patch).eq('id', v.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success('Statut mis à jour');
+    onChanged();
+    onClose();
+  };
+
+  const saveDetails = async () => {
+    setSaving(true);
+    const { error } = await supabase
+      .from('traffic_violations')
+      .update({ notes: notes || null, payment_reference: paymentRef || null })
+      .eq('id', v.id);
+    setSaving(false);
+    if (error) return toast.error(error.message);
+    toast.success('Détails enregistrés');
+    onChanged();
+  };
+
+  return (
+    <Sheet open={!!violation} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Flag className="h-5 w-5 text-primary" /> {v.license_plate}
+          </SheetTitle>
+          <SheetDescription>{v.violation_type}</SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge className={STATUS_COLOR[v.status as ViolationStatus]}>{STATUS_LABEL[v.status as ViolationStatus]}</Badge>
+            {v.gps_matched && <Badge variant="outline" className="gap-1"><MapPin className="h-3 w-3" /> GPS</Badge>}
+            <Badge variant="outline">{v.source === 'cgi_portal' ? 'CGI' : v.source === 'import' ? 'Import' : 'Manuel'}</Badge>
+            {v.attribution_method && <Badge variant="outline">Attr. {v.attribution_method}</Badge>}
+          </div>
+
+          <Card>
+            <CardContent className="p-4 space-y-3 text-sm">
+              <Row icon={Receipt} label="Montant" value={<span className="font-semibold">{fcfa(v.amount)}</span>} />
+              <Row icon={Hash} label="N° PV" value={v.pv_number || '—'} />
+              <Row icon={Calendar} label="Date" value={format(new Date(v.violation_date), 'dd MMM yyyy à HH:mm', { locale: fr })} />
+              <Row icon={MapPin} label="Lieu" value={v.location || '—'} />
+              <Row icon={Car} label="Véhicule" value={vehicleLabel || 'Non lié'} />
+              <Row icon={User} label="Chauffeur" value={driverName || 'Non attribué'} />
+              {v.payment_due_date && (
+                <Row icon={Calendar} label="Échéance" value={format(new Date(v.payment_due_date), 'dd MMM yyyy', { locale: fr })} />
+              )}
+              {v.paid_at && (
+                <Row icon={CheckCircle2} label="Payé le" value={format(new Date(v.paid_at), 'dd MMM yyyy', { locale: fr })} />
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-2">
+            <Label>Référence paiement</Label>
+            <Input value={paymentRef} onChange={(e) => setPaymentRef(e.target.value)} placeholder="Réf. quittance / virement" />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Notes internes</Label>
+            <Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {v.status !== 'paid' && v.status !== 'liquidated' && (
+              <Button size="sm" className="gap-2" onClick={() => setStatus('paid')} disabled={saving}>
+                <CheckCircle2 className="h-4 w-4" /> Marquer payé
+              </Button>
+            )}
+            {v.status !== 'contested' && (
+              <Button size="sm" variant="outline" onClick={() => setStatus('contested')} disabled={saving}>
+                En recours
+              </Button>
+            )}
+            {v.status !== 'cancelled' && (
+              <Button size="sm" variant="outline" onClick={() => setStatus('cancelled')} disabled={saving}>
+                Annuler
+              </Button>
+            )}
+            {v.pdf_url && (
+              <a href={v.pdf_url} target="_blank" rel="noreferrer">
+                <Button size="sm" variant="outline" className="gap-2"><FileText className="h-4 w-4" /> Voir PV</Button>
+              </a>
+            )}
+          </div>
+
+          {v.raw_data && (
+            <details className="text-xs">
+              <summary className="cursor-pointer text-muted-foreground">Données brutes</summary>
+              <pre className="mt-2 p-2 bg-muted rounded overflow-x-auto">{JSON.stringify(v.raw_data, null, 2)}</pre>
+            </details>
+          )}
+        </div>
+
+        <SheetFooter className="mt-6">
+          <Button variant="ghost" onClick={onClose}>Fermer</Button>
+          <Button onClick={saveDetails} disabled={saving}>Enregistrer</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function Row({ icon: Icon, label, value }: { icon: any; label: string; value: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2">
+      <Icon className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+      <span className="text-muted-foreground w-28 shrink-0">{label}</span>
+      <span className="flex-1">{value}</span>
+    </div>
   );
 }
