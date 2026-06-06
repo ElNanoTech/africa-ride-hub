@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 import {
   Shield, FileText, Mail, ChevronRight, ExternalLink, Info, Receipt, Wallet,
+  Bell, GraduationCap,
 } from 'lucide-react';
 
 const SUPPORT_EMAIL = 'support@damflotte.com';
@@ -42,6 +43,41 @@ export default function Settings() {
                   <Wallet className="h-5 w-5 text-primary" />
                 </div>
                 <span className="font-medium">Mon portefeuille</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Activity */}
+      <div className="px-4 mb-6">
+        <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
+          Mon activité
+        </h2>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            <Link
+              to="/driver/alertes"
+              className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors min-h-[48px]"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                  <Bell className="h-5 w-5 text-destructive" />
+                </div>
+                <span className="font-medium">Mes alertes</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Link>
+            <Link
+              to="/driver/formation"
+              className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors min-h-[48px]"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-medium">Formation</span>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </Link>
