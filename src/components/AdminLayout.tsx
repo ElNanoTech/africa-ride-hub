@@ -215,6 +215,13 @@ const sidebarItems: SidebarItem[] = [
     section: 'gestion',
   },
   {
+    to: '/admin/finance',
+    icon: Banknote,
+    label: 'Finance',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
+  },
+  {
     to: '/admin/billing',
     icon: FileText,
     label: 'Facturation',
