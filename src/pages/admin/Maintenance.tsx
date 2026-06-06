@@ -181,7 +181,6 @@ export default function Maintenance() {
         <AdminBreadcrumb items={[{ label: 'Maintenance' }]} />
 
         <HeroCard
-          icon={Wrench}
           title="Maintenance & Charges"
           subtitle="Ordres de travail, suivi atelier, prestataires et autres charges flotte"
           actions={
@@ -192,17 +191,17 @@ export default function Maintenance() {
         />
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <KpiTile icon={ListChecks} label="Total ordres" value={String(kpis.total)} />
-          <KpiTile icon={Clock} label="À valider" value={String(kpis.toValidate)} tone="warning" />
-          <KpiTile icon={Wrench} label="En cours" value={String(kpis.inProgress)} tone="info" />
-          <KpiTile icon={Banknote} label="Coût total" value={fcfa(kpis.totalCost)} />
-          <KpiTile icon={Car} label="Dispo flotte" value={`${kpis.fleetAvailable}/${kpis.fleetTotal}`} tone="success" />
+          <KpiTile icon={ListChecks} label="Total ordres" value={kpis.total} variant="slate" />
+          <KpiTile icon={Clock} label="À valider" value={kpis.toValidate} variant="orange" />
+          <KpiTile icon={Wrench} label="En cours" value={kpis.inProgress} variant="blue" />
+          <KpiTile icon={Banknote} label="Coût total" value={fcfa(kpis.totalCost)} variant="yellow" />
+          <KpiTile icon={Car} label="Dispo flotte" value={`${kpis.fleetAvailable}/${kpis.fleetTotal}`} variant="green" />
         </div>
 
         <PillTabs
           value={tab}
-          onValueChange={(v) => setTab(v as any)}
-          tabs={[
+          onChange={(v) => setTab(v as any)}
+          items={[
             { value: 'dashboard', label: 'Tableau de bord' },
             { value: 'orders', label: 'Ordres' },
             { value: 'kanban', label: 'Suivi Kanban' },
