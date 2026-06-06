@@ -3702,6 +3702,93 @@ export type Database = {
           },
         ]
       }
+      traffic_violations: {
+        Row: {
+          amount: number
+          attribution_method: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          customer_id: string | null
+          driver_id: string | null
+          gps_matched: boolean
+          id: string
+          license_plate: string
+          location: string | null
+          notes: string | null
+          paid_at: string | null
+          payment_due_date: string | null
+          payment_reference: string | null
+          pdf_url: string | null
+          pv_number: string | null
+          raw_data: Json | null
+          rental_id: string | null
+          source: string
+          status: string
+          synced_at: string | null
+          updated_at: string
+          vehicle_id: string | null
+          violation_date: string
+          violation_type: string
+        }
+        Insert: {
+          amount?: number
+          attribution_method?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          gps_matched?: boolean
+          id?: string
+          license_plate: string
+          location?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_due_date?: string | null
+          payment_reference?: string | null
+          pdf_url?: string | null
+          pv_number?: string | null
+          raw_data?: Json | null
+          rental_id?: string | null
+          source?: string
+          status?: string
+          synced_at?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          violation_date: string
+          violation_type: string
+        }
+        Update: {
+          amount?: number
+          attribution_method?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          gps_matched?: boolean
+          id?: string
+          license_plate?: string
+          location?: string | null
+          notes?: string | null
+          paid_at?: string | null
+          payment_due_date?: string | null
+          payment_reference?: string | null
+          pdf_url?: string | null
+          pv_number?: string | null
+          raw_data?: Json | null
+          rental_id?: string | null
+          source?: string
+          status?: string
+          synced_at?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+          violation_date?: string
+          violation_type?: string
+        }
+        Relationships: []
+      }
       vehicle_immobilization_commands: {
         Row: {
           acknowledged_at: string | null
