@@ -45,12 +45,12 @@ export default function SinistresHome() {
   const startReport = async () => {
     if (!canDeclare) return;
     if (draft) {
-      navigate(`/driver/sinistres/report/${draft.id}/safety`);
+      navigate(`/driver/sinistres/report/${draft.id}/type`);
       return;
     }
     try {
       const id = await createDraft.mutateAsync(undefined);
-      navigate(`/driver/sinistres/report/${id}/safety`);
+      navigate(`/driver/sinistres/report/${id}/type`);
     } catch (e: any) {
       toast.error('Création impossible', { description: e.message });
     }

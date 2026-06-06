@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { StepProgressBar } from './StepProgressBar';
 
 const STEPS = [
+  { key: 'type', label: 'Type' },
   { key: 'safety', label: 'Sécurité' },
   { key: 'evidence', label: 'Photos' },
   { key: 'location', label: 'Lieu & message' },

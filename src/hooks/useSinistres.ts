@@ -35,6 +35,7 @@ export interface AccidentRecord {
   updated_at: string;
   submitted_at: string | null;
   closed_at: string | null;
+  incident_type?: string | null;
 }
 
 export interface AccidentFile {

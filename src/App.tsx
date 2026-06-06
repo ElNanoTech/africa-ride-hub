@@ -100,6 +100,7 @@ const AdminContracts = lazy(() => import("./pages/admin/Contracts"));
 const DriverOwnership = lazy(() => import("./pages/driver/Ownership"));
 const DriverVehicleInspection = lazy(() => import("./pages/driver/VehicleInspection"));
 const DriverSinistresHome = lazy(() => import("./pages/driver/sinistres/SinistresHome"));
+const DriverSinistreType = lazy(() => import("./pages/driver/sinistres/StepType"));
 const DriverSinistreSafety = lazy(() => import("./pages/driver/sinistres/StepSafety"));
 const DriverSinistreEvidence = lazy(() => import("./pages/driver/sinistres/StepEvidence"));
 const DriverSinistreLocation = lazy(() => import("./pages/driver/sinistres/StepLocation"));
@@ -212,6 +213,7 @@ const App = () => {
                     <Route path="/driver/portefeuille" element={<DriverWallet />} />
                     <Route path="/driver/ownership" element={<DriverOwnership />} />
                     <Route path="/driver/sinistres" element={<DriverSinistresHome />} />
+                    <Route path="/driver/sinistres/report/:id/type" element={<DriverSinistreType />} />
                     <Route path="/driver/sinistres/report/:id/safety" element={<DriverSinistreSafety />} />
                     <Route path="/driver/sinistres/report/:id/evidence" element={<DriverSinistreEvidence />} />
                     <Route path="/driver/sinistres/report/:id/location" element={<DriverSinistreLocation />} />
