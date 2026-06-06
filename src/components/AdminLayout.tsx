@@ -186,6 +186,13 @@ const sidebarItems: SidebarItem[] = [
     allowedRoles: ['super_admin', 'manager'],
     section: 'gestion',
   },
+  {
+    to: '/admin/alertes',
+    icon: Bell,
+    label: 'Alertes',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
+  },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
