@@ -110,6 +110,7 @@ const AdminSinistres = lazy(() => import("./pages/admin/Sinistres"));
 const AdminSinistreDetail = lazy(() => import("./pages/admin/SinistreDetail"));
 const AdminSinistresAnalytics = lazy(() => import("./pages/admin/SinistresAnalytics"));
 const AdminFleetControl = lazy(() => import("./pages/admin/FleetControl"));
+const AdminMaintenance = lazy(() => import("./pages/admin/Maintenance"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminBillingAudit = lazy(() => import("./pages/admin/BillingAudit"));
 const DriverFactures = lazy(() => import("./pages/driver/Factures"));
@@ -251,6 +252,7 @@ const App = () => {
                     <Route path="/admin/driving-behavior" element={<AdminDrivingBehavior />} />
                     <Route path="/admin/sinistres" element={<AdminSinistres />} />
                     <Route path="/admin/fleet-control" element={<AdminFleetControl />} />
+                    <Route path="/admin/maintenance" element={<AdminMaintenance />} />
                     <Route path="/admin/sinistres/analytics" element={<AdminSinistresAnalytics />} />
                     <Route path="/admin/sinistres/:id" element={<AdminSinistreDetail />} />
                   </Route>

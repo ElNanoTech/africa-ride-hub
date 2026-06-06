@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Car, FileText, Wallet, CreditCard, 
   Settings, LogOut, Menu, ChevronLeft, BarChart3, MessageSquare,
-  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone
+  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -169,6 +169,13 @@ const sidebarItems: SidebarItem[] = [
     to: '/admin/rentals', 
     icon: FileText, 
     label: NAV.RENTALS,
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
+  },
+  {
+    to: '/admin/maintenance',
+    icon: Wrench,
+    label: 'Maintenance',
     allowedRoles: ['super_admin', 'manager'],
     section: 'gestion',
   },

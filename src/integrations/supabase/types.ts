@@ -2634,6 +2634,175 @@ export type Database = {
           },
         ]
       }
+      maintenance_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          item_type: string
+          label: string
+          order_id: string
+          quantity: number
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_type?: string
+          label: string
+          order_id: string
+          quantity?: number
+          unit_cost?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_type?: string
+          label?: string
+          order_id?: string
+          quantity?: number
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_orders: {
+        Row: {
+          actual_cost: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          description: string | null
+          diagnosis: string | null
+          estimated_cost: number
+          id: string
+          mileage_km: number | null
+          notes: string | null
+          order_number: string | null
+          order_type: string
+          priority: string
+          provider_id: string | null
+          scheduled_date: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          actual_cost?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          diagnosis?: string | null
+          estimated_cost?: number
+          id?: string
+          mileage_km?: number | null
+          notes?: string | null
+          order_number?: string | null
+          order_type?: string
+          priority?: string
+          provider_id?: string | null
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          actual_cost?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          diagnosis?: string | null
+          estimated_cost?: number
+          id?: string
+          mileage_km?: number | null
+          notes?: string | null
+          order_number?: string | null
+          order_type?: string
+          priority?: string
+          provider_id?: string | null
+          scheduled_date?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "maintenance_orders_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "maintenance_providers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maintenance_providers: {
+        Row: {
+          address: string | null
+          city: string | null
+          created_at: string
+          customer_id: string | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          notes: string | null
+          phone: string | null
+          rating: number | null
+          specialty: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          city?: string | null
+          created_at?: string
+          customer_id?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          rating?: number | null
+          specialty?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           channel: string | null
@@ -2702,6 +2871,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      other_charges: {
+        Row: {
+          amount: number
+          charge_date: string
+          charge_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          id: string
+          label: string
+          notes: string | null
+          period_end: string | null
+          period_start: string | null
+          provider_name: string | null
+          reference: string | null
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          amount?: number
+          charge_date?: string
+          charge_type: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          label: string
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider_name?: string | null
+          reference?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          amount?: number
+          charge_date?: string
+          charge_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          id?: string
+          label?: string
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider_name?: string | null
+          reference?: string | null
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: []
       }
       payment_receipts: {
         Row: {
