@@ -2,28 +2,57 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, runtime',
 }
 
-// Scoring configuration defaults
-const DEFAULT_WEIGHTS = {
-  income_stability: 0.30,
-  payment_history: 0.35,
-  driving_behavior: 0.25,
-  tenure: 0.10
+/**
+ * KIRA scoring engine — 6-factor model on 0–1000 scale, base 500.
+ * Weights and tier thresholds come from `scoring_config` (single source of truth).
+ *
+ * Factor → source table mapping:
+ *   payment_history   ← payments            (available)
+ *   driving_behavior  ← telemetry_events    (available; KIRA spec maps to "Conduite")
+ *   income_stability  ← income_records      (available; KIRA spec maps to "Revenu")
+ *   sinistralite      ← accidents           (available)
+ *   infractions       ← cgi_contraventions  (NOT YET — table missing, factor "en attente")
+ *   credit            ← loans               (NOT YET — table lacks repayment data, factor "en attente")
+ *
+ * Factors flagged unavailable have their weight redistributed across remaining
+ * factors so dark factors don't drag the score toward base 500.
+ */
+
+type FactorKey =
+  | 'income_stability'
+  | 'payment_history'
+  | 'driving_behavior'
+  | 'sinistralite'
+  | 'infractions'
+  | 'credit'
+
+const DEFAULT_WEIGHTS: Record<FactorKey, number> = {
+  payment_history: 25,
+  driving_behavior: 25,
+  income_stability: 10,
+  sinistralite: 15,
+  infractions: 10,
+  credit: 15,
 }
 
-const TIER_THRESHOLDS = {
-  A: 850,  // Platinum equivalent
-  B: 750,  // Gold equivalent  
-  C: 650,  // Silver equivalent
-  D: 500,  // Bronze equivalent
-  E: 0     // Onboarding equivalent
+// Threshold keys in scoring_config use legacy labels; values map to A/B/C/D floors.
+const DEFAULT_THRESHOLDS = {
+  platinum: 800, // A
+  gold: 650,     // B
+  silver: 500,   // C
+  bronze: 300,   // D
 }
+
+const SCORE_MIN = 0
+const SCORE_MAX = 1000
+const SCORE_BASE = 500
 
 interface ScoringConfig {
-  weights: typeof DEFAULT_WEIGHTS
-  tier_thresholds: typeof TIER_THRESHOLDS
+  weights: Record<FactorKey, number>
+  tier_thresholds: typeof DEFAULT_THRESHOLDS
 }
 
 interface DriverData {
@@ -76,16 +105,16 @@ Deno.serve(async (req) => {
       .select('config_key, config_value')
     
     const config: ScoringConfig = {
-      weights: DEFAULT_WEIGHTS,
-      tier_thresholds: TIER_THRESHOLDS
+      weights: { ...DEFAULT_WEIGHTS },
+      tier_thresholds: { ...DEFAULT_THRESHOLDS },
     }
     
     if (configData) {
       for (const item of configData) {
         if (item.config_key === 'weights') {
-          config.weights = { ...DEFAULT_WEIGHTS, ...item.config_value }
+          config.weights = { ...DEFAULT_WEIGHTS, ...(item.config_value as Record<string, number>) }
         } else if (item.config_key === 'tier_thresholds') {
-          config.tier_thresholds = { ...TIER_THRESHOLDS, ...item.config_value }
+          config.tier_thresholds = { ...DEFAULT_THRESHOLDS, ...(item.config_value as typeof DEFAULT_THRESHOLDS) }
         }
       }
     }
