@@ -21,7 +21,7 @@ import { ADMIN } from '@/lib/i18n';
 import { formatCurrency } from '@/lib/format';
 import { 
   Users, Car, CreditCard, Wallet, AlertTriangle, MessageSquare,
-  TrendingUp, TrendingDown, ArrowRight, CheckCircle, Clock, Wifi,
+  TrendingUp, TrendingDown, ArrowRight, CheckCircle, Clock,
   Zap, FileCheck, CarFront, Banknote, Headphones, ChevronDown, KeyRound
 } from 'lucide-react';
 import { useState } from 'react';
