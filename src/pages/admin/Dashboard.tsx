@@ -1,4 +1,7 @@
-import { AdminLayout, AdminPageHeader } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/AdminLayout';
+import { HeroCard } from '@/components/admin/HeroCard';
+import { KpiTile, type KpiVariant } from '@/components/admin/KpiTile';
+import { StatusPill } from '@/components/admin/StatusPill';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -108,13 +111,13 @@ export default function AdminDashboard() {
     staleTime: 5 * 60 * 1000,
   });
 
-  const kpis = [
-    { label: ADMIN.DASHBOARD.TOTAL_DRIVERS, value: stats?.totalDrivers || 0, icon: Users, color: 'primary' },
-    { label: ADMIN.DASHBOARD.ACTIVE_RENTALS, value: stats?.activeRentals || 0, icon: Car, color: 'secondary' },
-    { label: ADMIN.DASHBOARD.AVERAGE_SCORE, value: avgScore, icon: TrendingUp, color: 'tier-b' },
-    { label: ADMIN.DASHBOARD.PENDING_LOANS, value: stats?.pendingLoans || 0, icon: Wallet, color: 'warning' },
-    { label: ADMIN.DASHBOARD.OVERDUE_PAYMENTS, value: stats?.overduePayments || 0, icon: AlertTriangle, color: 'destructive' },
-    { label: ADMIN.DASHBOARD.OPEN_TICKETS, value: stats?.openTickets || 0, icon: MessageSquare, color: 'muted-foreground' },
+  const kpis: { label: string; value: number; icon: typeof Users; variant: KpiVariant }[] = [
+    { label: ADMIN.DASHBOARD.TOTAL_DRIVERS,   value: stats?.totalDrivers   || 0, icon: Users,          variant: 'green' },
+    { label: ADMIN.DASHBOARD.ACTIVE_RENTALS,  value: stats?.activeRentals  || 0, icon: Car,            variant: 'blue' },
+    { label: ADMIN.DASHBOARD.AVERAGE_SCORE,   value: avgScore,                    icon: TrendingUp,     variant: 'purple' },
+    { label: ADMIN.DASHBOARD.PENDING_LOANS,   value: stats?.pendingLoans   || 0, icon: Wallet,         variant: 'yellow' },
+    { label: ADMIN.DASHBOARD.OVERDUE_PAYMENTS,value: stats?.overduePayments|| 0, icon: AlertTriangle,  variant: 'orange' },
+    { label: ADMIN.DASHBOARD.OPEN_TICKETS,    value: stats?.openTickets    || 0, icon: MessageSquare,  variant: 'slate' },
   ];
 
   const pendingQueues = [
@@ -166,14 +169,23 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout>
-      <AdminPageHeader 
+      <HeroCard
+        eyebrow="Vue d'ensemble"
         title={ADMIN.DASHBOARD.TITLE}
-        description="Vue d'ensemble de la plateforme DAM Flotte"
-        action={
-          <div className="flex items-center gap-2 sm:gap-3">
+        subtitle="Vue d'ensemble de la plateforme DAM Flotte"
+        pills={
+          <>
+            <StatusPill label="Temps réel" tone="success" pulse />
+            <StatusPill label="Uffizio GPS" tone="info" />
+            <StatusPill label="Yango Fleet" tone="info" />
+            <StatusPill label="Wave API" tone="info" />
+          </>
+        }
+        actions={
+          <>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm" className="gap-1.5 sm:gap-2 text-xs sm:text-sm">
+                <Button variant="default" size="sm" className="gap-1.5 sm:gap-2 text-xs sm:text-sm bg-white text-foreground hover:bg-white/90">
                   <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span className="hidden xs:inline">Actions rapides</span>
                   <span className="xs:hidden">Actions</span>
@@ -208,37 +220,25 @@ export default function AdminDashboard() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-              <Wifi className="h-3 w-3 text-primary animate-pulse" />
-              <span>Temps réel</span>
-            </div>
-          </div>
+          </>
         }
       />
 
-      {/* KPI Grid - 2 cols mobile, 3 cols tablet, 6 cols desktop */}
+      {/* KPI Grid — pastel tiles */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4 mb-6 sm:mb-8">
-        {statsLoading ? (
-          Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i}>
-              <CardContent className="p-3 sm:p-4">
-                <Skeleton className="h-16 sm:h-20" />
-              </CardContent>
-            </Card>
-          ))
-        ) : (
-          kpis.map((kpi) => (
-            <Card key={kpi.label}>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center justify-between mb-1.5 sm:mb-2">
-                  <kpi.icon className={`h-4 w-4 sm:h-5 sm:w-5 text-${kpi.color}`} />
-                </div>
-                <p className="text-xl sm:text-2xl font-bold">{kpi.value}</p>
-                <p className="text-[11px] sm:text-xs text-muted-foreground leading-tight">{kpi.label}</p>
-              </CardContent>
-            </Card>
-          ))
-        )}
+        {statsLoading
+          ? Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-[120px] rounded-2xl" />
+            ))
+          : kpis.map((kpi) => (
+              <KpiTile
+                key={kpi.label}
+                label={kpi.label}
+                value={kpi.value}
+                icon={kpi.icon}
+                variant={kpi.variant}
+              />
+            ))}
       </div>
 
       {/* Score Trends Widget */}
