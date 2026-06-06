@@ -193,6 +193,13 @@ const sidebarItems: SidebarItem[] = [
     allowedRoles: ['super_admin', 'manager'],
     section: 'operations',
   },
+  {
+    to: '/admin/communication',
+    icon: MessageSquare,
+    label: 'Communication',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
+  },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
