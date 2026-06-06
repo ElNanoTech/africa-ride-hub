@@ -37,7 +37,7 @@ export default function Kira() {
       alerts, maintenance, scores, modules, broadcasts, inspections,
     ] = await Promise.all([
       supabase.from("drivers").select("id,status,created_at,full_name").limit(2000),
-      supabase.from("vehicles").select("id,status,vehicle_type,license_plate").limit(2000),
+      supabase.from("vehicles").select("id,status,vehicle_type,fleet_group,license_plate").limit(2000),
       supabase.from("rentals").select("id,status,start_date,total_amount,driver_id,created_at").gte("created_at", since30).limit(5000),
       supabase.from("payments").select("id,amount,status,created_at").gte("created_at", since30).limit(5000),
       supabase.from("accidents").select("id,status,severity,accident_date,created_at").gte("created_at", since30).limit(2000),
@@ -356,7 +356,7 @@ function VehicleStatusChart({ vehicles }: { vehicles: any[] }) {
 }
 
 function VehicleTypeChart({ vehicles }: { vehicles: any[] }) {
-  const grouped = groupBy(vehicles, (v) => v.vehicle_type || "autre");
+  const grouped = groupBy(vehicles, (v) => v.fleet_group || v.vehicle_type || "autre");
   const rows = Object.entries(grouped).map(([name, value]) => ({ name, value }));
   if (rows.length === 0) return <Empty />;
   return (

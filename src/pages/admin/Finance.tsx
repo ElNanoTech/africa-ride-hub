@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Banknote, TrendingUp, AlertTriangle, Target, ArrowRight, Wallet, FileText, CreditCard } from 'lucide-react';
+import { fleetCategoryLabel } from '@/lib/fleetCategories';
 import { formatCurrency } from '@/lib/format';
 import { supabase } from '@/integrations/supabase/routeClient';
 import {
@@ -58,7 +59,7 @@ export default function AdminFinance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('rentals')
-        .select('id, approved_rate, requested_rate, rental_days, status, vehicles(vehicle_type)')
+        .select('id, approved_rate, requested_rate, rental_days, status, vehicles(vehicle_type, fleet_group)')
         .in('status', ['active', 'approved']);
       if (error) throw error;
       return data || [];
@@ -111,7 +112,8 @@ export default function AdminFinance() {
   const byCategory = useMemo(() => {
     const m = new Map<string, number>();
     activeRentals.forEach((r: any) => {
-      const cat = r.vehicles?.vehicle_type || 'autre';
+      const raw = r.vehicles?.fleet_group || r.vehicles?.vehicle_type || 'autre';
+      const cat = r.vehicles?.fleet_group ? fleetCategoryLabel(raw) : raw;
       const rate = r.approved_rate || r.requested_rate || 0;
       m.set(cat, (m.get(cat) || 0) + rate);
     });
