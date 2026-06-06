@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Car, FileText, Wallet, CreditCard, 
   Settings, LogOut, Menu, ChevronLeft, BarChart3, MessageSquare,
-  Shield, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity
+  Shield, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -101,6 +101,7 @@ interface SidebarItem {
   exact?: boolean;
   allowedRoles: AppRole[];
   badgeKey?: 'pendingKyc'; // Key to get badge count
+  section?: 'operations' | 'gestion' | 'analyse' | 'systeme';
 }
 
 // Role-based menu configuration
@@ -110,7 +111,8 @@ const sidebarItems: SidebarItem[] = [
     icon: LayoutDashboard, 
     label: ADMIN.DASHBOARD.TITLE, 
     exact: true,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/drivers', 
@@ -118,6 +120,7 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.DRIVERS,
     allowedRoles: ['super_admin', 'manager'],
     badgeKey: 'pendingKyc', // Show pending KYC count
+    section: 'operations',
   },
   { 
     to: '/admin/vehicles', 
@@ -125,126 +128,147 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.VEHICLES,
     allowedRoles: ['super_admin', 'manager'],
     exact: true,
+    section: 'operations',
   },
   { 
     to: '/admin/vehicles/gps-mapping', 
     icon: MapPin, 
     label: 'Mapping GPS',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/tracking', 
     icon: MapPin, 
     label: 'Suivi GPS',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/driving-behavior', 
     icon: Activity, 
     label: 'Conduite',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   {
     to: '/admin/platform-sync', 
     icon: RefreshCw, 
     label: 'Sync Plateformes',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
   },
   { 
     to: '/admin/rentals', 
     icon: FileText, 
     label: NAV.RENTALS,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
     label: NAV.LOANS,
-    allowedRoles: ['super_admin', 'manager', 'agent_pret']
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'gestion',
   },
   { 
     to: '/admin/payments', 
     icon: CreditCard, 
     label: NAV.PAYMENTS,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   {
     to: '/admin/billing',
     icon: FileText,
     label: 'Facturation',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   {
     to: '/admin/billing/wallets',
     icon: Wallet,
     label: 'Portefeuilles',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   { 
     to: '/admin/support', 
     icon: MessageSquare, 
     label: NAV.SUPPORT,
-    allowedRoles: ['super_admin', 'manager', 'agent_support']
+    allowedRoles: ['super_admin', 'manager', 'agent_support'],
+    section: 'gestion',
   },
   { 
     to: '/admin/scoring', 
     icon: BarChart3, 
     label: ADMIN.SCORING.TITLE,
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'analyse',
   },
   { 
     to: '/admin/analytics', 
     icon: TrendingUp, 
     label: 'Analytique',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'analyse',
   },
   { 
     to: '/admin/audit', 
     icon: Shield, 
     label: NAV.AUDIT,
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/users', 
     icon: UserCog, 
     label: 'Administrateurs',
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/settings', 
     icon: Settings, 
     label: NAV.SETTINGS,
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/feature-flags', 
     icon: Flag, 
     label: 'Feature Flags',
-    allowedRoles: ['super_admin']
+    allowedRoles: ['super_admin'],
+    section: 'systeme',
   },
   { 
     to: '/admin/customers', 
     icon: Building2, 
     label: 'Clients',
-    allowedRoles: ['super_admin'] // Platform owners only, checked via RLS
+    allowedRoles: ['super_admin'], // Platform owners only, checked via RLS
+    section: 'systeme',
   },
   { 
     to: '/admin/income-entry', 
     icon: Banknote, 
     label: 'Saisie revenus',
-    allowedRoles: ['super_admin', 'manager'] // For Yango-independence fallback
+    allowedRoles: ['super_admin', 'manager'], // For Yango-independence fallback
+    section: 'gestion',
   },
   { 
     to: '/admin/income-approvals', 
     icon: FileText, 
     label: 'Approbations',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
   {
     to: '/admin/sinistres',
     icon: ShieldAlert,
     label: 'Sinistres',
-    allowedRoles: ['super_admin', 'manager']
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
   },
 
 ];
@@ -432,11 +456,48 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return location.pathname.startsWith(path);
   };
 
+  // Derive a Section › Page breadcrumb from the current route.
+  const breadcrumb = useMemo(() => {
+    const match = sidebarItems.find((item) =>
+      item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to),
+    );
+    if (!match) return { section: '', page: '' };
+    const sectionLabel = match.section ? {
+      operations: 'Opérations',
+      gestion: 'Gestion',
+      analyse: 'Analyse',
+      systeme: 'Système',
+    }[match.section] : '';
+    return { section: sectionLabel || '', page: match.label };
+  }, [location.pathname]);
+
   // Filter menu items based on user role_key
   const filteredSidebarItems = useMemo(() => {
     if (!adminUser?.role_key) return [];
     return sidebarItems.filter(item => hasAccess(adminUser.role_key, item.allowedRoles));
   }, [adminUser?.role_key]);
+
+  // Group filtered items by section for the new KIRA-style sidebar layout.
+  const groupedSidebarItems = useMemo(() => {
+    const groups: Record<'operations' | 'gestion' | 'analyse' | 'systeme', SidebarItem[]> = {
+      operations: [],
+      gestion: [],
+      analyse: [],
+      systeme: [],
+    };
+    for (const item of filteredSidebarItems) {
+      const key = (item.section ?? 'operations') as keyof typeof groups;
+      groups[key].push(item);
+    }
+    return groups;
+  }, [filteredSidebarItems]);
+
+  const SECTION_LABELS: Record<keyof typeof groupedSidebarItems, string> = {
+    operations: 'Opérations',
+    gestion: 'Gestion',
+    analyse: 'Analyse',
+    systeme: 'Système',
+  };
 
   const handleLogout = async () => {
     try {
@@ -519,78 +580,110 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 py-4 overflow-y-auto overscroll-contain">
-          <ul className="space-y-1 px-3">
-            {filteredSidebarItems.map((item) => (
-              <li key={item.to}>
-                <Link
-                  to={item.to}
-                  onClick={() => isMobile && setSidebarOpen(false)}
-                  className={cn(
-                    'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative',
-                    'active:scale-[0.98] touch-manipulation',
-                    isActive(item.to, item.exact)
-                      ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-sm'
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent'
-                  )}
-                >
-                  <item.icon className="h-5 w-5 flex-shrink-0" />
+          <div className="px-3 space-y-5">
+            {(Object.keys(groupedSidebarItems) as Array<keyof typeof groupedSidebarItems>).map((sectionKey) => {
+              const items = groupedSidebarItems[sectionKey];
+              if (items.length === 0) return null;
+              return (
+                <div key={sectionKey}>
                   {(!collapsed || isMobile) && (
-                    <span className="text-[15px] font-medium flex-1">{item.label}</span>
+                    <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.12em] uppercase text-sidebar-foreground/40">
+                      {SECTION_LABELS[sectionKey]}
+                    </p>
                   )}
-                  {/* Badge for pending items */}
-                  {item.badgeKey === 'pendingKyc' && pendingKycCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className={cn(
-                        "h-5 min-w-5 px-1.5 text-xs font-bold animate-pulse",
-                        collapsed && !isMobile && "absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
-                      )}
-                    >
-                      {pendingKycCount > 99 ? '99+' : pendingKycCount}
-                    </Badge>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
+                  <ul className="space-y-1">
+                    {items.map((item) => (
+                      <li key={item.to}>
+                        <Link
+                          to={item.to}
+                          onClick={() => isMobile && setSidebarOpen(false)}
+                          className={cn(
+                            'flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 relative',
+                            'active:scale-[0.98] touch-manipulation',
+                            isActive(item.to, item.exact)
+                              ? 'bg-sidebar-accent text-sidebar-primary-foreground shadow-inner ring-1 ring-sidebar-primary/30 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-sidebar-primary'
+                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:bg-sidebar-accent'
+                          )}
+                        >
+                          <item.icon className={cn(
+                            'h-[18px] w-[18px] flex-shrink-0',
+                            isActive(item.to, item.exact) && 'text-sidebar-primary'
+                          )} />
+                          {(!collapsed || isMobile) && (
+                            <span className="text-[14px] font-medium flex-1">{item.label}</span>
+                          )}
+                          {item.badgeKey === 'pendingKyc' && pendingKycCount > 0 && (
+                            <Badge
+                              variant="destructive"
+                              className={cn(
+                                "h-5 min-w-5 px-1.5 text-xs font-bold animate-pulse",
+                                collapsed && !isMobile && "absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
+                              )}
+                            >
+                              {pendingKycCount > 99 ? '99+' : pendingKycCount}
+                            </Badge>
+                          )}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
         </nav>
 
-        {/* User & Logout */}
-        <div className="p-4 border-t border-sidebar-border safe-bottom space-y-3">
-          {/* Mobile Role Badge */}
-          {isMobile && adminUser?.role_key && (
-            <div className="flex items-center gap-3 px-4 py-2">
-              <div className="w-8 h-8 rounded-full bg-sidebar-accent flex items-center justify-center">
-                <span className="text-sm font-semibold">
-                  {adminUser?.full_name?.charAt(0) || 'A'}
+        {/* Driver App shortcut */}
+        <div className="px-3 pb-2">
+          <Link
+            to="/driver"
+            onClick={() => isMobile && setSidebarOpen(false)}
+            className={cn(
+              'flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200',
+              'bg-gradient-to-br from-emerald-500/15 to-emerald-400/10 ring-1 ring-emerald-400/30',
+              'hover:from-emerald-500/25 hover:to-emerald-400/15 text-emerald-300'
+            )}
+          >
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <Smartphone className="h-4 w-4" />
+            </div>
+            {(!collapsed || isMobile) && (
+              <>
+                <span className="text-[14px] font-semibold flex-1">DAM Driver</span>
+                <Badge className="bg-emerald-400/20 text-emerald-200 border-0 text-[10px] tracking-wide">APP</Badge>
+              </>
+            )}
+          </Link>
+        </div>
+
+        {/* User chip + Settings + Logout */}
+        <div className="p-3 border-t border-sidebar-border safe-bottom space-y-1">
+          {(!collapsed || isMobile) && adminUser && (
+            <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-sidebar-accent/40">
+              <div className="w-9 h-9 rounded-full bg-sidebar-primary/20 ring-1 ring-sidebar-primary/40 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-semibold text-sidebar-primary-foreground">
+                  {adminUser.full_name?.charAt(0) || 'A'}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{adminUser?.full_name || 'Admin'}</p>
-                <Badge 
-                  variant="outline" 
-                  className={cn(
-                    "h-5 px-2 text-[10px] font-medium border mt-0.5",
-                    getRoleBadgeConfig(adminUser.role_key).className
-                  )}
-                >
-                  <Shield className="h-2.5 w-2.5 mr-1" />
+                <p className="text-[13px] font-semibold truncate text-sidebar-foreground">{adminUser.full_name || 'Admin'}</p>
+                <p className="text-[11px] text-sidebar-foreground/50 truncate">
                   {getRoleBadgeConfig(adminUser.role_key).label}
-                </Badge>
+                </p>
               </div>
             </div>
           )}
           <button
             onClick={handleLogout}
             className={cn(
-              'flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200',
-              'text-sidebar-foreground hover:bg-sidebar-accent active:bg-sidebar-accent',
+              'flex items-center gap-3 w-full px-4 py-2.5 rounded-xl transition-all duration-200',
+              'text-red-300/80 hover:bg-red-500/10 hover:text-red-200 active:bg-red-500/15',
               'active:scale-[0.98] touch-manipulation'
             )}
           >
-            <LogOut className="h-5 w-5 flex-shrink-0" />
+            <LogOut className="h-[18px] w-[18px] flex-shrink-0" />
             {(!collapsed || isMobile) && (
-              <span className="text-[15px] font-medium">{AUTH.LOGOUT}</span>
+              <span className="text-[14px] font-medium">{AUTH.LOGOUT}</span>
             )}
           </button>
         </div>
@@ -623,7 +716,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          
+
+          {/* Breadcrumb: Section › Page */}
+          {breadcrumb.page && (
+            <div className="hidden sm:flex items-center gap-2 ml-2 text-sm min-w-0">
+              {breadcrumb.section && (
+                <>
+                  <span className="text-muted-foreground truncate">{breadcrumb.section}</span>
+                  <span className="text-muted-foreground/50">›</span>
+                </>
+              )}
+              <span className="font-semibold text-foreground truncate">{breadcrumb.page}</span>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 md:gap-4">
             {/* Theme Toggle */}
             <TooltipProvider>
@@ -723,6 +829,46 @@ export function AdminPageHeader({ title, description, action }: PageHeaderProps)
         {description && <p className="text-sm text-muted-foreground mt-0.5 line-clamp-2">{description}</p>}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * AdminHeroCard — signature dark-navy gradient header card used at the top of
+ * every admin page (KIRA-style). Slot in status pills (`pills`) and primary
+ * CTAs (`actions`). Functionality stays in the page; this only handles layout.
+ */
+interface AdminHeroCardProps {
+  eyebrow?: string;
+  title: string;
+  subtitle?: string;
+  pills?: ReactNode;
+  actions?: ReactNode;
+  icon?: LucideIcon;
+}
+
+export function AdminHeroCard({ eyebrow, title, subtitle, pills, actions, icon: Icon }: AdminHeroCardProps) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-gradient-hero-card text-white p-5 md:p-7 mb-6 shadow-lg">
+      <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
+      <div className="relative flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
+        <div className="flex-1 min-w-0">
+          {eyebrow && (
+            <div className="flex items-center gap-2 mb-2 text-xs font-semibold tracking-[0.14em] uppercase text-primary-glow/90">
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              <span>{eyebrow}</span>
+            </div>
+          )}
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">{title}</h1>
+          {subtitle && <p className="text-sm md:text-base text-white/60 mt-1">{subtitle}</p>}
+        </div>
+        {(pills || actions) && (
+          <div className="flex flex-col gap-2 md:items-end shrink-0">
+            {pills && <div className="flex flex-wrap gap-2">{pills}</div>}
+            {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
