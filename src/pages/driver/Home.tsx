@@ -28,6 +28,7 @@ import { useIsFeatureEnabled } from '@/hooks/useFeatureFlags';
 import { AIChatbot } from '@/components/AIChatbot';
 import { AIIncomeInsights } from '@/components/AIIncomeInsights';
 import { OwnershipProgressCard } from '@/components/OwnershipProgressCard';
+import { DriverAdBanner } from '@/components/DriverAdBanner';
 import { MVP_HIDE_DRIVER_KYC } from '@/lib/mvpFlags';
 
 
@@ -964,6 +965,9 @@ export default function DriverHome() {
 
       {/* Rent-to-Own Ownership Progress - Premium */}
       <OwnershipProgressCard />
+
+      {/* In-app sponsored banner */}
+      <DriverAdBanner />
 
       {/* Weekly Income Summary */}
       <WeeklyIncomeSummary driverId={driverId} />
