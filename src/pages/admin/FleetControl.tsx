@@ -11,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShieldCheck, ListChecks, Clock, AlertTriangle, Ban, Zap, BellRing, CheckCircle2, XCircle, Camera } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/routeClient';
+import { supabase as _supabase } from '@/integrations/supabase/routeClient';
+// Types regenerate on next migration sync; cast for the new Phase 3 tables.
+const supabase = _supabase as any;
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
