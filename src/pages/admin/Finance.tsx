@@ -112,9 +112,10 @@ export default function AdminFinance() {
   const byCategory = useMemo(() => {
     const m = new Map<string, number>();
     activeRentals.forEach((r: any) => {
-      const cat = r.vehicles?.fleet_group || r.vehicles?.vehicle_type || 'autre';
+      const raw = r.vehicles?.fleet_group || r.vehicles?.vehicle_type || 'autre';
+      const cat = r.vehicles?.fleet_group ? fleetCategoryLabel(raw) : raw;
       const rate = r.approved_rate || r.requested_rate || 0;
-      m.set(fleetCategoryLabel(cat) === '—' ? cat : fleetCategoryLabel(cat), (m.get(cat) || 0) + rate);
+      m.set(cat, (m.get(cat) || 0) + rate);
     });
     return Array.from(m.entries()).map(([name, value]) => ({ name, value }));
   }, [activeRentals]);
