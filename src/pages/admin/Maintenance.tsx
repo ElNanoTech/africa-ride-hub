@@ -73,7 +73,7 @@ export default function Maintenance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('maintenance_orders')
-        .select('*, vehicles:vehicles!maintenance_orders_vehicle_id_fkey ( id, license_plate, make, model ), provider:maintenance_providers ( id, name )')
+        .select('*, vehicles:vehicles!maintenance_orders_vehicle_id_fkey ( id, license_plate, make, model:model_name ), provider:maintenance_providers ( id, name )')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -97,7 +97,7 @@ export default function Maintenance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('other_charges')
-        .select('*, vehicles:vehicles!other_charges_vehicle_id_fkey ( id, license_plate, make, model )')
+        .select('*, vehicles:vehicles!other_charges_vehicle_id_fkey ( id, license_plate, make, model:model_name )')
         .order('charge_date', { ascending: false });
       if (error) throw error;
       return data || [];
@@ -109,7 +109,7 @@ export default function Maintenance() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicles')
-        .select('id, license_plate, make, model')
+        .select('id, license_plate, make, model:model_name')
         .order('license_plate');
       if (error) throw error;
       return data || [];

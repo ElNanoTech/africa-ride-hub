@@ -75,7 +75,7 @@ export default function Contraventions() {
   const { data: vehicles = [] } = useQuery<any[]>({
     queryKey: ['contraventions', 'vehicles-list'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('vehicles').select('id, license_plate, make, model').order('license_plate');
+      const { data, error } = await supabase.from('vehicles').select('id, license_plate, make, model:model_name').order('license_plate');
       if (error) throw error;
       return data || [];
     },

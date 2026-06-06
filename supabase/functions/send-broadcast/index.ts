@@ -20,11 +20,11 @@ Deno.serve(async (req) => {
     if (bErr || !b) throw new Error(bErr?.message ?? "Broadcast introuvable");
 
     // Resolve audience -> driver list (scoped to broadcast tenant when set)
-    let q = supa.from("drivers").select("id, customer_id, status");
+    let q = supa.from("drivers").select("id, customer_id, driver_status");
     if (b.customer_id) q = q.eq("customer_id", b.customer_id);
     switch (b.audience) {
-      case "active": q = q.eq("status", "active"); break;
-      case "suspended": q = q.eq("status", "suspended"); break;
+      case "active": q = q.eq("driver_status", "active"); break;
+      case "suspended": q = q.eq("driver_status", "suspended"); break;
     }
     const { data: drivers, error: dErr } = await q;
     if (dErr) throw dErr;

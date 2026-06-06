@@ -33,7 +33,11 @@ export default function Formation() {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: drv } = await supabase.from("drivers").select("id").eq("user_id", user.id).maybeSingle();
+      const { data: drv } = await supabase
+        .from("drivers")
+        .select("id")
+        .or(`auth_user_id.eq.${user.id},user_id.eq.${user.id}`)
+        .maybeSingle();
       if (!drv) { setLoading(false); return; }
       setDriverId(drv.id);
       const [mods, prog] = await Promise.all([
