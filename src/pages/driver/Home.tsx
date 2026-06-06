@@ -966,6 +966,9 @@ export default function DriverHome() {
       {/* Rent-to-Own Ownership Progress - Premium */}
       <OwnershipProgressCard />
 
+      {/* In-app sponsored banner */}
+      <DriverAdBanner />
+
       {/* Weekly Income Summary */}
       <WeeklyIncomeSummary driverId={driverId} />
 
