@@ -7,12 +7,14 @@ import { VEHICLE } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { resolveVehicleImage } from '@/lib/vehicleImages';
+import { FLEET_CATEGORIES, fleetCategoryLabel, type FleetCategory } from '@/lib/fleetCategories';
 
 interface Vehicle {
   id: string;
   model_name: string;
   license_plate: string;
   vehicle_type?: string | null;
+  fleet_group?: string | null;
   rent_per_day: number;
   status: 'available' | 'rented' | 'maintenance';
   image_url?: string | null;
@@ -148,7 +150,7 @@ export function VehicleCard({ vehicle, onSelect, compact = false, isFavorite = f
               "text-xs font-medium",
               safeType === 'car' ? "text-primary/70" : "text-secondary/70"
             )}>
-              {safeType === 'car' ? 'Voiture' : 'Moto'}
+              {fleetCategoryLabel(vehicle.fleet_group)}
             </span>
           </div>
         )}
@@ -159,7 +161,7 @@ export function VehicleCard({ vehicle, onSelect, compact = false, isFavorite = f
           <div>
             <h3 className="font-semibold">{vehicle.model_name}</h3>
             <p className="text-xs text-muted-foreground">
-              {safeType === 'car' ? VEHICLE.CAR : VEHICLE.BIKE} · {vehicle.license_plate}
+              {fleetCategoryLabel(vehicle.fleet_group)} · {vehicle.license_plate}
             </p>
           </div>
           <Badge variant={statusVariant[vehicle.status]}>
@@ -189,15 +191,14 @@ export function VehicleCard({ vehicle, onSelect, compact = false, isFavorite = f
 }
 
 interface VehicleFilterProps {
-  value: 'all' | 'car' | 'bike';
-  onChange: (value: 'all' | 'car' | 'bike') => void;
+  value: 'all' | FleetCategory;
+  onChange: (value: 'all' | FleetCategory) => void;
 }
 
 export function VehicleFilter({ value, onChange }: VehicleFilterProps) {
   const options = [
     { value: 'all' as const, label: VEHICLE.ALL },
-    { value: 'car' as const, label: VEHICLE.CARS },
-    { value: 'bike' as const, label: VEHICLE.BIKES },
+    ...FLEET_CATEGORIES.map((c) => ({ value: c.value, label: c.label })),
   ];
 
   return (
