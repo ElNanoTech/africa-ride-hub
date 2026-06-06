@@ -520,22 +520,27 @@ function calculateDrivingScore(records: TelemetryRecord[]): { raw: number; norma
   return { raw: totalDistance, normalized }
 }
 
-function calculateTenureScore(createdAt: string): { raw: number; normalized: number } {
-  const created = new Date(createdAt)
-  const now = new Date()
-  const daysSinceJoined = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
-  
-  // Max benefit at 365 days
-  const normalized = Math.min(1, daysSinceJoined / 365)
-  
-  return { raw: daysSinceJoined, normalized }
+/**
+ * Sinistralité — penalty grows with count and severity of accidents.
+ * Severity-weight: minor=1, moderate=3, severe=6, critical=10.
+ * Score = 1 - min(1, weightedCount / 12). Zero accidents → 1.0 (clean).
+ */
+function calculateSinistreScore(records: Array<{ severity?: string | null }>): { raw: number; normalized: number } {
+  if (!records || records.length === 0) return { raw: 0, normalized: 1 }
+  const sev: Record<string, number> = { minor: 1, moderate: 3, severe: 6, critical: 10 }
+  let weighted = 0
+  for (const a of records) {
+    weighted += sev[(a.severity || 'minor').toLowerCase()] ?? 1
+  }
+  const normalized = Math.max(0, 1 - Math.min(1, weighted / 12))
+  return { raw: records.length, normalized }
 }
 
-function determineTier(score: number, thresholds: typeof TIER_THRESHOLDS): string {
-  if (score >= thresholds.A) return 'A'
-  if (score >= thresholds.B) return 'B'
-  if (score >= thresholds.C) return 'C'
-  if (score >= thresholds.D) return 'D'
+function determineTier(score: number, thresholds: typeof DEFAULT_THRESHOLDS): string {
+  if (score >= thresholds.platinum) return 'A'
+  if (score >= thresholds.gold) return 'B'
+  if (score >= thresholds.silver) return 'C'
+  if (score >= thresholds.bronze) return 'D'
   return 'E'
 }
 
