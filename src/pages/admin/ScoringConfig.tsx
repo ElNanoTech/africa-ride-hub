@@ -425,24 +425,66 @@ export default function AdminScoringConfig() {
                   </p>
                 </div>
 
-                {/* Tenure */}
+                {/* Sinistralité */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      Ancienneté
+                      <ShieldAlert className="h-4 w-4 text-destructive" />
+                      Sinistralité
                     </Label>
-                    <span className="font-medium">{config.weights.tenure}%</span>
+                    <span className="font-medium">{config.weights.sinistralite}%</span>
                   </div>
                   <Slider
-                    value={[config.weights.tenure]}
-                    onValueChange={([v]) => updateWeight('tenure', v)}
+                    value={[config.weights.sinistralite]}
+                    onValueChange={([v]) => updateWeight('sinistralite', v)}
                     max={100}
                     step={5}
                     className="cursor-pointer"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Durée depuis l'inscription sur la plateforme
+                    Sinistres responsables, gravité, fréquence
+                  </p>
+                </div>
+
+                {/* Infractions */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <FileWarning className="h-4 w-4 text-warning" />
+                      Infractions
+                    </Label>
+                    <span className="font-medium">{config.weights.infractions}%</span>
+                  </div>
+                  <Slider
+                    value={[config.weights.infractions]}
+                    onValueChange={([v]) => updateWeight('infractions', v)}
+                    max={100}
+                    step={5}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Contraventions, amendes, infractions routières (CGI)
+                  </p>
+                </div>
+
+                {/* Crédit */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <HandCoins className="h-4 w-4 text-tier-b" />
+                      Crédit
+                    </Label>
+                    <span className="font-medium">{config.weights.credit}%</span>
+                  </div>
+                  <Slider
+                    value={[config.weights.credit]}
+                    onValueChange={([v]) => updateWeight('credit', v)}
+                    max={100}
+                    step={5}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Historique de remboursement des prêts en cours et passés
                   </p>
                 </div>
               </CardContent>
