@@ -72,18 +72,18 @@ export default function Communication() {
       <Tabs defaultValue="formations">
         <TabsList>
           <TabsTrigger value="formations"><GraduationCap className="h-4 w-4 mr-1" /> Formations</TabsTrigger>
-          <TabsTrigger value="broadcasts"><Send className="h-4 w-4 mr-1" /> Diffusions</TabsTrigger>
-          <TabsTrigger value="ads"><Sparkles className="h-4 w-4 mr-1" /> Annonces</TabsTrigger>
+          <TabsTrigger value="ads"><Sparkles className="h-4 w-4 mr-1" /> Publicités</TabsTrigger>
+          <TabsTrigger value="broadcasts"><Send className="h-4 w-4 mr-1" /> Marketing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="formations" className="space-y-4">
           <ModulesTab modules={modules} loading={loading} reload={load} />
         </TabsContent>
-        <TabsContent value="broadcasts" className="space-y-4">
-          <BroadcastsTab broadcasts={broadcasts} loading={loading} reload={load} />
-        </TabsContent>
         <TabsContent value="ads" className="space-y-4">
           <AdsTab ads={ads} loading={loading} reload={load} />
+        </TabsContent>
+        <TabsContent value="broadcasts" className="space-y-4">
+          <BroadcastsTab broadcasts={broadcasts} loading={loading} reload={load} />
         </TabsContent>
       </Tabs>
     </div>
