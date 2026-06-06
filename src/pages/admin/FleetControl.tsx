@@ -70,7 +70,7 @@ export default function FleetControl() {
     queryKey: ['fleet-control', 'inspections'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('vehicle_inspections')
+        .from('vehicle_inspections' as any)
         .select(`
           id, vehicle_id, driver_id, status, due_at, submitted_at, validated_at,
           rejection_reason, reminder_count, immobilized_at, immobilization_reason,
@@ -125,7 +125,7 @@ export default function FleetControl() {
     mutationFn: async (id: string) => {
       const { data: u } = await supabase.auth.getUser();
       const { error } = await supabase
-        .from('vehicle_inspections')
+        .from('vehicle_inspections' as any)
         .update({ status: 'validated', validated_at: new Date().toISOString(), validated_by: u.user?.id ?? null })
         .eq('id', id);
       if (error) throw error;
@@ -140,7 +140,7 @@ export default function FleetControl() {
   const reject = useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
       const { error } = await supabase
-        .from('vehicle_inspections')
+        .from('vehicle_inspections' as any)
         .update({ status: 'rejected', rejection_reason: reason })
         .eq('id', id);
       if (error) throw error;
@@ -155,7 +155,7 @@ export default function FleetControl() {
   const remind = useMutation({
     mutationFn: async (row: InspectionRow) => {
       const { error } = await supabase
-        .from('vehicle_inspections')
+        .from('vehicle_inspections' as any)
         .update({ reminder_count: (row.reminder_count ?? 0) + 1 })
         .eq('id', row.id);
       if (error) throw error;
@@ -170,7 +170,7 @@ export default function FleetControl() {
   const immobilize = useMutation({
     mutationFn: async (row: InspectionRow) => {
       const { data: u } = await supabase.auth.getUser();
-      const { error: cmdErr } = await supabase.from('vehicle_immobilization_commands').insert({
+      const { error: cmdErr } = await supabase.from('vehicle_immobilization_commands' as any).insert({
         vehicle_id: row.vehicle_id,
         inspection_id: row.id,
         status: 'pending',
@@ -180,7 +180,7 @@ export default function FleetControl() {
       });
       if (cmdErr) throw cmdErr;
       const { error: insErr } = await supabase
-        .from('vehicle_inspections')
+        .from('vehicle_inspections' as any)
         .update({
           immobilized_at: new Date().toISOString(),
           immobilization_reason: `Inspection en retard de ${daysOverdue(row)} j`,
@@ -199,7 +199,7 @@ export default function FleetControl() {
     mutationFn: async () => {
       const candidates = enriched.filter((r) => r.status === 'expired' && !r.immobilized_at && (daysOverdue(r) >= 3 || r.reminder_count >= 2));
       for (const row of candidates) {
-        await supabase.from('vehicle_immobilization_commands').insert({
+        await supabase.from('vehicle_immobilization_commands' as any).insert({
           vehicle_id: row.vehicle_id,
           inspection_id: row.id,
           status: 'pending',
@@ -207,7 +207,7 @@ export default function FleetControl() {
           source: 'auto',
         });
         await supabase
-          .from('vehicle_inspections')
+          .from('vehicle_inspections' as any)
           .update({ immobilized_at: new Date().toISOString(), immobilization_reason: `Auto-immobilisation` })
           .eq('id', row.id);
       }
