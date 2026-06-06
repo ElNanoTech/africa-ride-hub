@@ -65,7 +65,7 @@ export default function Communication() {
           <Megaphone className="h-6 w-6" /> Communication
         </h1>
         <p className="text-sm text-muted-foreground">
-          Formations, diffusions et annonces pour les chauffeurs.
+          Formation, publicités et campagnes marketing pour les chauffeurs.
         </p>
       </div>
 
@@ -222,8 +222,8 @@ function BroadcastsTab({ broadcasts, loading, reload }: { broadcasts: Broadcast[
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Diffusions</CardTitle>
-        <Button onClick={() => { setForm({ title: "", message: "", audience: "all", channel: "in_app" }); setOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Nouvelle diffusion</Button>
+        <CardTitle>Campagnes marketing</CardTitle>
+        <Button onClick={() => { setForm({ title: "", message: "", audience: "all", channel: "in_app" }); setOpen(true); }}><Plus className="h-4 w-4 mr-1" /> Nouvelle campagne</Button>
       </CardHeader>
       <CardContent>
         {loading ? <p className="text-center py-6 text-muted-foreground">Chargement…</p> :
@@ -317,8 +317,8 @@ function AdsTab({ ads, loading, reload }: { ads: Ad[]; loading: boolean; reload:
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Annonces & Bannières</CardTitle>
-        <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Nouvelle annonce</Button>
+        <CardTitle>Publicités & Bannières</CardTitle>
+        <Button onClick={openNew}><Plus className="h-4 w-4 mr-1" /> Nouvelle publicité</Button>
       </CardHeader>
       <CardContent>
         {loading ? <p className="text-center py-6 text-muted-foreground">Chargement…</p> :
