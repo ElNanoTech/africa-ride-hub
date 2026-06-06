@@ -172,6 +172,13 @@ const sidebarItems: SidebarItem[] = [
     allowedRoles: ['super_admin', 'manager'],
     section: 'gestion',
   },
+  {
+    to: '/admin/maintenance',
+    icon: Wrench,
+    label: 'Maintenance',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
+  },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
