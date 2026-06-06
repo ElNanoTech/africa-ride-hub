@@ -247,6 +247,38 @@ export default function VehicleInspection() {
 
   const isLate = new Date(inspection.due_at).getTime() < Date.now() && inspection.status !== 'validated';
 
+  const renderZoneTile = (z: { key: Zone; label: string; help: string }, kind: 'camera' | 'doc') => {
+    const photo = photosByZone[z.key];
+    const busy = uploadingZone === z.key;
+    const locked = inspection.status === 'submitted' || inspection.status === 'validated';
+    const Icon = kind === 'doc' ? FileText : Camera;
+    return (
+      <button
+        key={z.key}
+        onClick={() => handlePickPhoto(z.key)}
+        disabled={busy || locked}
+        className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
+          photo ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-dashed border-muted-foreground/40 bg-card'
+        } disabled:opacity-60`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="font-medium">{z.label}</div>
+          {photo ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          ) : busy ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary" />
+          ) : (
+            <Icon className="h-5 w-5 text-muted-foreground" />
+          )}
+        </div>
+        <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        <div className="text-xs mt-3 font-medium">
+          {photo ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo') : (kind === 'doc' ? 'Toucher pour scanner' : 'Toucher pour photographier')}
+        </div>
+      </button>
+    );
+  };
+
   return (
     <DriverLayout>
       <PageHeader title="Contrôle du véhicule" subtitle={inspection.vehicles?.license_plate || ''} />
