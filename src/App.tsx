@@ -118,6 +118,7 @@ const AdminKira = lazy(() => import("./pages/admin/Kira"));
 const DriverFormation = lazy(() => import("./pages/driver/Formation"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminBillingAudit = lazy(() => import("./pages/admin/BillingAudit"));
+const AdminFinance = lazy(() => import("./pages/admin/Finance"));
 const DriverFactures = lazy(() => import("./pages/driver/Factures"));
 const DriverFactureDetail = lazy(() => import("./pages/driver/FactureDetail"));
 const DriverWallet = lazy(() => import("./pages/driver/Wallet"));
