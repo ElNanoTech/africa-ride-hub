@@ -243,9 +243,9 @@ const sidebarItems: SidebarItem[] = [
     section: 'analyse',
   },
   { 
-    to: '/admin/analytics', 
+    to: '/admin/kira', 
     icon: TrendingUp, 
-    label: 'Analytique',
+    label: 'KIRA Analytics',
     allowedRoles: ['super_admin', 'manager'],
     section: 'analyse',
   },
