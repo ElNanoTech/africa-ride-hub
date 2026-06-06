@@ -1,69 +1,96 @@
+# Gap Analysis: damafricahub.com vs kira.damafrica.com
 
-# Align Lovable app to the KIRA design
+## KIRA admin sidebar (reference, complete)
 
-After reviewing both surfaces of the customer's reference app (admin at kira.damafrica.com and the KIRA Driver mobile app), the look-and-feel is clearly defined and very different from what we ship today. Functionality stays the same — this is a visual/structural refresh of the existing routes, not a rebuild.
+**OPÉRATIONS** — Tableau de bord · Chauffeurs · Véhicules · **Fleet Control**
+**GESTION** — **Maintenance** · Finance · Crédit & Prêts · Sinistres · **Contraventions**
+**INSIGHTS** — **KIRA ANALYTICS** · **Alertes**
+**COMMUNICATION** — **Communication**
+**SHORTCUT** — KIRA Driver app · Paramètres · Déconnexion
 
-## What the reference establishes
+Bold = no equivalent (or much weaker equivalent) in our app today.
 
-**Admin (desktop)**
-- Dark navy sidebar (`#0B1020`-ish) with grouped nav: OPÉRATIONS / GESTION, a highlighted active item with subtle inner glow, a separate purple "KIRA Driver — APP" shortcut button, user chip + Paramètres + Déconnexion at the bottom.
-- Light slate canvas with a global top bar: breadcrumb (Section → Page), centered global search, date, dark-mode toggle, notifications, user avatar.
-- A signature gradient "hero card" at the top of every page: dark navy background, eyebrow label (e.g. "SUIVI EN TEMPS RÉEL"), big page title, subtitle, right-side status pills (Uffizio GPS, Yango Fleet, Wave API) and primary CTAs (Actualiser, Analyse IA, Nouveau …).
-- KPI strip: 5–6 pastel tinted tiles (green/orange/blue/yellow/grey), small uppercase label + large number.
-- Pill tab filters with counts (Tous 56 / Actif 56 / Suspendu 0 …) and a wide rounded search.
-- Data tables with avatar circles, colored 4px left-border per row, status badges ("Vérifié", "Lié"), no horizontal scroll.
-- Finance: KPI cards w/ tiny circular icons, big amount, helper text; tabbed sub-nav (KPI / Facturation / Paiements / KiraPay); chart + donut by fleet category.
-- Vehicles: fleet-segment pill tabs with counts, consolidated stats card, vehicle photo grid with "Actif" status chip.
+## What we already cover (good parity)
 
-**Driver (mobile)**
-- Full-bleed vibrant purple gradient hero (top ~55% of screen) with a soft white shield badge, "KIRA Driver" title and tagline.
-- White rounded-top sheet at the bottom with the form: uppercase micro-label, input with CI flag chip prefix, big rounded purple "Suivant" CTA with chevron, helper text under.
-- Same purple + white sheet pattern carries through PIN, home, etc. (assumed; behind unrecognized-number wall).
+Dashboard, Chauffeurs (Drivers + Detail), Véhicules, Suivi GPS / Mapping GPS / Conduite (≈ Tracking), Crédit & Prêts (Loans), Sinistres + Detail + Analytics, Paramètres, Administrateurs (Users), Sync Plateformes, Scoring, Audit, Pricing, Feature Flags, Customer Management, Income Approvals, Manual Income Entry, Wallets, Billing, Payments.
 
-## Approach
+## Missing or substantially weaker (priority targets)
 
-Do this as a **token + shell refresh first**, then page-by-page reskin. Functionality, data, routes and copy stay intact.
+### 1. Fleet Control (NEW) — HIGH IMPACT
+Periodic visual vehicle inspection performed by the driver, validated by fleet manager, with automatic engine cut-off via the GPS device when overdue.
+- KPI tiles: Total / Conformes / À valider / En retard / Bloqués
+- 7-zone photo submission per vehicle (driver app side)
+- Status workflow: brouillon → soumis → validé / rejeté
+- "Couper si stationné" action — sends immobilization command via Uffizio when vehicle is parked
+- Auto-rule: ≥3 days late OR ≥2 reminders → auto-immobilization (cron every 15 min)
+- Filters: statut, catégorie, recherche plaque/chauffeur/modèle
 
-### Phase 1 — Design tokens & shell (foundation)
-1. `src/index.css` + `tailwind.config.ts`: rework HSL tokens to match KIRA:
-   - New `--sidebar-background` deep navy, `--primary` electric blue `#2563EB`, `--driver-primary` vibrant purple `#7C3AED`, pastel surface tokens for KPI tiles (`--kpi-green/orange/blue/yellow/slate`), `--hero-gradient` (navy 135°), `--driver-hero-gradient` (purple 160°).
-   - Radius bumped to `0.875rem`, softer `--shadow-card`, accent ring.
-2. New shared components:
-   - `HeroCard` (eyebrow, title, subtitle, status pills slot, actions slot).
-   - `KpiTile` (variant by color token).
-   - `PillTabs` with counts.
-   - `StatusPill` (Connecté / Hors-ligne / Vérifié / Lié).
-   - `PageHeader` with breadcrumb + global search.
-3. `AdminLayout`: rebuild sidebar with grouped sections, active-state styling, "KIRA Driver" purple shortcut, bottom profile chip + Paramètres + Déconnexion; new top bar with breadcrumb + search + theme toggle + notifications + avatar.
-4. Driver shell: shared `DriverHero` (purple gradient + brand badge) and bottom `SheetCard` wrapper used by Login, PIN, and other auth/onboarding screens.
+### 2. Maintenance / Charges (NEW) — HIGH IMPACT
+Workshop work-orders, insurances, sub-rentals, providers.
+- Tabs: Tableau de bord · Ordres · Suivi Kanban · Autres charges · Prestataires
+- KPIs: Total ordres / À valider / En cours / Coût total réel / Dispo flotte
+- Charts: monthly orders+cost, breakdown by type, status, top vehicles by cost
+- Entities needed: maintenance_orders, providers (prestataires), other_charges (assurances, sous-locations)
 
-### Phase 2 — Admin pages reskin
-Wrap each existing page in `HeroCard` + KPI strip + the new pill tabs/table styling. No data/logic changes.
-- Dashboard
-- Drivers (Chauffeurs) — KPI tiles (Actifs / Suspendus / KYC Vérifié / Yango Lié / Sans véhicule), pill tabs, table with avatar + colored left-border + Vérifié/Lié badges.
-- Vehicles (Véhicules) — fleet-segment pill tabs, consolidated stats card, vehicle card grid with "Actif" chip.
-- Finance — sub-tab nav (KPI / Facturation / Paiements / KiraPay), KPI cards with circular icons, line chart + donut.
-- Loans (Crédit & Prêts), Sinistres, Contraventions, Maintenance, Fleet Control, Paramètres — same hero + KPI pattern applied.
+### 3. Contraventions (NEW) — HIGH IMPACT
+Côte d'Ivoire traffic fines via the CGI portal (eservices.cgi.ci).
+- "Synchroniser" pulls infractions from CGI portal
+- "Attribuer aux chauffeurs" cross-matches GPS history to assign fault
+- KPIs: En attente paiement / Liquidées / Véhicules impliqués / Total
+- Filters: Toutes / En attente / Liquidé / En recours, by plate/driver/type
+- Each item: type, plate, driver, GPS-live flag, date, amount XOF, PV number, status, PDF export
+- Reports tab, Portail CGI deeplink
 
-### Phase 3 — Driver app reskin
-- `pages/driver/Login.tsx`: purple gradient hero with shield badge, white bottom sheet, uppercase label, flag-prefixed input, big purple CTA, helper line.
-- PIN entry, Profile/KYC required, Onboarding, Home, Score, Wallet, Factures, Loans, Settings — apply the same purple-hero + white-card pattern; replace current green primary with `--driver-primary` purple on driver routes only (admin keeps blue).
-- Preserve gamification (ScoreGauge, badges, leaderboard) but recolor to the new palette.
+### 4. Communication (NEW) — MEDIUM-HIGH IMPACT
+Manage content delivered inside the driver app.
+- Tabs: Formation · Publicités · Marketing
+- Formation: training modules (categories: Conduite, Finances, Relation, Entretien, KIRA App) with duration, level, optional video, notes, quiz questions, ordering, activate/deactivate
+- Publicités: in-app ads / banners targeting (likely top of driver home)
+- Marketing: campaigns / push broadcasts
 
-### Phase 4 — Polish
-- Dark-mode pass on the new tokens.
-- Mobile responsiveness on admin (sidebar collapses).
-- QA: log in as admin + driver, walk every route, take screenshots, fix layout regressions.
+### 5. Alertes (NEW page) — MEDIUM IMPACT
+Centralized inbox separate from notifications, with badge count in nav.
+- 2 sub-tabs: Alertes KIRA · GPS Télématique
+- Filters: Non lues / Toutes, "Tout marquer lu", "Actualiser"
+- Items show severity (Critique / Avertissement / Info), category (Permis expirant, CNI expirée, …), driver, message, date
+- Auto-generators: expiring driver license, expiring CNI, expiring assurance, contrat expirant, etc.
 
-## Out of scope
-- No backend, DB, RLS, edge-function or business-logic changes.
-- No new features (KiraPay sub-tab will be a placeholder if no data hook exists yet — confirm before adding).
-- No copy changes beyond renaming "DAM Flotte" → "KIRA Fleet" in shell chrome if you want that (see Q1).
+### 6. KIRA ANALYTICS (consolidation) — MEDIUM IMPACT
+Multi-tab cross-domain analytics replacing our single Analytics page.
+- Tabs: Flotte · Maintenance · N'LOOTTO · Chauffeurs · Finance · Sinistres & Ctrl · Profils Chauffeurs
+- Per-tab: KPI tiles, distribution charts, fleet state, cost summaries
 
-## Open questions
+### 7. Finance polish — LOW-MEDIUM IMPACT
+Our Payments / Billing / Wallets exist; KIRA wraps them as one Finance page with 4 tabs (KPI · Facturation · Paiements · KiraPay) and adds:
+- CA prévisionnel (forward revenue projection by plan: journalier/hebdo/mensuel)
+- Taux de recouvrement with target (95%)
+- Impayés & retards bucket
+- "Loyers prévus vs collectés" 12-month chart
+- Loyers par catégorie (CARGO / N'LOOTTO / VTC / WARREN)
 
-1. **Brand name**: should the visible app name change from "DAM Flotte" to "KIRA Fleet" everywhere (logo, login, footer), or keep DAM Flotte branding with KIRA's *visual* language only?
-2. **Driver primary color**: keep current green for driver gamification (score tiers depend on it), or fully switch driver app to the purple palette as shown in the reference?
-3. **Scope confirmation**: do you want me to start with **Phase 1 + the Drivers page + driver Login** as a first deliverable so you can validate the direction before I roll it across every page?
+### 8. Vehicle category extension — LOW IMPACT
+KIRA categorizes vehicles as VTC, CARGO, N'LOOTTO, WARREN. Our `vehicle_type` constraint is car/bike/cargo/compact/sedan. Need to add new category dimension (probably `vehicle_category` separate from `vehicle_type`) without breaking existing data.
 
-I'll wait for your answers (especially #3) before implementing — this is a large surface and I'd rather land the foundation + one flagship page first, then iterate.
+## Proposed phased build order
+
+```text
+Phase 3  →  Fleet Control          (visual inspection + auto-immobilization)
+Phase 4  →  Maintenance            (orders, kanban, providers, other charges)
+Phase 5  →  Contraventions         (CGI sync + driver attribution + payment)
+Phase 6  →  Alertes                (centralized expiry/risk inbox + cron generators)
+Phase 7  →  Communication          (driver training modules + ads + broadcasts)
+Phase 8  →  KIRA Analytics rollup  (multi-tab analytics replacing /admin/analytics)
+Phase 9  →  Finance polish         (projection, recouvrement, unified 4-tab page)
+Phase 10 →  Vehicle categories     (VTC / CARGO / N'LOOTTO / WARREN dimension)
+```
+
+Each phase = DB migration + admin page(s) + edge function(s) where external integration is needed (Uffizio immobilization command for Fleet Control, CGI portal scraping for Contraventions, cron jobs for Alertes / Fleet Control enforcement) + driver-app counterparts where applicable (Fleet Control photo submission, Formation viewer, Contraventions visibility).
+
+## What I need from you to start Phase 3
+
+1. **Confirm scope & order** — go in the sequence above, or reprioritize?
+2. **CGI portal** (Phase 5) — do you have API/portal credentials for `eservices.cgi.ci`, or should we start with a manual import (CSV / paste PV numbers)?
+3. **Uffizio immobilization** (Phase 3) — does the live Uffizio account already expose the engine cut-off command for the connected GPS devices, or is that a manual radio call we just log for now?
+4. **Driver login** — share a real driver phone+PIN (or let me seed one) so I can verify each phase end-to-end on both sides.
+
+Reply "go phase 3" (with any tweaks) and I'll start implementing.
