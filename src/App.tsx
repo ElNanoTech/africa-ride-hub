@@ -252,6 +252,7 @@ const App = () => {
                     <Route path="/admin/driving-behavior" element={<AdminDrivingBehavior />} />
                     <Route path="/admin/sinistres" element={<AdminSinistres />} />
                     <Route path="/admin/fleet-control" element={<AdminFleetControl />} />
+                    <Route path="/admin/maintenance" element={<AdminMaintenance />} />
                     <Route path="/admin/sinistres/analytics" element={<AdminSinistresAnalytics />} />
                     <Route path="/admin/sinistres/:id" element={<AdminSinistreDetail />} />
                   </Route>
