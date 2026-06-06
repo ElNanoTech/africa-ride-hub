@@ -483,6 +483,7 @@ export type Database = {
           description: string | null
           driver_id: string
           id: string
+          incident_type: string | null
           injury_involved: boolean
           location_address: string | null
           location_geohash: string | null
@@ -512,6 +513,7 @@ export type Database = {
           description?: string | null
           driver_id: string
           id?: string
+          incident_type?: string | null
           injury_involved?: boolean
           location_address?: string | null
           location_geohash?: string | null
@@ -541,6 +543,7 @@ export type Database = {
           description?: string | null
           driver_id?: string
           id?: string
+          incident_type?: string | null
           injury_involved?: boolean
           location_address?: string | null
           location_geohash?: string | null
