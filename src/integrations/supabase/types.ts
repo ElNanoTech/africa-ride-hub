@@ -567,6 +567,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "accidents_assigned_admin_id_fkey"
+            columns: ["assigned_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "accidents_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -654,6 +661,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "admin_audit_logs_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
         ]
       }
       admin_preferences: {
@@ -698,6 +712,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "admin_preferences_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: true
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
         ]
       }
       admin_roles: {
@@ -725,6 +746,13 @@ export type Database = {
             columns: ["admin_user_id"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_roles_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
         ]
@@ -891,6 +919,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ai_usage_logs_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "ai_usage_logs_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -982,6 +1017,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "alerts_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -1000,6 +1042,13 @@ export type Database = {
             columns: ["resolved_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -1264,6 +1313,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -1668,6 +1724,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_ads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -2272,6 +2335,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "feature_flags_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
         ]
       }
       geofence_alerts: {
@@ -2813,6 +2883,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "kyc_submissions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
         ]
       }
       loans: {
@@ -2867,6 +2944,13 @@ export type Database = {
             columns: ["approved_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -3387,6 +3471,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "platform_settings_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
         ]
       }
       push_subscriptions: {
@@ -3684,6 +3775,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rentals_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "rentals_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3807,6 +3905,13 @@ export type Database = {
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "scoring_config_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
+            referencedColumns: ["id"]
+          },
         ]
       }
       support_ticket_messages: {
@@ -3899,6 +4004,13 @@ export type Database = {
             columns: ["assigned_to"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_tickets_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -4145,6 +4257,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users_with_tokens"
             referencedColumns: ["id"]
           },
           {
@@ -4611,6 +4730,65 @@ export type Database = {
       }
     }
     Views: {
+      admin_users_with_tokens: {
+        Row: {
+          created_at: string | null
+          customer_id: string | null
+          email: string | null
+          email_verified: boolean | null
+          full_name: string | null
+          id: string | null
+          is_active: boolean | null
+          is_platform_owner: boolean | null
+          last_login_at: string | null
+          role_key: string | null
+          updated_at: string | null
+          user_id: string | null
+          verification_sent_at: string | null
+          verification_token: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_id?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_platform_owner?: boolean | null
+          last_login_at?: string | null
+          role_key?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_sent_at?: string | null
+          verification_token?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_id?: string | null
+          email?: string | null
+          email_verified?: boolean | null
+          full_name?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_platform_owner?: boolean | null
+          last_login_at?: string | null
+          role_key?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          verification_sent_at?: string | null
+          verification_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_wallet_settlement_anomalies: {
         Row: {
           created_at: string | null
