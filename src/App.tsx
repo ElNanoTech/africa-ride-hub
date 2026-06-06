@@ -116,6 +116,7 @@ const AdminAlertes = lazy(() => import("./pages/admin/Alertes"));
 const AdminCommunication = lazy(() => import("./pages/admin/Communication"));
 const AdminKira = lazy(() => import("./pages/admin/Kira"));
 const DriverFormation = lazy(() => import("./pages/driver/Formation"));
+const DriverAlertes = lazy(() => import("./pages/driver/Alertes"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminBillingAudit = lazy(() => import("./pages/admin/BillingAudit"));
 const AdminFinance = lazy(() => import("./pages/admin/Finance"));
