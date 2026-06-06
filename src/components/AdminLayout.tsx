@@ -158,6 +158,13 @@ const sidebarItems: SidebarItem[] = [
     allowedRoles: ['super_admin', 'manager'],
     section: 'operations',
   },
+  {
+    to: '/admin/fleet-control',
+    icon: ShieldCheck,
+    label: 'Fleet Control',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'operations',
+  },
   { 
     to: '/admin/rentals', 
     icon: FileText, 
