@@ -98,6 +98,7 @@ const AdminPricing = lazy(() => import("./pages/admin/Pricing"));
 const AdminAIUsage = lazy(() => import("./pages/admin/AIUsageAnalytics"));
 const AdminContracts = lazy(() => import("./pages/admin/Contracts"));
 const DriverOwnership = lazy(() => import("./pages/driver/Ownership"));
+const DriverVehicleInspection = lazy(() => import("./pages/driver/VehicleInspection"));
 const DriverSinistresHome = lazy(() => import("./pages/driver/sinistres/SinistresHome"));
 const DriverSinistreSafety = lazy(() => import("./pages/driver/sinistres/StepSafety"));
 const DriverSinistreEvidence = lazy(() => import("./pages/driver/sinistres/StepEvidence"));
@@ -208,6 +209,7 @@ const App = () => {
                     <Route path="/driver/sinistres/report/:id/location" element={<DriverSinistreLocation />} />
                     <Route path="/driver/sinistres/cases/:id" element={<DriverSinistreCaseDetail />} />
                     <Route path="/driver/sinistres/success/:id" element={<DriverSinistreSuccess />} />
+                    <Route path="/driver/inspection" element={<DriverVehicleInspection />} />
                   </Route>
                   
                   {/* Admin Login — redirect to dashboard if already logged in (B2) */}
