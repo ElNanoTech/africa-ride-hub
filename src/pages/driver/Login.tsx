@@ -817,7 +817,6 @@ export default function DriverLogin() {
             Espace équipe (Admin)
           </a>
         </div>
-      </div>
     </div>
   );
 }
