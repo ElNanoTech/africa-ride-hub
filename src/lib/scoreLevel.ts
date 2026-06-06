@@ -17,3 +17,24 @@ export function getScoreLevel(score: number): ScoreLevelInfo {
   if (score >= 300) return { level: 'D', label: 'Faible', color: '#E67E22', hslColor: 'hsl(25, 95%, 53%)' };
   return { level: 'E', label: 'Très faible', color: '#C0392B', hslColor: 'hsl(0, 84%, 60%)' };
 }
+
+/**
+ * Phase 12 — Canonical grade thresholds (single source of truth).
+ * Mirrors getScoreLevel() bands so admin Seuils and driver Niveaux always agree.
+ * Range is 0–1000.
+ */
+export const SCORE_THRESHOLDS = {
+  A: 800,
+  B: 650,
+  C: 500,
+  D: 300,
+  E: 0,
+} as const;
+
+export const SCORE_SCALE = {
+  MIN: 0,
+  MAX: 1000,
+  BASE_FLOOR: 500,
+  BASE_DEFAULT: 700,
+  NEW_DRIVER: 650,
+} as const;

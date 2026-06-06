@@ -11,26 +11,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Save, RotateCcw, AlertTriangle, Calculator, Banknote, Car, CreditCard, Clock, Info, Play, Gauge, ShieldAlert, FileText, Loader2 } from 'lucide-react';
+import { Settings, Save, RotateCcw, AlertTriangle, Calculator, Banknote, Car, CreditCard, Clock, FileWarning, Info, Play, Gauge, ShieldAlert, FileText, Loader2, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
 import { DrivingEventWeightsEditor } from '@/components/admin/DrivingEventWeightsEditor';
 import { useScoringConfig, useUpdateScoringConfig } from '@/hooks/useAdminData';
 import { DEFAULT_ACCIDENT_PENALTIES, normalizeAccidentPenaltyConfig } from '@/lib/accidentScoring';
 import { downloadScoreAuditReport } from '@/lib/scoreAuditReport';
+import { SCORE_THRESHOLDS, SCORE_SCALE } from '@/lib/scoreLevel';
 
-// Default configuration
+// Default configuration — Phase 12: KIRA 6-factor model on 0–1000 scale
 const defaultConfig = {
   weights: {
-    income_stability: 30,
-    payment_history: 35,
+    payment_history: 25,
     driving_behavior: 25,
-    tenure: 10
+    income_stability: 10,
+    sinistralite: 15,
+    infractions: 10,
+    credit: 15,
   },
   tier_thresholds: {
-    platinum: 850,
-    gold: 750,
-    silver: 650,
-    bronze: 500
+    platinum: SCORE_THRESHOLDS.A,
+    gold: SCORE_THRESHOLDS.B,
+    silver: SCORE_THRESHOLDS.C,
+    bronze: SCORE_THRESHOLDS.D,
   },
   loan_limits: {
     platinum: { max_amount: 500000, max_interest: 5 },
@@ -422,24 +425,66 @@ export default function AdminScoringConfig() {
                   </p>
                 </div>
 
-                {/* Tenure */}
+                {/* Sinistralité */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      Ancienneté
+                      <ShieldAlert className="h-4 w-4 text-destructive" />
+                      Sinistralité
                     </Label>
-                    <span className="font-medium">{config.weights.tenure}%</span>
+                    <span className="font-medium">{config.weights.sinistralite}%</span>
                   </div>
                   <Slider
-                    value={[config.weights.tenure]}
-                    onValueChange={([v]) => updateWeight('tenure', v)}
+                    value={[config.weights.sinistralite]}
+                    onValueChange={([v]) => updateWeight('sinistralite', v)}
                     max={100}
                     step={5}
                     className="cursor-pointer"
                   />
                   <p className="text-sm text-muted-foreground">
-                    Durée depuis l'inscription sur la plateforme
+                    Sinistres responsables, gravité, fréquence
+                  </p>
+                </div>
+
+                {/* Infractions */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <FileWarning className="h-4 w-4 text-warning" />
+                      Infractions
+                    </Label>
+                    <span className="font-medium">{config.weights.infractions}%</span>
+                  </div>
+                  <Slider
+                    value={[config.weights.infractions]}
+                    onValueChange={([v]) => updateWeight('infractions', v)}
+                    max={100}
+                    step={5}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Contraventions, amendes, infractions routières (CGI)
+                  </p>
+                </div>
+
+                {/* Crédit */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2">
+                      <HandCoins className="h-4 w-4 text-tier-b" />
+                      Crédit
+                    </Label>
+                    <span className="font-medium">{config.weights.credit}%</span>
+                  </div>
+                  <Slider
+                    value={[config.weights.credit]}
+                    onValueChange={([v]) => updateWeight('credit', v)}
+                    max={100}
+                    step={5}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Historique de remboursement des prêts en cours et passés
                   </p>
                 </div>
               </CardContent>
@@ -452,7 +497,7 @@ export default function AdminScoringConfig() {
               <CardHeader>
                 <CardTitle>Seuils de niveau</CardTitle>
                 <CardDescription>
-                  Définissez les scores minimum pour chaque niveau. Le score va de 300 à 900.
+                  Définissez les scores minimum pour chaque niveau. Le score va de 0 à 1000 (base 500, défaut 700 pour les nouveaux conducteurs).
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -467,8 +512,8 @@ export default function AdminScoringConfig() {
                     <Slider
                       value={[threshold]}
                       onValueChange={([v]) => updateThreshold(tier as keyof typeof config.tier_thresholds, v)}
-                      min={300}
-                      max={900}
+                      min={0}
+                      max={1000}
                       step={10}
                       className="cursor-pointer"
                     />
@@ -498,12 +543,12 @@ export default function AdminScoringConfig() {
                     </div>
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>300</span>
+                    <span>0</span>
                     <span>{config.tier_thresholds.bronze}</span>
                     <span>{config.tier_thresholds.silver}</span>
                     <span>{config.tier_thresholds.gold}</span>
                     <span>{config.tier_thresholds.platinum}</span>
-                    <span>900</span>
+                    <span>1000</span>
                   </div>
                 </div>
               </CardContent>

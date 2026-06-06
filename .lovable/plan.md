@@ -1,96 +1,50 @@
-# Gap Analysis: damafricahub.com vs kira.damafrica.com
+## Phase 12 — Scoring Overhaul (Gap C2 + C3)
 
-## KIRA admin sidebar (reference, complete)
+Align our scoring model to the KIRA target spec, fix internal threshold inconsistencies, and recompute every existing driver score on the new scale.
 
-**OPÉRATIONS** — Tableau de bord · Chauffeurs · Véhicules · **Fleet Control**
-**GESTION** — **Maintenance** · Finance · Crédit & Prêts · Sinistres · **Contraventions**
-**INSIGHTS** — **KIRA ANALYTICS** · **Alertes**
-**COMMUNICATION** — **Communication**
-**SHORTCUT** — KIRA Driver app · Paramètres · Déconnexion
+### Target model
 
-Bold = no equivalent (or much weaker equivalent) in our app today.
+- **Scale:** 0–1000 (already correct in `scoringEngine.ts`; admin Seuils currently 300–900 — fix).
+- **Base:** 500 floor, default 700 for new drivers; new drivers seeded at **650 / Niveau B / Provisional**.
+- **Factors (6):** replace `Ancienneté` with three new factors.
 
-## What we already cover (good parity)
+| Factor          | Weight | Source                                              |
+|-----------------|--------|-----------------------------------------------------|
+| Paiement        | 25 %   | existing payment events                             |
+| Conduite        | 25 %   | existing Uffizio behavior events                    |
+| Revenu          | 10 %   | existing income declarations                        |
+| Sinistralité    | 15 %   | existing accident determinations                    |
+| Infractions     | 10 %   | `contraventions` table (Phase 5)                    |
+| Crédit          | 15 %   | repayment history from `loans` + `loan_repayments`  |
 
-Dashboard, Chauffeurs (Drivers + Detail), Véhicules, Suivi GPS / Mapping GPS / Conduite (≈ Tracking), Crédit & Prêts (Loans), Sinistres + Detail + Analytics, Paramètres, Administrateurs (Users), Sync Plateformes, Scoring, Audit, Pricing, Feature Flags, Customer Management, Income Approvals, Manual Income Entry, Wallets, Billing, Payments.
+- **Driver score page:** 5 dimensions = Paiement, Conduite, Revenu, Sinistralité, **Contrôles visuels** (from Phase 3 fleet-control submissions). Infractions and Crédit roll into the global score but the driver UI keeps 5 cards for simplicity.
+- **Grade thresholds (single source of truth):** A ≥ 800, B ≥ 650, C ≥ 500, D ≥ 300, E < 300. Already in `getScoreLevel`; align admin Seuils tab to match exactly. Remove the duplicate threshold inputs from admin Seuils — make them read-only display of `getScoreLevel`.
 
-## Missing or substantially weaker (priority targets)
+### Database migration
 
-### 1. Fleet Control (NEW) — HIGH IMPACT
-Periodic visual vehicle inspection performed by the driver, validated by fleet manager, with automatic engine cut-off via the GPS device when overdue.
-- KPI tiles: Total / Conformes / À valider / En retard / Bloqués
-- 7-zone photo submission per vehicle (driver app side)
-- Status workflow: brouillon → soumis → validé / rejeté
-- "Couper si stationné" action — sends immobilization command via Uffizio when vehicle is parked
-- Auto-rule: ≥3 days late OR ≥2 reminders → auto-immobilization (cron every 15 min)
-- Filters: statut, catégorie, recherche plaque/chauffeur/modèle
+1. New `scoring_config` rows (or update existing) so factor weights persist with the 6-factor schema. Add columns / defaults: `weight_infractions`, `weight_sinistralite`, `weight_credit`; drop `weight_anciennete` (or set to 0 and hide).
+2. Migration patch: rewrite `recompute_driver_score(driver_id)` SQL function to sum the 6 factor contributions on the 0–1000 scale, base 500, default 700 for drivers with `status = 'provisional'`.
+3. New `driver_factor_scores` view (materialised per driver) so admin `/admin/scoring` and driver `/driver/score` read the same per-dimension values.
+4. Backfill: one-shot SQL that calls `recompute_driver_score()` for every active driver. Old 300–900 values are overwritten — explicit user choice ("rescale + recompute all").
 
-### 2. Maintenance / Charges (NEW) — HIGH IMPACT
-Workshop work-orders, insurances, sub-rentals, providers.
-- Tabs: Tableau de bord · Ordres · Suivi Kanban · Autres charges · Prestataires
-- KPIs: Total ordres / À valider / En cours / Coût total réel / Dispo flotte
-- Charts: monthly orders+cost, breakdown by type, status, top vehicles by cost
-- Entities needed: maintenance_orders, providers (prestataires), other_charges (assurances, sous-locations)
+### Code changes
 
-### 3. Contraventions (NEW) — HIGH IMPACT
-Côte d'Ivoire traffic fines via the CGI portal (eservices.cgi.ci).
-- "Synchroniser" pulls infractions from CGI portal
-- "Attribuer aux chauffeurs" cross-matches GPS history to assign fault
-- KPIs: En attente paiement / Liquidées / Véhicules impliqués / Total
-- Filters: Toutes / En attente / Liquidé / En recours, by plate/driver/type
-- Each item: type, plate, driver, GPS-live flag, date, amount XOF, PV number, status, PDF export
-- Reports tab, Portail CGI deeplink
+- `src/lib/scoringEngine.ts` — add `FactorWeights`, `evaluateContraventions`, `evaluateCredit`, extend `evaluateDriver` to return per-factor breakdown.
+- `src/lib/scoreLevel.ts` — already correct; export as canonical and add a `THRESHOLDS` constant other files import.
+- `src/pages/admin/ScoringConfig.tsx` — Poids tab: 6 sliders summing to 100 %; Seuils tab: read-only thresholds bound to `THRESHOLDS`; remove Anciennete inputs; add Infractions / Sinistralité / Crédit weight controls.
+- `src/pages/driver/Score.tsx` — show 5 dimension cards (Paiement, Conduite, Revenu, Sinistralité, Contrôles visuels) reading from `driver_factor_scores`.
+- `src/pages/driver/Home.tsx` — replace any hard-coded grade label with `getScoreLevel(score).level` so 722 always shows B everywhere.
+- `src/pages/admin/Drivers.tsx`, `DriverDetail.tsx`, `Dashboard.tsx` — same: route every tier badge through `getScoreLevel`.
+- New seeding helper: driver insert sets `base_score = 700`, `score = 650`, `status = 'provisional'`.
 
-### 4. Communication (NEW) — MEDIUM-HIGH IMPACT
-Manage content delivered inside the driver app.
-- Tabs: Formation · Publicités · Marketing
-- Formation: training modules (categories: Conduite, Finances, Relation, Entretien, KIRA App) with duration, level, optional video, notes, quiz questions, ordering, activate/deactivate
-- Publicités: in-app ads / banners targeting (likely top of driver home)
-- Marketing: campaigns / push broadcasts
+### Verification
 
-### 5. Alertes (NEW page) — MEDIUM IMPACT
-Centralized inbox separate from notifications, with badge count in nav.
-- 2 sub-tabs: Alertes KIRA · GPS Télématique
-- Filters: Non lues / Toutes, "Tout marquer lu", "Actualiser"
-- Items show severity (Critique / Avertissement / Info), category (Permis expirant, CNI expirée, …), driver, message, date
-- Auto-generators: expiring driver license, expiring CNI, expiring assurance, contrat expirant, etc.
+- Vitest: extend `scoringEngine.test.ts` and `scoreReconciliation.test.ts` to cover the 6-factor formula and new-driver default.
+- After backfill: `SELECT level, count(*) FROM drivers GROUP BY level` sanity check.
+- Manual: open test driver (+225 05 05 05 05 05) on /driver/score and verify 5 cards + grade matches Home.
 
-### 6. KIRA ANALYTICS (consolidation) — MEDIUM IMPACT
-Multi-tab cross-domain analytics replacing our single Analytics page.
-- Tabs: Flotte · Maintenance · N'LOOTTO · Chauffeurs · Finance · Sinistres & Ctrl · Profils Chauffeurs
-- Per-tab: KPI tiles, distribution charts, fleet state, cost summaries
+### Out of scope (deferred to Phase 13)
 
-### 7. Finance polish — LOW-MEDIUM IMPACT
-Our Payments / Billing / Wallets exist; KIRA wraps them as one Finance page with 4 tabs (KPI · Facturation · Paiements · KiraPay) and adds:
-- CA prévisionnel (forward revenue projection by plan: journalier/hebdo/mensuel)
-- Taux de recouvrement with target (95%)
-- Impayés & retards bucket
-- "Loyers prévus vs collectés" 12-month chart
-- Loyers par catégorie (CARGO / N'LOOTTO / VTC / WARREN)
-
-### 8. Vehicle category extension — LOW IMPACT
-KIRA categorizes vehicles as VTC, CARGO, N'LOOTTO, WARREN. Our `vehicle_type` constraint is car/bike/cargo/compact/sedan. Need to add new category dimension (probably `vehicle_category` separate from `vehicle_type`) without breaking existing data.
-
-## Proposed phased build order
-
-```text
-Phase 3  →  Fleet Control          (visual inspection + auto-immobilization)
-Phase 4  →  Maintenance            (orders, kanban, providers, other charges)
-Phase 5  →  Contraventions         (CGI sync + driver attribution + payment)
-Phase 6  →  Alertes                (centralized expiry/risk inbox + cron generators)
-Phase 7  →  Communication          (driver training modules + ads + broadcasts)
-Phase 8  →  KIRA Analytics rollup  (multi-tab analytics replacing /admin/analytics)
-Phase 9  →  Finance polish         (projection, recouvrement, unified 4-tab page)
-Phase 10 →  Vehicle categories     (VTC / CARGO / N'LOOTTO / WARREN dimension)
-```
-
-Each phase = DB migration + admin page(s) + edge function(s) where external integration is needed (Uffizio immobilization command for Fleet Control, CGI portal scraping for Contraventions, cron jobs for Alertes / Fleet Control enforcement) + driver-app counterparts where applicable (Fleet Control photo submission, Formation viewer, Contraventions visibility).
-
-## What I need from you to start Phase 3
-
-1. **Confirm scope & order** — go in the sequence above, or reprioritize?
-2. **CGI portal** (Phase 5) — do you have API/portal credentials for `eservices.cgi.ci`, or should we start with a manual import (CSV / paste PV numbers)?
-3. **Uffizio immobilization** (Phase 3) — does the live Uffizio account already expose the engine cut-off command for the connected GPS devices, or is that a manual radio call we just log for now?
-4. **Driver login** — share a real driver phone+PIN (or let me seed one) so I can verify each phase end-to-end on both sides.
-
-Reply "go phase 3" (with any tweaks) and I'll start implementing.
+- Full Paramètres suite (Entreprise / Apparence / Journal d'audit panel).
+- Explicit "Recharger via Wave" CTA polish on driver Wallet.
+- Removing legacy `weight_anciennete` column (kept nullable for one release).
