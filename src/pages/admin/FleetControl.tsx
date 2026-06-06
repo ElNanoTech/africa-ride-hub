@@ -172,6 +172,11 @@ export default function FleetControl() {
   const immobilize = useMutation({
     mutationFn: async (row: InspectionRow) => {
       const { data: u } = await supabase.auth.getUser();
+      // TODO(uffizio): the real engine-cut command is not yet wired. We insert
+      // a 'pending' row in vehicle_immobilization_commands so a future
+      // edge function / Uffizio polling worker can pick it up and dispatch
+      // the actual SET_OUT command to the device. UI state below is updated
+      // optimistically so admins see the inspection as immobilized.
       const { error: cmdErr } = await supabase.from('vehicle_immobilization_commands' ).insert({
         vehicle_id: row.vehicle_id,
         inspection_id: row.id,
