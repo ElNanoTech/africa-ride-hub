@@ -17,6 +17,7 @@ const supabase = _supabase as any;
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { FLEET_CATEGORIES, fleetCategoryLabel } from '@/lib/fleetCategories';
 
 type InspectionStatus = 'draft' | 'submitted' | 'validated' | 'rejected' | 'expired';
 
@@ -32,7 +33,7 @@ interface InspectionRow {
   reminder_count: number;
   immobilized_at: string | null;
   immobilization_reason: string | null;
-  vehicles?: { id: string; license_plate: string | null; make: string | null; model: string | null; vehicle_type: string | null } | null;
+  vehicles?: { id: string; license_plate: string | null; make: string | null; model: string | null; vehicle_type: string | null; fleet_group: string | null } | null;
   drivers?: { id: string; first_name: string | null; last_name: string | null } | null;
   photos?: { count: number }[];
 }
@@ -76,7 +77,7 @@ export default function FleetControl() {
         .select(`
           id, vehicle_id, driver_id, status, due_at, submitted_at, validated_at,
           rejection_reason, reminder_count, immobilized_at, immobilization_reason,
-          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( id, license_plate, make, model, vehicle_type ),
+          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( id, license_plate, make, model, vehicle_type, fleet_group ),
           drivers:drivers!vehicle_inspections_driver_id_fkey ( id, first_name, last_name ),
           photos:vehicle_inspection_photos ( count )
         `)
@@ -105,7 +106,7 @@ export default function FleetControl() {
   const filtered = useMemo(() => {
     return enriched.filter((r) => {
       if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-      if (categoryFilter !== 'all' && r.vehicles?.vehicle_type !== categoryFilter) return false;
+      if (categoryFilter !== 'all' && r.vehicles?.fleet_group !== categoryFilter) return false;
       if (search.trim()) {
         const q = search.toLowerCase();
         const plate = r.vehicles?.license_plate?.toLowerCase() ?? '';
@@ -117,11 +118,8 @@ export default function FleetControl() {
     });
   }, [enriched, statusFilter, categoryFilter, search]);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    enriched.forEach((r) => r.vehicles?.vehicle_type && set.add(r.vehicles.vehicle_type));
-    return Array.from(set);
-  }, [enriched]);
+  // KIRA categories are sourced from vehicles.fleet_group (VTC / WARREN / CARGO / N'LOOTTO).
+  const categories = FLEET_CATEGORIES;
 
   const validate = useMutation({
     mutationFn: async (id: string) => {
@@ -293,7 +291,7 @@ export default function FleetControl() {
           <SelectContent>
             <SelectItem value="all">Toutes catégories</SelectItem>
             {categories.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
+              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -358,7 +356,7 @@ function InspectionCard({
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="font-semibold">{plate}</span>
             <span className="text-sm text-muted-foreground">{model}</span>
-            {row.vehicles?.vehicle_type && <Badge variant="outline" className="text-[10px]">{row.vehicles.vehicle_type.toUpperCase()}</Badge>}
+            {row.vehicles?.fleet_group && <Badge variant="outline" className="text-[10px]">{fleetCategoryLabel(row.vehicles.fleet_group)}</Badge>}
             <Badge className={STATUS_VARIANT[row.status]}>{STATUS_LABEL[row.status]}</Badge>
             {row.immobilized_at && (
               <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
