@@ -286,37 +286,24 @@ export default function VehicleInspection() {
           </CardContent>
         </Card>
 
-        {/* Zones grid */}
-        <div className="grid grid-cols-2 gap-3">
-          {ZONES.map((z) => {
-            const photo = photosByZone[z.key];
-            const busy = uploadingZone === z.key;
-            return (
-              <button
-                key={z.key}
-                onClick={() => handlePickPhoto(z.key)}
-                disabled={busy || inspection.status === 'submitted' || inspection.status === 'validated'}
-                className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
-                  photo ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-dashed border-muted-foreground/40 bg-card'
-                } disabled:opacity-60`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="font-medium">{z.label}</div>
-                  {photo ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                  ) : busy ? (
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  ) : (
-                    <Camera className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
-                <div className="text-xs mt-3 font-medium">
-                  {photo ? 'Modifier la photo' : 'Toucher pour photographier'}
-                </div>
-              </button>
-            );
-          })}
+        {/* Visual zones grid */}
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Photos du véhicule
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {VISUAL_ZONES.map((z) => renderZoneTile(z, 'camera'))}
+          </div>
+        </div>
+
+        {/* Documents grid */}
+        <div>
+          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+            Documents
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {DOC_ZONES.map((z) => renderZoneTile(z, 'doc'))}
+          </div>
         </div>
 
         {/* Notes */}
