@@ -40,12 +40,8 @@ export function DriverAdBanner() {
 
   if (!ad || dismissed === ad.id) return null;
 
-  // Fire-and-forget view counter; ignore failures (RLS-safe via RPC if needed).
-  void supabase.rpc('increment_ad_view' as any, { _ad_id: ad.id }).then(() => {}, () => {});
-
   const handleCta = async () => {
     if (!ad.cta_url) return;
-    void supabase.rpc('increment_ad_click' as any, { _ad_id: ad.id }).then(() => {}, () => {});
     window.open(ad.cta_url, '_blank', 'noopener,noreferrer');
   };
 
