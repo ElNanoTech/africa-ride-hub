@@ -277,7 +277,7 @@ export default function FleetControl() {
           onChange={(e) => setSearch(e.target.value)}
           className="md:max-w-sm"
         />
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v )}>
+        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
           <SelectTrigger className="md:w-48"><SelectValue placeholder="Tous les statuts" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Tous les statuts</SelectItem>
@@ -302,7 +302,7 @@ export default function FleetControl() {
       <PillTabs
         className="mb-4"
         value={statusFilter}
-        onChange={(v) => setStatusFilter(v )}
+        onChange={(v) => setStatusFilter(v as any)}
         items={[
           { value: 'all', label: 'Toutes', count: enriched.length },
           { value: 'submitted', label: 'À valider', count: kpis.aValider },
