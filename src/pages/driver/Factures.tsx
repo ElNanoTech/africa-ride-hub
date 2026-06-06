@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/lib/statusBadges";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { FileText, ChevronLeft, ChevronRight, CreditCard } from "lucide-react";
+import { FileText, ChevronLeft, ChevronRight, CreditCard, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
 
@@ -112,6 +112,27 @@ export default function DriverFactures() {
       </header>
 
       <main className="p-4">
+        <Card
+          className="mb-4 cursor-pointer hover:bg-accent/40 transition-colors border-warning/40 bg-warning/5"
+          onClick={() => navigate('/driver/contraventions')}
+          role="link"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              navigate('/driver/contraventions');
+            }
+          }}
+        >
+          <CardContent className="p-4 flex items-center gap-3">
+            <AlertTriangle className="h-5 w-5 text-warning shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="font-semibold text-sm">Mes contraventions</div>
+              <div className="text-xs text-muted-foreground">Amendes et PV enregistrés</div>
+            </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          </CardContent>
+        </Card>
         <Tabs defaultValue="invoices">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="invoices">Factures</TabsTrigger>

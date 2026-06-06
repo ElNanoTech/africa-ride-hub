@@ -118,6 +118,7 @@ const AdminCommunication = lazy(() => import("./pages/admin/Communication"));
 const AdminKira = lazy(() => import("./pages/admin/Kira"));
 const DriverFormation = lazy(() => import("./pages/driver/Formation"));
 const DriverAlertes = lazy(() => import("./pages/driver/Alertes"));
+const DriverContraventions = lazy(() => import("./pages/driver/Contraventions"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminBillingAudit = lazy(() => import("./pages/admin/BillingAudit"));
 const AdminFinance = lazy(() => import("./pages/admin/Finance"));
@@ -222,6 +223,7 @@ const App = () => {
                     <Route path="/driver/inspection" element={<DriverVehicleInspection />} />
                     <Route path="/driver/formation" element={<DriverFormation />} />
                     <Route path="/driver/alertes" element={<DriverAlertes />} />
+                    <Route path="/driver/contraventions" element={<DriverContraventions />} />
                   </Route>
                   
                   {/* Admin Login — redirect to dashboard if already logged in (B2) */}
