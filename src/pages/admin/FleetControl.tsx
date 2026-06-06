@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { FLEET_CATEGORIES, fleetCategoryLabel } from '@/lib/fleetCategories';
+import { FleetControlDetailDialog } from '@/components/admin/FleetControlDetailDialog';
 
 type InspectionStatus = 'draft' | 'submitted' | 'validated' | 'rejected' | 'expired';
 
@@ -68,6 +69,7 @@ export default function FleetControl() {
   const [statusFilter, setStatusFilter] = useState<'all' | InspectionStatus>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
+  const [activeRow, setActiveRow] = useState<InspectionRow | null>(null);
 
   const { data: inspections = [], isLoading } = useQuery<InspectionRow[]>({
     queryKey: ['fleet-control', 'inspections'],
@@ -170,6 +172,11 @@ export default function FleetControl() {
   const immobilize = useMutation({
     mutationFn: async (row: InspectionRow) => {
       const { data: u } = await supabase.auth.getUser();
+      // TODO(uffizio): the real engine-cut command is not yet wired. We insert
+      // a 'pending' row in vehicle_immobilization_commands so a future
+      // edge function / Uffizio polling worker can pick it up and dispatch
+      // the actual SET_OUT command to the device. UI state below is updated
+      // optimistically so admins see the inspection as immobilized.
       const { error: cmdErr } = await supabase.from('vehicle_immobilization_commands' ).insert({
         vehicle_id: row.vehicle_id,
         inspection_id: row.id,
@@ -323,21 +330,43 @@ export default function FleetControl() {
         </Card>
       ) : (
         <div className="space-y-3">
-          {filtered.map((row) => <InspectionCard key={row.id} row={row} onValidate={validate.mutate} onReject={(id) => reject.mutate({ id, reason: 'Non conforme' })} onRemind={remind.mutate} onImmobilize={immobilize.mutate} />)}
+          {filtered.map((row) => (
+            <InspectionCard
+              key={row.id}
+              row={row}
+              onOpen={() => setActiveRow(row)}
+              onValidate={validate.mutate}
+              onReject={(id) => reject.mutate({ id, reason: 'Non conforme' })}
+              onRemind={remind.mutate}
+              onImmobilize={immobilize.mutate}
+            />
+          ))}
         </div>
       )}
+
+      <FleetControlDetailDialog
+        row={activeRow as any}
+        onClose={() => setActiveRow(null)}
+        onValidate={(id) => { validate.mutate(id); setActiveRow(null); }}
+        onReject={(id) => { reject.mutate({ id, reason: 'Non conforme' }); setActiveRow(null); }}
+        onRemind={(r) => { remind.mutate(r as any); }}
+        onImmobilize={(r) => { immobilize.mutate(r as any); setActiveRow(null); }}
+        busy={validate.isPending || reject.isPending || remind.isPending || immobilize.isPending}
+      />
     </AdminLayout>
   );
 }
 
 function InspectionCard({
   row,
+  onOpen,
   onValidate,
   onReject,
   onRemind,
   onImmobilize,
 }: {
   row: InspectionRow;
+  onOpen: () => void;
   onValidate: (id: string) => void;
   onReject: (id: string) => void;
   onRemind: (row: InspectionRow) => void;
@@ -350,7 +379,7 @@ function InspectionCard({
   const overdueDays = daysOverdue(row);
 
   return (
-    <Card>
+    <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={onOpen}>
       <CardContent className="pt-6 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -370,7 +399,7 @@ function InspectionCard({
             <span>📅 Échéance {format(new Date(row.due_at), 'd MMM yyyy', { locale: fr })}</span>
             {row.status === 'expired' && <span className="text-amber-600 font-medium">En retard de {overdueDays} j</span>}
             {row.reminder_count > 0 && <span>🔔 {row.reminder_count} relance(s)</span>}
-            <span className="inline-flex items-center gap-1"><Camera className="h-3 w-3" /> {photoCount}/7 zones</span>
+            <span className="inline-flex items-center gap-1"><Camera className="h-3 w-3" /> {photoCount}/11 pièces</span>
           </div>
 
           {row.rejection_reason && (
@@ -378,14 +407,11 @@ function InspectionCard({
           )}
         </div>
 
-        <div className="flex flex-col gap-2 shrink-0 md:items-end">
+        <div className="flex flex-col gap-2 shrink-0 md:items-end" onClick={(e) => e.stopPropagation()}>
           {row.status === 'submitted' && (
             <div className="flex gap-2">
-              <Button size="sm" variant="default" onClick={() => onValidate(row.id)}>
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Valider
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => onReject(row.id)}>
-                <XCircle className="h-4 w-4 mr-1" /> Rejeter
+              <Button size="sm" variant="default" onClick={onOpen}>
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Examiner
               </Button>
             </div>
           )}
