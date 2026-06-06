@@ -497,7 +497,7 @@ export default function AdminScoringConfig() {
               <CardHeader>
                 <CardTitle>Seuils de niveau</CardTitle>
                 <CardDescription>
-                  Définissez les scores minimum pour chaque niveau. Le score va de 300 à 900.
+                  Définissez les scores minimum pour chaque niveau. Le score va de 0 à 1000 (base 500, défaut 700 pour les nouveaux conducteurs).
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -512,8 +512,8 @@ export default function AdminScoringConfig() {
                     <Slider
                       value={[threshold]}
                       onValueChange={([v]) => updateThreshold(tier as keyof typeof config.tier_thresholds, v)}
-                      min={300}
-                      max={900}
+                      min={0}
+                      max={1000}
                       step={10}
                       className="cursor-pointer"
                     />
@@ -543,12 +543,12 @@ export default function AdminScoringConfig() {
                     </div>
                   </div>
                   <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>300</span>
+                    <span>0</span>
                     <span>{config.tier_thresholds.bronze}</span>
                     <span>{config.tier_thresholds.silver}</span>
                     <span>{config.tier_thresholds.gold}</span>
                     <span>{config.tier_thresholds.platinum}</span>
-                    <span>900</span>
+                    <span>1000</span>
                   </div>
                 </div>
               </CardContent>
