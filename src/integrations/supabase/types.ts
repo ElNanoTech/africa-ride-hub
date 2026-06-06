@@ -4103,6 +4103,7 @@ export type Database = {
           is_mandatory: boolean
           is_published: boolean
           order_index: number | null
+          quiz: Json | null
           thumbnail_url: string | null
           title: string
           updated_at: string
@@ -4120,6 +4121,7 @@ export type Database = {
           is_mandatory?: boolean
           is_published?: boolean
           order_index?: number | null
+          quiz?: Json | null
           thumbnail_url?: string | null
           title: string
           updated_at?: string
@@ -4137,6 +4139,7 @@ export type Database = {
           is_mandatory?: boolean
           is_published?: boolean
           order_index?: number | null
+          quiz?: Json | null
           thumbnail_url?: string | null
           title?: string
           updated_at?: string

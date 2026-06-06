@@ -1,0 +1,2 @@
+ALTER TABLE public.training_modules ADD COLUMN IF NOT EXISTS quiz jsonb;
+COMMENT ON COLUMN public.training_modules.quiz IS 'Optional quiz: array of {question, options:[text], correct_index, explanation?}';
