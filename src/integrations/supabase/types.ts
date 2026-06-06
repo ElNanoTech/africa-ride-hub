@@ -3479,6 +3479,210 @@ export type Database = {
           },
         ]
       }
+      vehicle_immobilization_commands: {
+        Row: {
+          acknowledged_at: string | null
+          created_at: string
+          customer_id: string | null
+          error_message: string | null
+          id: string
+          inspection_id: string | null
+          reason: string | null
+          requested_by: string | null
+          sent_at: string | null
+          source: string
+          status: string
+          updated_at: string
+          vehicle_id: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          inspection_id?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          sent_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          vehicle_id: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          inspection_id?: string | null
+          reason?: string | null
+          requested_by?: string | null
+          sent_at?: string | null
+          source?: string
+          status?: string
+          updated_at?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_immobilization_commands_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_immobilization_commands_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_immobilization_commands_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_immobilization_commands_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_inspection_photos: {
+        Row: {
+          created_at: string
+          id: string
+          inspection_id: string
+          notes: string | null
+          storage_path: string
+          updated_at: string
+          zone: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          inspection_id: string
+          notes?: string | null
+          storage_path: string
+          updated_at?: string
+          zone: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          inspection_id?: string
+          notes?: string | null
+          storage_path?: string
+          updated_at?: string
+          zone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspection_photos_inspection_id_fkey"
+            columns: ["inspection_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_inspections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_inspections: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          driver_id: string | null
+          due_at: string
+          id: string
+          immobilization_reason: string | null
+          immobilized_at: string | null
+          last_reminder_at: string | null
+          notes: string | null
+          rejection_reason: string | null
+          reminder_count: number
+          status: string
+          submitted_at: string | null
+          updated_at: string
+          validated_at: string | null
+          validated_by: string | null
+          vehicle_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          due_at?: string
+          id?: string
+          immobilization_reason?: string | null
+          immobilized_at?: string | null
+          last_reminder_at?: string | null
+          notes?: string | null
+          rejection_reason?: string | null
+          reminder_count?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vehicle_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          due_at?: string
+          id?: string
+          immobilization_reason?: string | null
+          immobilized_at?: string | null
+          last_reminder_at?: string | null
+          notes?: string | null
+          rejection_reason?: string | null
+          reminder_count?: number
+          status?: string
+          submitted_at?: string | null
+          updated_at?: string
+          validated_at?: string | null
+          validated_by?: string | null
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_inspections_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vehicle_location_history: {
         Row: {
           customer_id: string | null
