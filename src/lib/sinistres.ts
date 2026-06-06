@@ -18,6 +18,27 @@ export type FileType = 'PHOTO' | 'VIDEO' | 'DOCUMENT' | 'POLICE_REPORT' | 'WITNE
 
 export type PartyType = 'OTHER_DRIVER' | 'WITNESS' | 'POLICE';
 
+export type IncidentType =
+  | 'COLLISION'
+  | 'SCRAPE'
+  | 'ROLLOVER'
+  | 'THEFT'
+  | 'VANDALISM'
+  | 'BREAKDOWN'
+  | 'FIRE'
+  | 'OTHER';
+
+export const INCIDENT_TYPE_LABELS_FR: Record<IncidentType, string> = {
+  COLLISION: 'Collision',
+  SCRAPE: 'Éraflure / petit choc',
+  ROLLOVER: 'Renversement',
+  THEFT: 'Vol',
+  VANDALISM: 'Vandalisme',
+  BREAKDOWN: 'Panne',
+  FIRE: 'Incendie',
+  OTHER: 'Autre',
+};
+
 export const STATUS_LABELS_FR: Record<AccidentStatus, string> = {
   DRAFT: 'Brouillon',
   SUBMITTED: 'Soumis',
