@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AUTH } from '@/lib/i18n';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
-import { Phone, ArrowLeft, TestTube2, User, KeyRound, Smartphone } from 'lucide-react';
+import { Phone, ArrowLeft, TestTube2, User, KeyRound, Smartphone, ShieldCheck } from 'lucide-react';
 import {
   InputOTP,
   InputOTPGroup,
@@ -230,27 +230,28 @@ export default function DriverLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex flex-col items-center justify-center p-6">
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl" />
+    <div className="min-h-screen flex flex-col bg-gradient-driver-hero relative overflow-hidden">
+      {/* Hero decoration */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-32 -right-24 w-80 h-80 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute top-40 -left-20 w-72 h-72 rounded-full bg-white/5 blur-3xl" />
       </div>
 
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <img 
-            src={damFlotteLogo} 
-            alt="DAM Flotte" 
-            className="w-20 h-20 rounded-2xl mx-auto mb-4 shadow-glow object-contain"
-          />
-          <h1 className="text-3xl font-bold text-white">DAM Flotte</h1>
-          <p className="text-sm text-white/60 mt-1">Côte d'Ivoire 🇨🇮</p>
+      {/* Hero — top ~45% of viewport */}
+      <div className="relative flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8 text-center min-h-[45vh]">
+        <div className="relative">
+          <div className="absolute inset-0 rounded-3xl bg-white/30 blur-2xl scale-110" />
+          <div className="relative w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-sm ring-1 ring-white/40 flex items-center justify-center shadow-2xl">
+            <ShieldCheck className="w-10 h-10 text-white" strokeWidth={2} />
+          </div>
         </div>
+        <h1 className="mt-5 text-3xl font-bold text-white tracking-tight">DAM Driver</h1>
+        <p className="text-sm text-white/80 mt-1">Espace chauffeur DAM Flotte</p>
+      </div>
 
-        {/* Login card */}
-        <div className="w-full bg-card rounded-2xl p-8 shadow-2xl">
+      {/* Sheet card — bottom ~55% */}
+      <div className="relative bg-card rounded-t-[28px] shadow-[0_-12px_40px_-12px_rgba(0,0,0,0.25)] px-6 pt-7 pb-8 sm:rounded-3xl sm:mx-auto sm:mb-8 sm:max-w-md sm:w-full sm:px-8">
+        <div className="w-12 h-1 rounded-full bg-muted mx-auto mb-5 sm:hidden" aria-hidden="true" />
           
           {/* Provider Selection Mode */}
           {mode === 'select' && (
