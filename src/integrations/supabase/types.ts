@@ -1164,6 +1164,117 @@ export type Database = {
           },
         ]
       }
+      broadcast_deliveries: {
+        Row: {
+          broadcast_id: string
+          delivered_at: string
+          driver_id: string
+          id: string
+          read_at: string | null
+        }
+        Insert: {
+          broadcast_id: string
+          delivered_at?: string
+          driver_id: string
+          id?: string
+          read_at?: string | null
+        }
+        Update: {
+          broadcast_id?: string
+          delivered_at?: string
+          driver_id?: string
+          id?: string
+          read_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcast_deliveries_broadcast_id_fkey"
+            columns: ["broadcast_id"]
+            isOneToOne: false
+            referencedRelation: "broadcasts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcast_deliveries_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      broadcasts: {
+        Row: {
+          audience: string
+          audience_filters: Json
+          channel: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          delivered_count: number
+          id: string
+          message: string
+          read_count: number
+          recipient_count: number
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          audience?: string
+          audience_filters?: Json
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          delivered_count?: number
+          id?: string
+          message: string
+          read_count?: number
+          recipient_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          audience?: string
+          audience_filters?: Json
+          channel?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          delivered_count?: number
+          id?: string
+          message?: string
+          read_count?: number
+          recipient_count?: number
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadcasts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadcasts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_milestones: {
         Row: {
           contract_id: string
@@ -1489,6 +1600,81 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      driver_ads: {
+        Row: {
+          body: string | null
+          click_count: number
+          created_at: string
+          created_by: string | null
+          cta_label: string | null
+          cta_url: string | null
+          customer_id: string | null
+          ends_at: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          placement: string
+          priority: number
+          starts_at: string
+          title: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          body?: string | null
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          customer_id?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          placement?: string
+          priority?: number
+          starts_at?: string
+          title: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          body?: string | null
+          click_count?: number
+          created_at?: string
+          created_by?: string | null
+          cta_label?: string | null
+          cta_url?: string | null
+          customer_id?: string | null
+          ends_at?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          placement?: string
+          priority?: number
+          starts_at?: string
+          title?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_ads_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_ads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -3900,6 +4086,129 @@ export type Database = {
           violation_type?: string
         }
         Relationships: []
+      }
+      training_modules: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_mandatory: boolean
+          is_published: boolean
+          order_index: number | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_mandatory?: boolean
+          is_published?: boolean
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_mandatory?: boolean
+          is_published?: boolean
+          order_index?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_modules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          driver_id: string
+          id: string
+          module_id: string
+          progress_percent: number
+          score: number | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          driver_id: string
+          id?: string
+          module_id: string
+          progress_percent?: number
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          driver_id?: string
+          id?: string
+          module_id?: string
+          progress_percent?: number
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_progress_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       vehicle_immobilization_commands: {
         Row: {
