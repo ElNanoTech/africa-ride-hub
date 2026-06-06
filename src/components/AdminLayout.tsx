@@ -179,6 +179,13 @@ const sidebarItems: SidebarItem[] = [
     allowedRoles: ['super_admin', 'manager'],
     section: 'gestion',
   },
+  {
+    to: '/admin/contraventions',
+    icon: Flag,
+    label: 'Contraventions',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'gestion',
+  },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
