@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Save, RotateCcw, AlertTriangle, Calculator, Banknote, Car, CreditCard, FileWarning, Info, Play, Gauge, ShieldAlert, FileText, Loader2, HandCoins } from 'lucide-react';
+import { Settings, Save, RotateCcw, AlertTriangle, Calculator, Banknote, Car, CreditCard, Clock, FileWarning, Info, Play, Gauge, ShieldAlert, FileText, Loader2, HandCoins } from 'lucide-react';
 import { toast } from 'sonner';
 import { DrivingEventWeightsEditor } from '@/components/admin/DrivingEventWeightsEditor';
 import { useScoringConfig, useUpdateScoringConfig } from '@/hooks/useAdminData';
