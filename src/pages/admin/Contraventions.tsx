@@ -11,9 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '@/components/ui/sheet';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Flag, Banknote, CheckCircle2, Car, ExternalLink, Plus, RefreshCw, Wand2, Trash2, MapPin, FileDown } from 'lucide-react';
+import { Flag, Banknote, CheckCircle2, Car, ExternalLink, Plus, RefreshCw, Wand2, Trash2, MapPin, FileDown, User, Calendar, Hash, FileText, Receipt } from 'lucide-react';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 const supabase = _supabase as any;
 import { toast } from 'sonner';
@@ -59,6 +60,7 @@ export default function Contraventions() {
   const [search, setSearch] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [selected, setSelected] = useState<any | null>(null);
 
   const { data: violations = [], isLoading } = useQuery<any[]>({
     queryKey: ['contraventions', 'violations'],
@@ -236,7 +238,14 @@ export default function Contraventions() {
             <div className="space-y-2">
               {isLoading && <p className="text-sm text-muted-foreground text-center py-8">Chargement…</p>}
               {!isLoading && filtered.map((v) => (
-                <div key={v.id} className="flex flex-col md:flex-row md:items-center gap-3 p-3 border border-border rounded-lg">
+                <div
+                  key={v.id}
+                  className="flex flex-col md:flex-row md:items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/40 cursor-pointer transition-colors"
+                  onClick={() => setSelected(v)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setSelected(v); }}
+                >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium">{v.license_plate}</span>
@@ -251,7 +260,7 @@ export default function Contraventions() {
                       {v.drivers ? ` · ${v.drivers.first_name || ''} ${v.drivers.last_name || ''}` : ' · Non attribué'}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <div className="text-right">
                       <p className="text-sm font-semibold">{fcfa(v.amount)}</p>
                       {v.paid_at && <p className="text-xs text-muted-foreground">Payé {format(new Date(v.paid_at), 'dd/MM', { locale: fr })}</p>}
@@ -287,6 +296,12 @@ export default function Contraventions() {
           onOpenChange={setShowAddDialog}
           vehicles={vehicles}
           onCreated={() => qc.invalidateQueries({ queryKey: ['contraventions'] })}
+        />
+
+        <ViolationDetailDrawer
+          violation={selected}
+          onClose={() => setSelected(null)}
+          onChanged={() => qc.invalidateQueries({ queryKey: ['contraventions'] })}
         />
       </div>
     </AdminLayout>
