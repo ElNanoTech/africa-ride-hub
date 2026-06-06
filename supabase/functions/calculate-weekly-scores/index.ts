@@ -2,28 +2,57 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, runtime',
 }
 
-// Scoring configuration defaults
-const DEFAULT_WEIGHTS = {
-  income_stability: 0.30,
-  payment_history: 0.35,
-  driving_behavior: 0.25,
-  tenure: 0.10
+/**
+ * KIRA scoring engine — 6-factor model on 0–1000 scale, base 500.
+ * Weights and tier thresholds come from `scoring_config` (single source of truth).
+ *
+ * Factor → source table mapping:
+ *   payment_history   ← payments            (available)
+ *   driving_behavior  ← telemetry_events    (available; KIRA spec maps to "Conduite")
+ *   income_stability  ← income_records      (available; KIRA spec maps to "Revenu")
+ *   sinistralite      ← accidents           (available)
+ *   infractions       ← cgi_contraventions  (NOT YET — table missing, factor "en attente")
+ *   credit            ← loans               (NOT YET — table lacks repayment data, factor "en attente")
+ *
+ * Factors flagged unavailable have their weight redistributed across remaining
+ * factors so dark factors don't drag the score toward base 500.
+ */
+
+type FactorKey =
+  | 'income_stability'
+  | 'payment_history'
+  | 'driving_behavior'
+  | 'sinistralite'
+  | 'infractions'
+  | 'credit'
+
+const DEFAULT_WEIGHTS: Record<FactorKey, number> = {
+  payment_history: 25,
+  driving_behavior: 25,
+  income_stability: 10,
+  sinistralite: 15,
+  infractions: 10,
+  credit: 15,
 }
 
-const TIER_THRESHOLDS = {
-  A: 850,  // Platinum equivalent
-  B: 750,  // Gold equivalent  
-  C: 650,  // Silver equivalent
-  D: 500,  // Bronze equivalent
-  E: 0     // Onboarding equivalent
+// Threshold keys in scoring_config use legacy labels; values map to A/B/C/D floors.
+const DEFAULT_THRESHOLDS = {
+  platinum: 800, // A
+  gold: 650,     // B
+  silver: 500,   // C
+  bronze: 300,   // D
 }
+
+const SCORE_MIN = 0
+const SCORE_MAX = 1000
+const SCORE_BASE = 500
 
 interface ScoringConfig {
-  weights: typeof DEFAULT_WEIGHTS
-  tier_thresholds: typeof TIER_THRESHOLDS
+  weights: Record<FactorKey, number>
+  tier_thresholds: typeof DEFAULT_THRESHOLDS
 }
 
 interface DriverData {
@@ -76,16 +105,16 @@ Deno.serve(async (req) => {
       .select('config_key, config_value')
     
     const config: ScoringConfig = {
-      weights: DEFAULT_WEIGHTS,
-      tier_thresholds: TIER_THRESHOLDS
+      weights: { ...DEFAULT_WEIGHTS },
+      tier_thresholds: { ...DEFAULT_THRESHOLDS },
     }
     
     if (configData) {
       for (const item of configData) {
         if (item.config_key === 'weights') {
-          config.weights = { ...DEFAULT_WEIGHTS, ...item.config_value }
+          config.weights = { ...DEFAULT_WEIGHTS, ...(item.config_value as Record<string, number>) }
         } else if (item.config_key === 'tier_thresholds') {
-          config.tier_thresholds = { ...TIER_THRESHOLDS, ...item.config_value }
+          config.tier_thresholds = { ...DEFAULT_THRESHOLDS, ...(item.config_value as typeof DEFAULT_THRESHOLDS) }
         }
       }
     }
@@ -170,6 +199,9 @@ async function calculateDriverScore(
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
 
+  const oneEightyDaysAgo = new Date()
+  oneEightyDaysAgo.setDate(oneEightyDaysAgo.getDate() - 180)
+
   // Fetch income records (last 30 days) - prioritize Yango data, fallback to manual entries
   // Only include approved records for driver_declared source
   const { data: yangoIncomeRecords } = await supabase
@@ -241,63 +273,78 @@ async function calculateDriverScore(
     .eq('driver_id', driver.id)
     .gte('event_date', thirtyDaysAgoStr)
 
+  // Fetch accidents (last 180 days) for sinistralité
+  const { data: accidentRecords } = await supabase
+    .from('accidents')
+    .select('severity, status, accident_datetime')
+    .eq('driver_id', driver.id)
+    .gte('accident_datetime', oneEightyDaysAgo.toISOString())
+
   // Calculate component scores
   const incomeScore = calculateIncomeScore(incomeRecords || [])
   const paymentScore = calculatePaymentScore(paymentRecords || [])
   const drivingScore = calculateDrivingScore(telemetryRecords || [])
-  const tenureScore = calculateTenureScore(driver.created_at)
+  const sinistreScore = calculateSinistreScore(accidentRecords || [])
 
-  // Determine data availability
-  const incomeDataAvailable = incomeRecords.length > 0
-  const paymentDataAvailable = (paymentRecords?.length || 0) > 0
-  const drivingDataAvailable = (telemetryRecords?.length || 0) > 0
-  
-  // Log income source for debugging
-  console.log(`Driver ${driver.id}: Income source=${incomeSource}, available=${incomeDataAvailable}`)
-
-  // Calculate weighted score
-  let totalWeight = 0
-  let weightedScore = 0
-
-  if (incomeDataAvailable) {
-    weightedScore += incomeScore.normalized * config.weights.income_stability
-    totalWeight += config.weights.income_stability
+  // Data availability per factor
+  const available: Record<FactorKey, boolean> = {
+    income_stability: incomeRecords.length > 0,
+    payment_history: (paymentRecords?.length || 0) > 0,
+    driving_behavior: (telemetryRecords?.length || 0) > 0,
+    sinistralite: true, // absence of accidents = clean record (perfect score)
+    infractions: false, // TODO: wire when cgi_contraventions table exists
+    credit: false,      // TODO: wire when loans schedule/repayments tracked
   }
-  if (paymentDataAvailable) {
-    weightedScore += paymentScore.normalized * config.weights.payment_history
-    totalWeight += config.weights.payment_history
-  }
-  if (drivingDataAvailable) {
-    weightedScore += drivingScore.normalized * config.weights.driving_behavior
-    totalWeight += config.weights.driving_behavior
-  }
-  // Tenure always available
-  weightedScore += tenureScore.normalized * config.weights.tenure
-  totalWeight += config.weights.tenure
 
-  // Normalize to 300-900 range
-  const normalizedScore = totalWeight > 0 ? weightedScore / totalWeight : 0
-  const finalScore = Math.round(300 + normalizedScore * 600)
-  const clampedScore = Math.max(300, Math.min(900, finalScore))
+  const factorNormalized: Record<FactorKey, number> = {
+    income_stability: incomeScore.normalized,
+    payment_history: paymentScore.normalized,
+    driving_behavior: drivingScore.normalized,
+    sinistralite: sinistreScore.normalized,
+    infractions: 0,
+    credit: 0,
+  }
+
+  console.log(`Driver ${driver.id}: Income source=${incomeSource}, factors=`, available)
+
+  // Renormalize weights across available factors so unavailable factors don't drag score to base
+  let totalAvailableWeight = 0
+  for (const k of Object.keys(available) as FactorKey[]) {
+    if (available[k]) totalAvailableWeight += (config.weights[k] || 0)
+  }
+
+  let clampedScore: number
+  if (totalAvailableWeight <= 0) {
+    clampedScore = SCORE_BASE
+  } else {
+    let weightedNormalized = 0
+    for (const k of Object.keys(available) as FactorKey[]) {
+      if (available[k]) {
+        weightedNormalized += factorNormalized[k] * (config.weights[k] || 0)
+      }
+    }
+    const normalizedScore = weightedNormalized / totalAvailableWeight // 0..1
+    const finalScore = Math.round(SCORE_MIN + normalizedScore * (SCORE_MAX - SCORE_MIN))
+    clampedScore = Math.max(SCORE_MIN, Math.min(SCORE_MAX, finalScore))
+  }
 
   // Determine tier
   const tier = determineTier(clampedScore, config.tier_thresholds)
 
-  // Determine status
-  const status = (incomeDataAvailable && paymentDataAvailable && drivingDataAvailable) 
-    ? 'confirmed' 
+  // Status: confirmed only when all "wireable" factors (the 4 with sources) are present
+  const status = (available.income_stability && available.payment_history && available.driving_behavior)
+    ? 'confirmed'
     : 'provisional'
 
-  // Calculate impacts (points contributed)
-  const incomeImpact = incomeDataAvailable 
-    ? Math.round(incomeScore.normalized * config.weights.income_stability * 600) 
-    : null
-  const paymentImpact = paymentDataAvailable 
-    ? Math.round(paymentScore.normalized * config.weights.payment_history * 600) 
-    : null
-  const drivingImpact = drivingDataAvailable 
-    ? Math.round(drivingScore.normalized * config.weights.driving_behavior * 600) 
-    : null
+  // Impact points: contribution to the 0..1000 score, scaled by renormalized weight share
+  const impactFor = (k: FactorKey) => {
+    if (!available[k] || totalAvailableWeight <= 0) return null
+    const share = (config.weights[k] || 0) / totalAvailableWeight
+    return Math.round(factorNormalized[k] * share * (SCORE_MAX - SCORE_MIN))
+  }
+  const incomeImpact = impactFor('income_stability')
+  const paymentImpact = impactFor('payment_history')
+  const drivingImpact = impactFor('driving_behavior')
 
   // Insert credit score record with income source tracking
   const { data: scoreRecord, error: insertError } = await supabase
@@ -344,57 +391,33 @@ async function calculateDriverScore(
     }
   }
 
-  // Insert breakdown details if we have a score record
+  // Insert breakdowns for all 6 factors (mark unavailable ones)
   if (scoreRecord?.id) {
-    const breakdowns = []
-    
-    if (incomeDataAvailable) {
-      breakdowns.push({
-        credit_score_id: scoreRecord.id,
-        factor: 'income_stability',
-        raw_value: incomeScore.raw,
-        normalized_value: incomeScore.normalized,
-        weight_applied: config.weights.income_stability,
-        impact_points: incomeImpact,
-        data_available: true
-      })
+    const rawFor: Record<FactorKey, number> = {
+      income_stability: incomeScore.raw,
+      payment_history: paymentScore.raw,
+      driving_behavior: drivingScore.raw,
+      sinistralite: sinistreScore.raw,
+      infractions: 0,
+      credit: 0,
     }
-    
-    if (paymentDataAvailable) {
-      breakdowns.push({
-        credit_score_id: scoreRecord.id,
-        factor: 'payment_history',
-        raw_value: paymentScore.raw,
-        normalized_value: paymentScore.normalized,
-        weight_applied: config.weights.payment_history,
-        impact_points: paymentImpact,
-        data_available: true
-      })
+    const notesFor: Partial<Record<FactorKey, string>> = {
+      infractions: 'En attente — source cgi_contraventions non disponible',
+      credit: 'En attente — données de remboursement loans non disponibles',
     }
-    
-    if (drivingDataAvailable) {
-      breakdowns.push({
-        credit_score_id: scoreRecord.id,
-        factor: 'driving_behavior',
-        raw_value: drivingScore.raw,
-        normalized_value: drivingScore.normalized,
-        weight_applied: config.weights.driving_behavior,
-        impact_points: drivingImpact,
-        data_available: true
-      })
-    }
-    
-    breakdowns.push({
+    const breakdowns = (Object.keys(config.weights) as FactorKey[]).map((k) => ({
       credit_score_id: scoreRecord.id,
-      factor: 'tenure',
-      raw_value: tenureScore.raw,
-      normalized_value: tenureScore.normalized,
-      weight_applied: config.weights.tenure,
-      impact_points: Math.round(tenureScore.normalized * config.weights.tenure * 600),
-      data_available: true
-    })
-
+      factor: k,
+      raw_value: rawFor[k],
+      normalized_value: factorNormalized[k],
+      weight_applied: config.weights[k] || 0,
+      impact_points: impactFor(k),
+      data_available: available[k],
+      notes: notesFor[k] || null,
+    }))
     if (breakdowns.length > 0) {
+      // Clear prior breakdowns for this score then insert fresh
+      await supabase.from('credit_score_breakdowns').delete().eq('credit_score_id', scoreRecord.id)
       await supabase.from('credit_score_breakdowns').insert(breakdowns)
     }
   }
@@ -497,22 +520,27 @@ function calculateDrivingScore(records: TelemetryRecord[]): { raw: number; norma
   return { raw: totalDistance, normalized }
 }
 
-function calculateTenureScore(createdAt: string): { raw: number; normalized: number } {
-  const created = new Date(createdAt)
-  const now = new Date()
-  const daysSinceJoined = Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24))
-  
-  // Max benefit at 365 days
-  const normalized = Math.min(1, daysSinceJoined / 365)
-  
-  return { raw: daysSinceJoined, normalized }
+/**
+ * Sinistralité — penalty grows with count and severity of accidents.
+ * Severity-weight: minor=1, moderate=3, severe=6, critical=10.
+ * Score = 1 - min(1, weightedCount / 12). Zero accidents → 1.0 (clean).
+ */
+function calculateSinistreScore(records: Array<{ severity?: string | null }>): { raw: number; normalized: number } {
+  if (!records || records.length === 0) return { raw: 0, normalized: 1 }
+  const sev: Record<string, number> = { minor: 1, moderate: 3, severe: 6, critical: 10 }
+  let weighted = 0
+  for (const a of records) {
+    weighted += sev[(a.severity || 'minor').toLowerCase()] ?? 1
+  }
+  const normalized = Math.max(0, 1 - Math.min(1, weighted / 12))
+  return { raw: records.length, normalized }
 }
 
-function determineTier(score: number, thresholds: typeof TIER_THRESHOLDS): string {
-  if (score >= thresholds.A) return 'A'
-  if (score >= thresholds.B) return 'B'
-  if (score >= thresholds.C) return 'C'
-  if (score >= thresholds.D) return 'D'
+function determineTier(score: number, thresholds: typeof DEFAULT_THRESHOLDS): string {
+  if (score >= thresholds.platinum) return 'A'
+  if (score >= thresholds.gold) return 'B'
+  if (score >= thresholds.silver) return 'C'
+  if (score >= thresholds.bronze) return 'D'
   return 'E'
 }
 
