@@ -75,7 +75,7 @@ export default function DriverAlertes() {
 
         {!isLoading && (!alerts || alerts.length === 0) && (
           <EmptyState
-            icon={CheckCircle2}
+            icon={<CheckCircle2 className="h-12 w-12 text-success" />}
             title="Tout est en ordre !"
             description="Vous n'avez aucune alerte pour le moment."
           />
