@@ -26,6 +26,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Card, CardContent } from '@/components/ui/card';
 import { Car, Bike, Calendar, AlertCircle, CheckCircle, SlidersHorizontal, ArrowUpDown, Check, Search, X, ShieldAlert } from 'lucide-react';
+import { FLEET_CATEGORIES, type FleetCategory } from '@/lib/fleetCategories';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -43,6 +44,7 @@ interface Vehicle {
   model_name: string;
   license_plate: string;
   vehicle_type: 'car' | 'bike';
+  fleet_group?: string | null;
   rent_per_day: number;
   status: 'available' | 'rented' | 'maintenance';
   image_url?: string | null;
@@ -50,7 +52,7 @@ interface Vehicle {
 
 type SortOption = 'name' | 'price-asc' | 'price-desc' | 'availability';
 type StatusFilter = 'all' | 'available' | 'rented' | 'maintenance';
-type TypeFilter = 'all' | 'car' | 'bike';
+type TypeFilter = 'all' | FleetCategory;
 
 function useRequestRental() {
   const queryClient = useQueryClient();
@@ -336,9 +338,9 @@ export default function Vehicles() {
       );
     }
 
-    // Apply type filter
+    // Apply fleet category filter (VTC / WARREN / CARGO / N'LOOTTO)
     if (typeFilter !== 'all') {
-      result = result.filter(v => v.vehicle_type === typeFilter);
+      result = result.filter(v => v.fleet_group === typeFilter);
     }
 
     // Apply status filter
@@ -440,37 +442,29 @@ export default function Vehicles() {
 
       {/* Filter and Sort Controls */}
       <div className="px-4 mb-4 flex gap-2">
-        {/* Type Filter Buttons */}
-        <div className="flex bg-muted rounded-lg p-1 flex-1">
+        {/* Fleet category filter (KIRA: VTC / WARREN / CARGO / N'LOOTTO) */}
+        <div className="flex bg-muted rounded-lg p-1 flex-1 overflow-x-auto">
           <button
             onClick={() => setTypeFilter('all')}
             className={cn(
-              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors',
+              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
               typeFilter === 'all' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
             )}
           >
             Tous
           </button>
-          <button
-            onClick={() => setTypeFilter('car')}
-            className={cn(
-              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-1.5',
-              typeFilter === 'car' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Car className="h-4 w-4" />
-            Voitures
-          </button>
-          <button
-            onClick={() => setTypeFilter('bike')}
-            className={cn(
-              'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors flex items-center justify-center gap-1.5',
-              typeFilter === 'bike' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <Bike className="h-4 w-4" />
-            Motos
-          </button>
+          {FLEET_CATEGORIES.map((c) => (
+            <button
+              key={c.value}
+              onClick={() => setTypeFilter(c.value)}
+              className={cn(
+                'flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors whitespace-nowrap',
+                typeFilter === c.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {c.label}
+            </button>
+          ))}
         </div>
 
         {/* Filter Dropdown */}
