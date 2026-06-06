@@ -38,6 +38,9 @@ const TYPE_LABELS: Record<string, string> = {
   contravention_pending: "Contravention",
   inspection_overdue: "Inspection",
   vehicle_immobilized: "Véhicule immobilisé",
+  invoice_overdue: "Facture impayée",
+  kyc_pending_review: "KYC en attente",
+  kyc_rejected: "KYC refusée",
 };
 
 const SEVERITY_STYLES: Record<string, string> = {
