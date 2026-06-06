@@ -906,6 +906,118 @@ export type Database = {
           },
         ]
       }
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          created_at: string
+          customer_id: string | null
+          dedupe_key: string
+          driver_id: string | null
+          due_date: string | null
+          id: string
+          message: string | null
+          metadata: Json
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source_id: string | null
+          source_table: string | null
+          status: string
+          title: string
+          updated_at: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          created_at?: string
+          customer_id?: string | null
+          dedupe_key: string
+          driver_id?: string | null
+          due_date?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_id?: string | null
+          source_table?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          created_at?: string
+          customer_id?: string | null
+          dedupe_key?: string
+          driver_id?: string | null
+          due_date?: string | null
+          id?: string
+          message?: string | null
+          metadata?: Json
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source_id?: string | null
+          source_table?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_acknowledged_by_fkey"
+            columns: ["acknowledged_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badge_definitions: {
         Row: {
           badge_key: string
@@ -4745,6 +4857,7 @@ export type Database = {
         Returns: string
       }
       generate_accident_case_number: { Args: never; Returns: string }
+      generate_fleet_alerts: { Args: never; Returns: number }
       get_driver_360_summary: { Args: { p_driver_id: string }; Returns: Json }
       get_driver_activity_timeline: {
         Args: { p_driver_id: string; p_limit?: number }
