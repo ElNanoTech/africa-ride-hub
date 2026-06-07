@@ -170,12 +170,23 @@ export function DriverLayout({
   );
 
   return (
-    <div className="h-[100dvh] bg-background flex flex-col overflow-hidden">
-      <OverduePaymentModal />
-      <OfflineIndicator />
-      
-      {/* Compact gamified header */}
-      {!hideHeader && (
+    <div className="md:h-[100dvh] md:bg-gradient-to-br md:from-violet-600 md:via-purple-600 md:to-fuchsia-600 md:flex md:items-center md:justify-center md:p-6 md:overflow-hidden">
+      {/* Desktop framing label */}
+      <div className="hidden md:flex md:absolute md:top-6 md:left-1/2 md:-translate-x-1/2 md:items-center md:gap-2 md:text-white/90 md:text-sm md:font-medium md:tracking-wide">
+        <img src={damFlotteLogo} alt="" className="w-5 h-5 rounded-md" />
+        KIRA Driver — Application Chauffeurs
+      </div>
+
+      {/* Phone frame (desktop) / fullscreen (mobile) */}
+      <div className="h-[100dvh] w-full bg-background flex flex-col overflow-hidden md:h-[min(880px,92vh)] md:w-[400px] md:rounded-[2.75rem] md:border-[10px] md:border-black md:shadow-[0_30px_90px_-20px_rgba(0,0,0,0.6)] md:relative md:[transform:translateZ(0)]">
+        {/* Notch (desktop only) */}
+        <div className="hidden md:block md:absolute md:top-0 md:left-1/2 md:-translate-x-1/2 md:w-32 md:h-6 md:bg-black md:rounded-b-2xl md:z-50" />
+
+        <OverduePaymentModal />
+        <OfflineIndicator />
+
+        {/* Compact gamified header */}
+        {!hideHeader && (
         <header className="sticky top-0 z-40 bg-card/95 backdrop-blur-xl border-b border-border/50">
           <div className="flex items-center justify-between px-4 h-14">
             {/* Logo + streak */}
@@ -215,20 +226,21 @@ export function DriverLayout({
             </div>
           </div>
         </header>
-      )}
-      
-      {enablePullToRefresh ? (
-        <PullToRefresh onRefresh={handleRefresh} className="flex-1 overflow-y-auto overscroll-contain">
-          {mainContent}
-        </PullToRefresh>
-      ) : (
-        <div className="flex-1 overflow-y-auto overscroll-contain">
-          {mainContent}
-        </div>
-      )}
-      
-      {!hideNav && <BottomNav />}
-      {!hideNav && <AccidentFAB />}
+        )}
+
+        {enablePullToRefresh ? (
+          <PullToRefresh onRefresh={handleRefresh} className="flex-1 overflow-y-auto overscroll-contain">
+            {mainContent}
+          </PullToRefresh>
+        ) : (
+          <div className="flex-1 overflow-y-auto overscroll-contain">
+            {mainContent}
+          </div>
+        )}
+
+        {!hideNav && <BottomNav />}
+        {!hideNav && <AccidentFAB />}
+      </div>
     </div>
   );
 }
