@@ -178,7 +178,7 @@ export function DriverLayout({
       </div>
 
       {/* Phone frame (desktop) / fullscreen (mobile) */}
-      <div className="h-[100dvh] w-full bg-background flex flex-col overflow-hidden md:h-[min(880px,92vh)] md:w-[400px] md:rounded-[2.75rem] md:border-[10px] md:border-black md:shadow-[0_30px_90px_-20px_rgba(0,0,0,0.6)] md:relative">
+      <div className="h-[100dvh] w-full bg-background flex flex-col overflow-hidden md:h-[min(880px,92vh)] md:w-[400px] md:rounded-[2.75rem] md:border-[10px] md:border-black md:shadow-[0_30px_90px_-20px_rgba(0,0,0,0.6)] md:relative md:[transform:translateZ(0)]">
         {/* Notch (desktop only) */}
         <div className="hidden md:block md:absolute md:top-0 md:left-1/2 md:-translate-x-1/2 md:w-32 md:h-6 md:bg-black md:rounded-b-2xl md:z-50" />
 
