@@ -20,6 +20,7 @@ const supabase = _supabase as any;
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useAdminUser } from '@/hooks/useAdminUser';
 
 type ViolationStatus = 'pending_payment' | 'paid' | 'contested' | 'cancelled' | 'liquidated';
 
@@ -82,6 +83,8 @@ export default function Contraventions() {
       return data || [];
     },
   });
+
+  const { customerId } = useAdminUser();
 
   const filtered = useMemo(() => {
     return violations.filter((v) => {
@@ -295,6 +298,7 @@ export default function Contraventions() {
           open={showAddDialog}
           onOpenChange={setShowAddDialog}
           vehicles={vehicles}
+          customerId={customerId}
           onCreated={() => qc.invalidateQueries({ queryKey: ['contraventions'] })}
         />
 
@@ -308,7 +312,7 @@ export default function Contraventions() {
   );
 }
 
-function AddViolationDialog({ open, onOpenChange, vehicles, onCreated }: any) {
+function AddViolationDialog({ open, onOpenChange, vehicles, customerId, onCreated }: any) {
   const [form, setForm] = useState({
     license_plate: '', pv_number: '', violation_type: 'Excès de vitesse',
     violation_date: new Date().toISOString().slice(0, 16), location: '',
@@ -317,6 +321,22 @@ function AddViolationDialog({ open, onOpenChange, vehicles, onCreated }: any) {
 
   const submit = async () => {
     if (!form.license_plate || !form.amount) return toast.error('Plaque et montant requis');
+    // Auto-derive customer_id from selected vehicle if present, otherwise from
+    // current admin scope. Required so customer-restricted admins can see the
+    // row they just created (RLS scopes by customer_id).
+    let resolvedCustomerId: string | null = customerId ?? null;
+    if (form.vehicle_id) {
+      const veh = vehicles.find((v: any) => v.id === form.vehicle_id);
+      if (veh?.customer_id) resolvedCustomerId = veh.customer_id;
+    }
+    if (!resolvedCustomerId && form.license_plate) {
+      const { data: veh } = await supabase
+        .from('vehicles')
+        .select('customer_id')
+        .ilike('license_plate', form.license_plate.toUpperCase().trim())
+        .maybeSingle();
+      if (veh?.customer_id) resolvedCustomerId = veh.customer_id;
+    }
     const { error } = await supabase.from('traffic_violations').insert({
       license_plate: form.license_plate.toUpperCase().trim(),
       pv_number: form.pv_number || null,
@@ -328,6 +348,7 @@ function AddViolationDialog({ open, onOpenChange, vehicles, onCreated }: any) {
       notes: form.notes || null,
       source: 'manual',
       status: 'pending_payment',
+      customer_id: resolvedCustomerId,
     });
     if (error) return toast.error(error.message);
     toast.success('Contravention enregistrée');
