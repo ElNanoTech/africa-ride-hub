@@ -850,13 +850,15 @@ export function useSendTicketReply() {
       message,
       senderId,
       attachmentUrl,
+      voiceStoragePath,
     }: { 
       ticketId: string; 
       message: string;
       senderId: string;
       attachmentUrl?: string;
+      voiceStoragePath?: string;
     }) => {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('support_ticket_messages')
         .insert({
           ticket_id: ticketId,
@@ -864,9 +866,19 @@ export function useSendTicketReply() {
           sender_id: senderId,
           sender_type: 'admin',
           attachment_url: attachmentUrl || null,
-        });
+          voice_storage_path: voiceStoragePath || null,
+          transcript_status: voiceStoragePath ? 'pending' : null,
+        })
+        .select('id')
+        .single();
       
       if (error) throw error;
+
+      if (voiceStoragePath && data?.id) {
+        supabase.functions.invoke('transcribe-support-audio', { body: { message_id: data.id } }).catch((err) => {
+          console.error('Transcription invoke failed:', err);
+        });
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-tickets'] });
