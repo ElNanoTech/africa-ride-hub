@@ -36,7 +36,7 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
           errorUrl: `${window.location.origin}${returnPath}${returnPath.includes('?') ? '&' : '?'}topup=error`,
         },
       });
-      if (error) throw error;
+      if (error) throw new Error(data?.error || error.message);
       if (!data?.success || !data?.checkout_url) {
         throw new Error(data?.error || 'Erreur Wave');
       }
