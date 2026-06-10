@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
     if (!cust) {
       const { data: created, error } = await admin
         .from("customers")
-        .insert({ name: TEST_CUSTOMER_NAME, is_active: true })
+        .insert({ name: TEST_CUSTOMER_NAME, slug: "e2e-test-fleet-co", is_active: true })
         .select("id, name")
         .single();
       if (error) throw new Error(`customers insert: ${error.message}`);
