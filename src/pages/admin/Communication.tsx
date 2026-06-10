@@ -95,13 +95,6 @@ export default function Communication() {
 }
 
 /* ---------------- Formations ---------------- */
-function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: boolean; reload: () => void }) {
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<Module | null>(null);
-  const [form, setForm] = useState<any>({});
-
-  const openNew = () => { setEditing(null); setForm({ title: "", description: "", category: "safety", video_url: "", duration_minutes: 5, is_mandatory: false, is_published: true, order_index: 0 }); setOpen(true); };
-
 /* ---------------- Tracking ---------------- */
 function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean }) {
   const [selected, setSelected] = useState<Module | null>(null);
