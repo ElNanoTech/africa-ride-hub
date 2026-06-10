@@ -52,6 +52,15 @@ async function main() {
   const me = (await c.auth.getUser()).data.user!;
   console.log(`🔑 Signed in as ${me.email}  customer=${creds.customer_id.slice(0, 8)}\n`);
 
+  // Resolve our admin_users.id — loans/kyc FKs reference admin_users(id), not auth.users(id)
+  const adminRow = await c
+    .from("admin_users")
+    .select("id")
+    .eq("user_id", me.id)
+    .maybeSingle();
+  const adminId = adminRow.data?.id as string | undefined;
+  log({ module: "Setup", step: "resolve admin_users.id", ok: !!adminId, detail: adminId?.slice(0, 8) });
+
   // ---------- shared fixtures ----------
   const stamp = Date.now();
   const vehIns = await c
@@ -111,14 +120,14 @@ async function main() {
     log({ module: "KYC", step: "submit pending", ok: true });
     const approve = await c
       .from("kyc_submissions")
-      .update({ status: "approved", reviewed_by: me.id, reviewed_at: new Date().toISOString() })
+      .update({ status: "verified", reviewed_by: adminId, reviewed_at: new Date().toISOString() })
       .eq("id", kyc.data.id)
       .select("id, status")
       .single();
     log({
       module: "KYC",
       step: "admin approves",
-      ok: !approve.error && approve.data?.status === "approved",
+      ok: !approve.error && approve.data?.status === "verified",
       detail: approve.error?.message,
     });
 
@@ -155,7 +164,7 @@ async function main() {
         status: "approved",
         amount_approved: 75000,
         interest_rate: 10,
-        approved_by: me.id,
+        approved_by: adminId,
         approved_at: new Date().toISOString(),
       })
       .eq("id", loan.data.id)
@@ -179,7 +188,7 @@ async function main() {
   if (!loan2.error) {
     const rej = await c
       .from("loans")
-      .update({ status: "rejected", rejection_reason: "Score insuffisant", approved_by: me.id })
+      .update({ status: "rejected", rejection_reason: "Score insuffisant", approved_by: adminId })
       .eq("id", loan2.data.id)
       .select("status, rejection_reason")
       .single();
@@ -235,7 +244,7 @@ async function main() {
       subject: "E2E workflow ticket",
       description: "Wave paiement bloqué",
       status: "open",
-      priority: "medium",
+      priority: "normal",
     })
     .select("id")
     .single();
@@ -247,14 +256,14 @@ async function main() {
     const msg = await c.from("support_ticket_messages").insert({
       ticket_id: ticket.data.id,
       sender_type: "admin",
-      sender_id: me.id,
+      sender_id: adminId ?? me.id,
       message: "Bonjour, nous regardons votre dossier.",
     });
     log({ module: "Support", step: "admin reply message", ok: !msg.error, detail: msg.error?.message });
 
     const resolved = await c
       .from("support_tickets")
-      .update({ status: "resolved", resolved_at: new Date().toISOString(), assigned_to: me.id })
+      .update({ status: "resolved", resolved_at: new Date().toISOString(), assigned_to: adminId })
       .eq("id", ticket.data.id)
       .select("status, resolved_at")
       .single();
@@ -297,28 +306,66 @@ async function main() {
       ok: true,
       detail: `case_number=${acc.data.case_number ?? "(none)"}`,
     });
-    const assigned = await c
+    // Valid transition matrix: SUBMITTED → UNDER_REVIEW → INVESTIGATING →
+    //   PENDING_DETERMINATION → RESOLVED_NOT_AT_FAULT → CLOSED
+    const toReview = await c
       .from("accidents")
-      .update({ assigned_admin_id: me.id, status: "UNDER_INVESTIGATION" })
+      .update({ assigned_admin_id: adminId, status: "UNDER_REVIEW" })
       .eq("id", acc.data.id)
       .select("status, assigned_admin_id")
       .single();
     log({
       module: "Accidents",
-      step: "admin assigns + investigates",
-      ok: !assigned.error && assigned.data?.status === "UNDER_INVESTIGATION",
-      detail: assigned.error?.message,
+      step: "SUBMITTED → UNDER_REVIEW (assign admin)",
+      ok: !toReview.error && toReview.data?.status === "UNDER_REVIEW",
+      detail: toReview.error?.message,
+    });
+    const toInv = await c
+      .from("accidents")
+      .update({ status: "INVESTIGATING" })
+      .eq("id", acc.data.id)
+      .select("status")
+      .single();
+    log({
+      module: "Accidents",
+      step: "UNDER_REVIEW → INVESTIGATING",
+      ok: !toInv.error && toInv.data?.status === "INVESTIGATING",
+      detail: toInv.error?.message,
+    });
+    const toPending = await c
+      .from("accidents")
+      .update({ status: "PENDING_DETERMINATION" })
+      .eq("id", acc.data.id)
+      .select("status")
+      .single();
+    log({
+      module: "Accidents",
+      step: "INVESTIGATING → PENDING_DETERMINATION",
+      ok: !toPending.error,
+      detail: toPending.error?.message,
+    });
+    const toResolved = await c
+      .from("accidents")
+      .update({ status: "RESOLVED_NOT_AT_FAULT" })
+      .eq("id", acc.data.id)
+      .select("status")
+      .single();
+    log({
+      module: "Accidents",
+      step: "PENDING_DETERMINATION → RESOLVED_NOT_AT_FAULT",
+      ok: !toResolved.error,
+      detail: toResolved.error?.message,
     });
     const closed = await c
       .from("accidents")
-      .update({ status: "CLOSED", closed_at: new Date().toISOString() })
+      .update({ status: "CLOSED" })
       .eq("id", acc.data.id)
       .select("status, closed_at")
       .single();
     log({
       module: "Accidents",
-      step: "close case",
-      ok: !closed.error && closed.data?.status === "CLOSED",
+      step: "RESOLVED → CLOSED (auto-sets closed_at)",
+      ok: !closed.error && closed.data?.status === "CLOSED" && !!closed.data?.closed_at,
       detail: closed.error?.message,
     });
     await c.from("accidents").delete().eq("id", acc.data.id);
