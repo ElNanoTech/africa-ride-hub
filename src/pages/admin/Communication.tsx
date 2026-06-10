@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GraduationCap, Megaphone, Sparkles, Plus, Send, Trash2, Pencil } from "lucide-react";
+import { GraduationCap, Megaphone, Sparkles, Plus, Send, Trash2, Pencil, BarChart3, CheckCircle2, Clock, Circle, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -72,12 +72,16 @@ export default function Communication() {
       <Tabs defaultValue="formations">
         <TabsList>
           <TabsTrigger value="formations"><GraduationCap className="h-4 w-4 mr-1" /> Formations</TabsTrigger>
+          <TabsTrigger value="tracking"><BarChart3 className="h-4 w-4 mr-1" /> Suivi</TabsTrigger>
           <TabsTrigger value="ads"><Sparkles className="h-4 w-4 mr-1" /> Publicités</TabsTrigger>
           <TabsTrigger value="broadcasts"><Send className="h-4 w-4 mr-1" /> Marketing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="formations" className="space-y-4">
           <ModulesTab modules={modules} loading={loading} reload={load} />
+        </TabsContent>
+        <TabsContent value="tracking" className="space-y-4">
+          <TrackingTab modules={modules} loading={loading} />
         </TabsContent>
         <TabsContent value="ads" className="space-y-4">
           <AdsTab ads={ads} loading={loading} reload={load} />
@@ -87,6 +91,185 @@ export default function Communication() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+/* ---------------- Formations ---------------- */
+/* ---------------- Tracking ---------------- */
+function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean }) {
+  const [selected, setSelected] = useState<Module | null>(null);
+  const [stats, setStats] = useState<Record<string, any>>({});
+  const [roster, setRoster] = useState<any[]>([]);
+  const [rosterLoading, setRosterLoading] = useState(false);
+
+  // Load completion stats for all modules
+  useEffect(() => {
+    if (modules.length === 0) return;
+    (async () => {
+      const results: Record<string, any> = {};
+      await Promise.all(modules.map(async (m) => {
+        const { data } = await supabase.rpc("get_module_completion_stats", { p_module_id: m.id });
+        if (data && data[0]) results[m.id] = data[0];
+      }));
+      setStats(results);
+    })();
+  }, [modules]);
+
+  const openRoster = async (m: Module) => {
+    setSelected(m);
+    setRosterLoading(true);
+    // Drivers (scoped by customer if module has one) + their progress for this module
+    const sb: any = supabase;
+    let driversQ: any = sb.from("drivers").select("id, full_name, phone, customer_id").eq("status", "active");
+    if (m.customer_id) driversQ = driversQ.eq("customer_id", m.customer_id);
+    const [drvRes, progRes] = await Promise.all([
+      driversQ,
+      supabase.from("training_progress").select("*").eq("module_id", m.id),
+    ]);
+    const progMap: Record<string, any> = {};
+    (progRes.data ?? []).forEach((p: any) => { progMap[p.driver_id] = p; });
+    const list = (drvRes.data ?? []).map((d: any) => ({ ...d, progress: progMap[d.id] }));
+    list.sort((a, b) => {
+      const sa = a.progress?.status ?? "not_started";
+      const sb = b.progress?.status ?? "not_started";
+      const order: Record<string, number> = { completed: 0, in_progress: 1, not_started: 2 };
+      return (order[sa] ?? 3) - (order[sb] ?? 3);
+    });
+    setRoster(list);
+    setRosterLoading(false);
+  };
+
+  const exportCSV = () => {
+    if (!selected) return;
+    const rows = [["Chauffeur", "Téléphone", "Statut", "Progression %", "Score", "Démarré", "Terminé"]];
+    roster.forEach((r) => {
+      const p = r.progress;
+      rows.push([
+        r.full_name ?? "",
+        r.phone ?? "",
+        p?.status ?? "not_started",
+        String(p?.progress_percent ?? 0),
+        p?.score != null ? String(p.score) : "",
+        p?.started_at ? format(new Date(p.started_at), "dd/MM/yyyy HH:mm") : "",
+        p?.completed_at ? format(new Date(p.completed_at), "dd/MM/yyyy HH:mm") : "",
+      ]);
+    });
+    const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `formation-${selected.title.replace(/\W+/g, "_")}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  const sendReminders = async () => {
+    const res = await supabase.functions.invoke("training-reminders", { body: { module_id: selected?.id } });
+    if (res.error) toast.error("Erreur: " + res.error.message);
+    else toast.success(`Rappels envoyés à ${res.data?.sent ?? 0} chauffeurs`);
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader><CardTitle>Suivi des formations</CardTitle></CardHeader>
+        <CardContent>
+          {loading ? <p className="text-center py-6 text-muted-foreground">Chargement…</p> :
+            modules.length === 0 ? <p className="text-center py-6 text-muted-foreground">Aucun module à suivre</p> :
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Module</TableHead>
+                <TableHead>Chauffeurs</TableHead>
+                <TableHead>Terminé</TableHead>
+                <TableHead>En cours</TableHead>
+                <TableHead>Non démarré</TableHead>
+                <TableHead>Taux</TableHead>
+                <TableHead>Score moy.</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {modules.map((m) => {
+                  const s = stats[m.id];
+                  const rate = s ? Number(s.completion_rate) : 0;
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell>
+                        <div className="font-medium">{m.title}</div>
+                        <div className="flex gap-1 mt-1">
+                          {m.is_mandatory && <Badge variant="outline" className="text-[10px]">Obligatoire</Badge>}
+                          {!m.is_published && <Badge variant="secondary" className="text-[10px]">Brouillon</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell>{s?.total_drivers ?? "—"}</TableCell>
+                      <TableCell className="text-green-600 font-medium">{s?.completed ?? 0}</TableCell>
+                      <TableCell className="text-amber-600">{s?.in_progress ?? 0}</TableCell>
+                      <TableCell className="text-muted-foreground">{s?.not_started ?? 0}</TableCell>
+                      <TableCell>
+                        <Badge variant={rate >= 70 ? "default" : rate >= 30 ? "secondary" : "outline"}>{rate}%</Badge>
+                      </TableCell>
+                      <TableCell>{s?.avg_score ? `${s.avg_score}%` : "—"}</TableCell>
+                      <TableCell className="text-right">
+                        <Button size="sm" variant="outline" onClick={() => openRoster(m)}>Détails</Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>}
+        </CardContent>
+      </Card>
+
+      <Dialog open={!!selected} onOpenChange={(v) => !v && setSelected(null)}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{selected?.title}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-sm text-muted-foreground">{roster.length} chauffeur(s)</p>
+            <div className="flex gap-2">
+              {selected?.is_mandatory && (
+                <Button size="sm" variant="outline" onClick={sendReminders}>
+                  <Bell className="h-4 w-4 mr-1" /> Envoyer rappels
+                </Button>
+              )}
+              <Button size="sm" variant="outline" onClick={exportCSV}>Export CSV</Button>
+            </div>
+          </div>
+          {rosterLoading ? <p className="text-center py-6 text-muted-foreground">Chargement…</p> :
+            <Table>
+              <TableHeader><TableRow>
+                <TableHead>Chauffeur</TableHead>
+                <TableHead>Téléphone</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Score</TableHead>
+                <TableHead>Terminé le</TableHead>
+              </TableRow></TableHeader>
+              <TableBody>
+                {roster.map((r) => {
+                  const p = r.progress;
+                  const status = p?.status ?? "not_started";
+                  return (
+                    <TableRow key={r.id}>
+                      <TableCell className="font-medium">{r.full_name}</TableCell>
+                      <TableCell className="text-xs">{r.phone}</TableCell>
+                      <TableCell>
+                        {status === "completed" ? (
+                          <Badge className="bg-green-600 hover:bg-green-700"><CheckCircle2 className="h-3 w-3 mr-1" /> Terminé</Badge>
+                        ) : status === "in_progress" ? (
+                          <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" /> En cours ({p.progress_percent}%)</Badge>
+                        ) : (
+                          <Badge variant="outline"><Circle className="h-3 w-3 mr-1" /> Non démarré</Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>{p?.score != null ? `${p.score}%` : "—"}</TableCell>
+                      <TableCell className="text-xs">{p?.completed_at ? format(new Date(p.completed_at), "dd/MM/yyyy HH:mm", { locale: fr }) : "—"}</TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
