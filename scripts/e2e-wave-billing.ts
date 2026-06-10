@@ -247,6 +247,12 @@ async function main() {
   // =========================================================
   // generate-invoice
   // =========================================================
+  // Mark rental as ended so generate-invoice's active-rental auto-lookup
+  // returns 0 rows. The trigger that creates an invoice when receipts are
+  // recorded only fires for active rentals, so we also avoid clashing with
+  // the receipt-driven invoice from the next block.
+  await svc.from("rentals").update({ status: "completed" }).eq("id", rentalId);
+
   let invoiceId: string | null = null;
   let publicToken: string | null = null;
   {
