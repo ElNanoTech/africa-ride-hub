@@ -478,39 +478,56 @@ function OrderDialog({ open, onOpenChange, vehicles, providers, onCreated }: any
     vehicle_id: '', provider_id: '', order_type: 'repair', priority: 'normal',
     description: '', scheduled_date: '', estimated_cost: '',
   });
+  const [submitting, setSubmitting] = useState(false);
   const submit = async () => {
     if (!form.vehicle_id) return toast.error('Sélectionnez un véhicule');
-    const { error } = await supabase.from('maintenance_orders').insert({
-      vehicle_id: form.vehicle_id,
-      provider_id: form.provider_id || null,
-      order_type: form.order_type,
-      priority: form.priority,
-      description: form.description || null,
-      scheduled_date: form.scheduled_date || null,
-      estimated_cost: parseInt(form.estimated_cost || '0', 10) || 0,
-      status: 'to_validate',
-    });
-    if (error) return toast.error(error.message);
-    toast.success('Ordre créé');
-    onCreated();
-    onOpenChange(false);
-    setForm({ vehicle_id: '', provider_id: '', order_type: 'repair', priority: 'normal', description: '', scheduled_date: '', estimated_cost: '' });
+    setSubmitting(true);
+    try {
+      const { error } = await supabase.from('maintenance_orders').insert({
+        vehicle_id: form.vehicle_id,
+        provider_id: form.provider_id || null,
+        order_type: form.order_type,
+        priority: form.priority,
+        description: form.description || null,
+        scheduled_date: form.scheduled_date || null,
+        estimated_cost: parseInt(form.estimated_cost || '0', 10) || 0,
+        status: 'to_validate',
+      });
+      if (error) throw error;
+      toast.success('Ordre créé');
+      onCreated();
+      onOpenChange(false);
+      setForm({ vehicle_id: '', provider_id: '', order_type: 'repair', priority: 'normal', description: '', scheduled_date: '', estimated_cost: '' });
+    } catch (e: any) {
+      toast.error(e?.message || "Impossible de créer l'ordre");
+    } finally {
+      setSubmitting(false);
+    }
   };
+  const canSubmit = !!form.vehicle_id && !submitting;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader><DialogTitle>Nouvel ordre de travail</DialogTitle></DialogHeader>
         <div className="space-y-3">
           <div>
-            <Label>Véhicule</Label>
+            <Label>Véhicule <span className="text-destructive">*</span></Label>
             <Select value={form.vehicle_id} onValueChange={(v) => setForm({ ...form, vehicle_id: v })}>
-              <SelectTrigger><SelectValue placeholder="Choisir…" /></SelectTrigger>
+              <SelectTrigger aria-invalid={!form.vehicle_id} className={!form.vehicle_id ? 'border-destructive/60' : ''}>
+                <SelectValue placeholder="Choisir un véhicule…" />
+              </SelectTrigger>
               <SelectContent>
                 {vehicles.map((v: any) => (
                   <SelectItem key={v.id} value={v.id}>{v.license_plate} — {v.make} {v.model}</SelectItem>
                 ))}
+                {vehicles.length === 0 && (
+                  <div className="px-3 py-2 text-sm text-muted-foreground">Aucun véhicule disponible</div>
+                )}
               </SelectContent>
             </Select>
+            {!form.vehicle_id && (
+              <p className="text-xs text-muted-foreground mt-1">Requis pour créer l'ordre.</p>
+            )}
           </div>
           <div>
             <Label>Prestataire</Label>
@@ -559,8 +576,10 @@ function OrderDialog({ open, onOpenChange, vehicles, providers, onCreated }: any
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={submit}>Créer</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>Annuler</Button>
+          <Button onClick={submit} disabled={!canSubmit}>
+            {submitting ? 'Création…' : 'Créer'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
