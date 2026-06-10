@@ -334,6 +334,14 @@ function TicketDetailDialog({
                         </div>
                       )}
                       {message.message !== '🎤 Message vocal' && message.message}
+                      {message.attachment_url && (message as any).transcript_status && (
+                        <div className="mt-2 text-xs italic opacity-80 whitespace-pre-wrap">
+                          {(message as any).transcript_status === 'ready' && (message as any).transcript}
+                          {(message as any).transcript_status === 'processing' && '⏳ Transcription en cours…'}
+                          {(message as any).transcript_status === 'pending' && '⏳ Transcription en attente…'}
+                          {(message as any).transcript_status === 'failed' && '⚠️ Transcription indisponible'}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
