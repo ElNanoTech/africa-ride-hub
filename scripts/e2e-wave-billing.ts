@@ -156,9 +156,16 @@ async function main() {
     });
   }
   {
-    const r = await callFn("wave-checkout", accessToken, {
-      paymentId, amount: 60000, driverPhone: "+22588800001",
-    });
+    const r = await fetch(fnUrl("wave-checkout"), {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: ANON_KEY,
+        "Content-Type": "application/json",
+        Origin: "https://damafricahub.com",
+      },
+      body: JSON.stringify({ paymentId, amount: 60000, driverPhone: "+22588800001" }),
+    }).then(async (res) => ({ status: res.status, body: await res.json().catch(() => ({})) }));
     const ok = r.status === 200 && typeof (r.body as any)?.checkout_url === "string";
     log({
       module: "wave-checkout",
