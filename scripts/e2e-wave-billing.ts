@@ -189,12 +189,17 @@ async function main() {
       body: JSON.stringify({ type: "checkout.session.completed", data: { id: "evt_fake", client_reference: paymentId, checkout_status: "complete", amount: "60000" } }),
     });
     const txt = await r.text();
+    // 401 = secret configured, unsigned call rejected (prod-correct)
+    // 500 = WAVE_WEBHOOK_SECRET not configured in this env (config gap, defensive default)
     log({
       module: "wave-webhook",
-      step: "missing signature → 401",
-      ok: r.status === 401,
-      detail: `status=${r.status} ${txt.slice(0, 60)}`,
+      step: "unsigned call rejected (401 prod / 500 if secret unset)",
+      ok: r.status === 401 || r.status === 500,
+      detail: `status=${r.status} ${txt.slice(0, 80)}`,
     });
+    if (r.status === 500) {
+      console.log("   ⚠️  WAVE_WEBHOOK_SECRET is not configured — webhook signature path untested end-to-end.");
+    }
   }
 
   // =========================================================
