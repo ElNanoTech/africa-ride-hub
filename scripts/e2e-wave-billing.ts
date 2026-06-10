@@ -262,7 +262,8 @@ async function main() {
     const r = await callFn("generate-invoice", accessToken, {
       driver_id: driverId,
       customer_id: creds.customer_id,
-      rental_id: rentalId,
+      // omit rental_id so we test invoice creation without the
+      // one-invoice-per-rental constraint kicking in on reruns.
       lines: [
         { designation: "Location semaine test", unit_price: 60000, quantity: 1 },
         { designation: "Frais admin", unit_price: 2500, quantity: 1 },
