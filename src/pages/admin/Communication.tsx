@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { GraduationCap, Megaphone, Sparkles, Plus, Send, Trash2, Pencil } from "lucide-react";
+import { GraduationCap, Megaphone, Sparkles, Plus, Send, Trash2, Pencil, BarChart3, CheckCircle2, Clock, Circle, Bell } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -72,12 +72,16 @@ export default function Communication() {
       <Tabs defaultValue="formations">
         <TabsList>
           <TabsTrigger value="formations"><GraduationCap className="h-4 w-4 mr-1" /> Formations</TabsTrigger>
+          <TabsTrigger value="tracking"><BarChart3 className="h-4 w-4 mr-1" /> Suivi</TabsTrigger>
           <TabsTrigger value="ads"><Sparkles className="h-4 w-4 mr-1" /> Publicités</TabsTrigger>
           <TabsTrigger value="broadcasts"><Send className="h-4 w-4 mr-1" /> Marketing</TabsTrigger>
         </TabsList>
 
         <TabsContent value="formations" className="space-y-4">
           <ModulesTab modules={modules} loading={loading} reload={load} />
+        </TabsContent>
+        <TabsContent value="tracking" className="space-y-4">
+          <TrackingTab modules={modules} loading={loading} />
         </TabsContent>
         <TabsContent value="ads" className="space-y-4">
           <AdsTab ads={ads} loading={loading} reload={load} />
