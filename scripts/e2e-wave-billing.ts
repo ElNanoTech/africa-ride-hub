@@ -100,7 +100,8 @@ async function main() {
     .select("id").single();
   const vehicleId = veh!.id as string;
 
-  const { data: rental, error: rentalErr } = await c
+  // Insert rental via service role to bypass tenant-tagging quirks for the test fixture.
+  const { data: rental, error: rentalErr } = await svc
     .from("rentals")
     .insert({
       driver_id: driverId,
@@ -110,10 +111,14 @@ async function main() {
       requested_rate: 12000,
       approved_rate: 12000,
       final_rate: 12000,
+      customer_id: creds.customer_id,
     })
     .select("id").single();
-  if (rentalErr) log({ module: "Setup", step: "rental", ok: false, detail: rentalErr.message });
-  const rentalId = rental?.id as string;
+  if (rentalErr) {
+    log({ module: "Setup", step: "rental", ok: false, detail: rentalErr.message });
+    return summarize();
+  }
+  const rentalId = rental.id as string;
 
   const { data: pay } = await c
     .from("payments")
