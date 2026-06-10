@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
         user_id: userId,
         email: TEST_EMAIL,
         full_name: "E2E Customer Admin",
-        role_key: "fleet_admin",
+        role_key: "manager",
         customer_id: cust!.id,
         is_platform_owner: false,
         is_active: true,
@@ -84,6 +84,7 @@ Deno.serve(async (req) => {
           customer_id: cust!.id,
           is_platform_owner: false,
           is_active: true,
+          role_key: "manager",
         })
         .eq("id", existingAdmin.id);
     }
