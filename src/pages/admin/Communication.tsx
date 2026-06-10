@@ -272,9 +272,8 @@ function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean
   );
 }
 
-function _ModulesTab_continued() { return null; }
-
-function ModulesTabImpl({ modules, loading, reload }: { modules: Module[]; loading: boolean; reload: () => void }) {
+/* ---------------- Formations ---------------- */
+function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: boolean; reload: () => void }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Module | null>(null);
   const [form, setForm] = useState<any>({});
