@@ -137,6 +137,7 @@ export type Database = {
           checklist_tag: string | null
           created_at: string
           customer_id: string | null
+          duration_seconds: number | null
           file_type: string
           file_url: string
           id: string
@@ -145,6 +146,9 @@ export type Database = {
           size_bytes: number | null
           storage_path: string | null
           thumbnail_url: string | null
+          transcript: string | null
+          transcript_lang: string | null
+          transcript_status: string | null
           uploaded_by: string | null
         }
         Insert: {
@@ -152,6 +156,7 @@ export type Database = {
           checklist_tag?: string | null
           created_at?: string
           customer_id?: string | null
+          duration_seconds?: number | null
           file_type: string
           file_url: string
           id?: string
@@ -160,6 +165,9 @@ export type Database = {
           size_bytes?: number | null
           storage_path?: string | null
           thumbnail_url?: string | null
+          transcript?: string | null
+          transcript_lang?: string | null
+          transcript_status?: string | null
           uploaded_by?: string | null
         }
         Update: {
@@ -167,6 +175,7 @@ export type Database = {
           checklist_tag?: string | null
           created_at?: string
           customer_id?: string | null
+          duration_seconds?: number | null
           file_type?: string
           file_url?: string
           id?: string
@@ -175,6 +184,9 @@ export type Database = {
           size_bytes?: number | null
           storage_path?: string | null
           thumbnail_url?: string | null
+          transcript?: string | null
+          transcript_lang?: string | null
+          transcript_status?: string | null
           uploaded_by?: string | null
         }
         Relationships: [

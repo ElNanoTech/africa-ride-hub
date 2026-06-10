@@ -14,7 +14,7 @@ export type AccidentStatus =
 
 export type AccidentSeverity = 'UNKNOWN' | 'MINOR' | 'MODERATE' | 'SEVERE';
 
-export type FileType = 'PHOTO' | 'VIDEO' | 'DOCUMENT' | 'POLICE_REPORT' | 'WITNESS';
+export type FileType = 'PHOTO' | 'VIDEO' | 'DOCUMENT' | 'POLICE_REPORT' | 'WITNESS' | 'AUDIO';
 
 export type PartyType = 'OTHER_DRIVER' | 'WITNESS' | 'POLICE';
 
@@ -92,5 +92,6 @@ export function fileTypeFromMime(mime: string | null | undefined): FileType {
   if (!mime) return 'DOCUMENT';
   if (mime.startsWith('image/')) return 'PHOTO';
   if (mime.startsWith('video/')) return 'VIDEO';
+  if (mime.startsWith('audio/')) return 'AUDIO';
   return 'DOCUMENT';
 }

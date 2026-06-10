@@ -22,6 +22,7 @@ import { RequestInfoModal } from '@/components/sinistres/RequestInfoModal';
 import { LoadingState } from '@/components/LoadingState';
 import { AdminFileUploader } from '@/components/sinistres/AdminFileUploader';
 import { AdminCaseDetailsEditor } from '@/components/sinistres/AdminCaseDetailsEditor';
+import { Languages, Loader2, RefreshCw } from 'lucide-react';
 import {
   useAdminAccident, useAccidentFiles, useAccidentParties, useAccidentTimeline,
   useTransitionAccidentStatus, useAssignAccident, useAddAdminNote, useAdminUsersList,
@@ -338,23 +339,30 @@ export default function AdminSinistreDetail() {
                     {files.length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">Aucune preuve.</p>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {files.map((f) => (
-                          <a key={f.id} href={f.file_url} target="_blank" rel="noreferrer" className="block group">
-                            {f.file_type === 'PHOTO' ? (
-                              <img src={f.file_url} alt="" className="aspect-square object-cover rounded border group-hover:border-primary" />
-                            ) : (
-                              <div className="aspect-square bg-muted rounded border flex flex-col items-center justify-center text-xs p-2 group-hover:border-primary">
-                                <FileText className="h-6 w-6 mb-1" />
-                                <span className="truncate w-full text-center">{f.original_filename ?? f.file_type}</span>
-                              </div>
-                            )}
-                            {f.checklist_tag && (
-                              <div className="text-[10px] text-muted-foreground mt-1 truncate">{f.checklist_tag}</div>
-                            )}
-                          </a>
+                      <>
+                        {/* Audio voice notes — full-width with transcript */}
+                        {files.filter((f) => f.file_type === 'AUDIO').map((f) => (
+                          <AudioEvidence key={f.id} file={f} />
                         ))}
-                      </div>
+                        {/* Non-audio gallery */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {files.filter((f) => f.file_type !== 'AUDIO').map((f) => (
+                            <a key={f.id} href={f.file_url} target="_blank" rel="noreferrer" className="block group">
+                              {f.file_type === 'PHOTO' ? (
+                                <img src={f.file_url} alt="" className="aspect-square object-cover rounded border group-hover:border-primary" />
+                              ) : (
+                                <div className="aspect-square bg-muted rounded border flex flex-col items-center justify-center text-xs p-2 group-hover:border-primary">
+                                  <FileText className="h-6 w-6 mb-1" />
+                                  <span className="truncate w-full text-center">{f.original_filename ?? f.file_type}</span>
+                                </div>
+                              )}
+                              {f.checklist_tag && (
+                                <div className="text-[10px] text-muted-foreground mt-1 truncate">{f.checklist_tag}</div>
+                              )}
+                            </a>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
@@ -695,6 +703,89 @@ function DeterminationDialog({ accidentId, existing, severity }: { accidentId: s
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function AudioEvidence({ file }: { file: any }) {
+  const [status, setStatus] = useState<string>(file.transcript_status ?? (file.transcript ? 'ready' : 'pending'));
+  const [transcript, setTranscript] = useState<string | null>(file.transcript ?? null);
+  const [lang, setLang] = useState<string | null>(file.transcript_lang ?? null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setStatus(file.transcript_status ?? (file.transcript ? 'ready' : 'pending'));
+    setTranscript(file.transcript ?? null);
+    setLang(file.transcript_lang ?? null);
+  }, [file.id, file.transcript, file.transcript_status, file.transcript_lang]);
+
+  // Auto-poll while processing
+  useEffect(() => {
+    if (status !== 'pending' && status !== 'processing') return;
+    const t = setInterval(async () => {
+      const { data } = await supabase
+        .from('accident_files')
+        .select('transcript, transcript_lang, transcript_status')
+        .eq('id', file.id)
+        .maybeSingle();
+      if (data) {
+        setTranscript((data as any).transcript);
+        setLang((data as any).transcript_lang);
+        setStatus((data as any).transcript_status ?? 'ready');
+      }
+    }, 4000);
+    return () => clearInterval(t);
+  }, [status, file.id]);
+
+  const retry = async () => {
+    setBusy(true);
+    setStatus('processing');
+    try {
+      const { error } = await supabase.functions.invoke('transcribe-accident-audio', { body: { file_id: file.id } });
+      if (error) throw error;
+    } catch (e: any) {
+      setStatus('failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardContent className="p-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs font-semibold flex items-center gap-1">
+            🎙️ Message vocal
+            {file.checklist_tag && <span className="text-muted-foreground font-normal">· {file.checklist_tag}</span>}
+          </div>
+          {(status === 'failed' || status === 'ready') && (
+            <Button size="sm" variant="ghost" onClick={retry} disabled={busy}>
+              <RefreshCw className={`h-3 w-3 mr-1 ${busy ? 'animate-spin' : ''}`} /> Re-transcrire
+            </Button>
+          )}
+        </div>
+        <audio controls src={file.file_url} className="w-full h-10" />
+        <div className="text-xs">
+          {status === 'pending' || status === 'processing' ? (
+            <div className="flex items-center gap-2 text-muted-foreground italic">
+              <Loader2 className="h-3 w-3 animate-spin" /> Transcription en cours…
+            </div>
+          ) : status === 'failed' ? (
+            <div className="text-destructive">Échec de la transcription. {transcript}</div>
+          ) : transcript ? (
+            <div className="space-y-1">
+              {lang && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Languages className="h-3 w-3" /> {lang}
+                </div>
+              )}
+              <p className="whitespace-pre-wrap bg-background rounded p-2 border">{transcript}</p>
+            </div>
+          ) : (
+            <span className="italic text-muted-foreground">Pas de transcription disponible.</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

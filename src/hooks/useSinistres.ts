@@ -50,6 +50,10 @@ export interface AccidentFile {
   size_bytes: number | null;
   checklist_tag: string | null;
   created_at: string;
+  transcript?: string | null;
+  transcript_lang?: string | null;
+  transcript_status?: string | null;
+  duration_seconds?: number | null;
 }
 
 export interface AccidentParty {
@@ -316,7 +320,7 @@ export function useUploadAccidentFile() {
 
       const compressed = await compressImage(file).catch(() => file);
       const ft = fileTypeFromMime(compressed.type);
-      const folder = ft === 'PHOTO' ? 'photos' : ft === 'VIDEO' ? 'videos' : 'docs';
+      const folder = ft === 'PHOTO' ? 'photos' : ft === 'VIDEO' ? 'videos' : ft === 'AUDIO' ? 'audio' : 'docs';
       const ext = compressed.name.split('.').pop() || 'bin';
       const path = `${driverProfile.customer_id ?? 'no-tenant'}/${accidentId}/${folder}/${crypto.randomUUID()}.${ext}`;
 
@@ -342,10 +346,19 @@ export function useUploadAccidentFile() {
           storage_path: path,
           size_bytes: compressed.size,
           checklist_tag: checklistTag ?? null,
+          transcript_status: ft === 'AUDIO' ? 'pending' : null,
         })
         .select('*')
         .single();
       if (insErr) throw insErr;
+
+      // Fire-and-forget transcription for audio
+      if (ft === 'AUDIO' && rec?.id) {
+        sb.functions
+          .invoke('transcribe-accident-audio', { body: { file_id: rec.id } })
+          .catch((e: any) => console.warn('Transcription dispatch failed', e));
+      }
+
       return rec as AccidentFile;
     },
     onSuccess: (rec) => {
