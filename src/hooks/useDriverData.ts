@@ -144,7 +144,7 @@ export function useAddTicketMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ ticketId, message, attachmentUrl }: { ticketId: string; message: string; attachmentUrl?: string }) => {
+    mutationFn: async ({ ticketId, message, attachmentUrl, voiceStoragePath }: { ticketId: string; message: string; attachmentUrl?: string; voiceStoragePath?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Non authentifié');
 
@@ -164,11 +164,21 @@ export function useAddTicketMessage() {
           sender_type: 'driver',
           message,
           attachment_url: attachmentUrl || null,
+          voice_storage_path: voiceStoragePath || null,
+          transcript_status: voiceStoragePath ? 'pending' : null,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Fire-and-forget transcription
+      if (voiceStoragePath && data?.id) {
+        supabase.functions.invoke('transcribe-support-audio', { body: { message_id: data.id } }).catch((err) => {
+          console.error('Transcription invoke failed:', err);
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -202,7 +212,7 @@ export function useUploadVoiceNote() {
         .createSignedUrl(fileName, 60 * 60 * 24 * 365);
 
       if (signError || !signed) throw signError ?? new Error('Signed URL failed');
-      return signed.signedUrl;
+      return { signedUrl: signed.signedUrl, storagePath: fileName };
     },
     onError: (error: Error) => {
       toast.error('Erreur lors de l\'envoi du vocal');

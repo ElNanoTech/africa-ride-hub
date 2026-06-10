@@ -3833,6 +3833,10 @@ export type Database = {
           sender_id: string
           sender_type: string
           ticket_id: string
+          transcript: string | null
+          transcript_lang: string | null
+          transcript_status: string | null
+          voice_storage_path: string | null
         }
         Insert: {
           attachment_url?: string | null
@@ -3842,6 +3846,10 @@ export type Database = {
           sender_id: string
           sender_type: string
           ticket_id: string
+          transcript?: string | null
+          transcript_lang?: string | null
+          transcript_status?: string | null
+          voice_storage_path?: string | null
         }
         Update: {
           attachment_url?: string | null
@@ -3851,6 +3859,10 @@ export type Database = {
           sender_id?: string
           sender_type?: string
           ticket_id?: string
+          transcript?: string | null
+          transcript_lang?: string | null
+          transcript_status?: string | null
+          voice_storage_path?: string | null
         }
         Relationships: [
           {
