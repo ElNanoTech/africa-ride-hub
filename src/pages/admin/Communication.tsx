@@ -119,7 +119,8 @@ function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean
     setSelected(m);
     setRosterLoading(true);
     // Drivers (scoped by customer if module has one) + their progress for this module
-    let driversQ: any = supabase.from("drivers").select("id, full_name, phone, customer_id").eq("status", "active");
+    const sb: any = supabase;
+    let driversQ: any = sb.from("drivers").select("id, full_name, phone, customer_id").eq("status", "active");
     if (m.customer_id) driversQ = driversQ.eq("customer_id", m.customer_id);
     const [drvRes, progRes] = await Promise.all([
       driversQ,
