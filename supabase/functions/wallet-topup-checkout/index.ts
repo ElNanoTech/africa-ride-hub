@@ -11,6 +11,14 @@ const WAVE_API_URL = "https://api.wave.com/v1";
 const MIN_TOPUP = 500;
 const MAX_TOPUP = 500000;
 
+function normalizeWavePhone(phone?: string | null): string | null {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, "");
+  if (/^225\d{10}$/.test(digits)) return `+${digits}`;
+  if (/^\d{10}$/.test(digits)) return `+225${digits}`;
+  return null;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -94,6 +102,7 @@ serve(async (req) => {
     }
 
     const origin = req.headers.get("origin") || "";
+    const restrictedMobile = normalizeWavePhone(driver.phone_number);
     const waveResponse = await fetch(`${WAVE_API_URL}/checkout/sessions`, {
       method: "POST",
       headers: {
@@ -106,7 +115,7 @@ serve(async (req) => {
         error_url: errorUrl || `${origin}/driver/portefeuille?topup=error`,
         success_url: successUrl || `${origin}/driver/portefeuille?topup=success`,
         client_reference: payment.id,
-        ...(driver.phone_number ? { restrict_payer_mobile: driver.phone_number } : {}),
+        ...(restrictedMobile ? { restrict_payer_mobile: restrictedMobile } : {}),
       }),
     });
 
@@ -115,7 +124,14 @@ serve(async (req) => {
       console.error(`Wave API error [${waveResponse.status}]:`, errorText);
       // best-effort cleanup
       await service.from("payments").delete().eq("id", payment.id);
-      throw new Error(`Wave API call failed [${waveResponse.status}]`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Wave a refusé la recharge. Vérifiez votre numéro mobile money ou réessayez.",
+          code: "WAVE_CHECKOUT_FAILED",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const session = await waveResponse.json();
