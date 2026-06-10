@@ -98,7 +98,7 @@ Deno.serve(async (req) => {
     if (!bs) {
       await admin.from("customer_billing_settings").insert({
         customer_id: cust!.id,
-        invoice_slug: "e2e",
+        invoice_slug: "E2ETST",
         legal_name: "E2E Test Fleet Co",
         legal_address: "Abidjan, Côte d'Ivoire",
         legal_footer: "Document de test — ne pas comptabiliser",
