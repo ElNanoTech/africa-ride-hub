@@ -223,7 +223,7 @@ async function main() {
       alert_type: "system",
       title: "E2E alert",
       dedupe_key: `e2e-${Date.now()}`,
-      severity: "info",
+      severity: "low",
     },
     "dedupe_key",
   );
@@ -282,8 +282,8 @@ async function main() {
         driver_id: driverId,
         record_date: new Date().toISOString().slice(0, 10),
         source: "yango",
-        gross_amount: 25000,
-        net_amount: 20000,
+        gross_income: 25000,
+        net_income: 20000,
       },
       "source",
     );
@@ -311,12 +311,12 @@ async function main() {
       {
         driver_id: driverId,
         vehicle_id: vehicleId,
-        accident_type: "collision",
-        severity: "minor",
-        status: "reported",
-        reported_at: new Date().toISOString(),
+        incident_type: "COLLISION",
+        severity: "MINOR",
+        status: "SUBMITTED",
+        accident_datetime: new Date().toISOString(),
       },
-      "accident_type",
+      "incident_type",
     );
   }
 
