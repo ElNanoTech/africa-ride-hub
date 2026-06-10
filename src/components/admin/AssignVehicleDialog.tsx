@@ -63,7 +63,7 @@ function useAvailableDrivers(enabled: boolean) {
 
       const { data, error } = await supabase
         .from('drivers')
-        .select('id, full_name, phone_number, driver_status, kyc_verified')
+        .select('id, full_name, phone_number, driver_status, kyc_status')
         .neq('driver_status', 'suspended')
         .order('full_name', { ascending: true })
         .limit(500);
@@ -72,7 +72,7 @@ function useAvailableDrivers(enabled: boolean) {
         .filter((d) => !busyIds.has(d.id as string))
         .map((d) => {
           const status = (d.driver_status as string) ?? 'inactive';
-          const kyc = !!d.kyc_verified;
+          const kyc = (d.kyc_status as string) === 'verified';
           return {
             id: d.id as string,
             full_name: d.full_name as string,
