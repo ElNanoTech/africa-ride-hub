@@ -164,7 +164,7 @@ async function main() {
         "Content-Type": "application/json",
         Origin: "https://damafricahub.com",
       },
-      body: JSON.stringify({ paymentId, amount: 60000, driverPhone: "+22588800001" }),
+      body: JSON.stringify({ paymentId, amount: 60000 }),
     }).then(async (res) => ({ status: res.status, body: await res.json().catch(() => ({})) }));
     const ok = r.status === 200 && typeof (r.body as any)?.checkout_url === "string";
     log({
