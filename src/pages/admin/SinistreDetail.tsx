@@ -706,3 +706,86 @@ function DeterminationDialog({ accidentId, existing, severity }: { accidentId: s
   );
 }
 
+function AudioEvidence({ file }: { file: any }) {
+  const [status, setStatus] = useState<string>(file.transcript_status ?? (file.transcript ? 'ready' : 'pending'));
+  const [transcript, setTranscript] = useState<string | null>(file.transcript ?? null);
+  const [lang, setLang] = useState<string | null>(file.transcript_lang ?? null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setStatus(file.transcript_status ?? (file.transcript ? 'ready' : 'pending'));
+    setTranscript(file.transcript ?? null);
+    setLang(file.transcript_lang ?? null);
+  }, [file.id, file.transcript, file.transcript_status, file.transcript_lang]);
+
+  // Auto-poll while processing
+  useEffect(() => {
+    if (status !== 'pending' && status !== 'processing') return;
+    const t = setInterval(async () => {
+      const { data } = await supabase
+        .from('accident_files')
+        .select('transcript, transcript_lang, transcript_status')
+        .eq('id', file.id)
+        .maybeSingle();
+      if (data) {
+        setTranscript((data as any).transcript);
+        setLang((data as any).transcript_lang);
+        setStatus((data as any).transcript_status ?? 'ready');
+      }
+    }, 4000);
+    return () => clearInterval(t);
+  }, [status, file.id]);
+
+  const retry = async () => {
+    setBusy(true);
+    setStatus('processing');
+    try {
+      const { error } = await supabase.functions.invoke('transcribe-accident-audio', { body: { file_id: file.id } });
+      if (error) throw error;
+    } catch (e: any) {
+      setStatus('failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card className="border-primary/30 bg-primary/5">
+      <CardContent className="p-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div className="text-xs font-semibold flex items-center gap-1">
+            🎙️ Message vocal
+            {file.checklist_tag && <span className="text-muted-foreground font-normal">· {file.checklist_tag}</span>}
+          </div>
+          {(status === 'failed' || status === 'ready') && (
+            <Button size="sm" variant="ghost" onClick={retry} disabled={busy}>
+              <RefreshCw className={`h-3 w-3 mr-1 ${busy ? 'animate-spin' : ''}`} /> Re-transcrire
+            </Button>
+          )}
+        </div>
+        <audio controls src={file.file_url} className="w-full h-10" />
+        <div className="text-xs">
+          {status === 'pending' || status === 'processing' ? (
+            <div className="flex items-center gap-2 text-muted-foreground italic">
+              <Loader2 className="h-3 w-3 animate-spin" /> Transcription en cours…
+            </div>
+          ) : status === 'failed' ? (
+            <div className="text-destructive">Échec de la transcription. {transcript}</div>
+          ) : transcript ? (
+            <div className="space-y-1">
+              {lang && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <Languages className="h-3 w-3" /> {lang}
+                </div>
+              )}
+              <p className="whitespace-pre-wrap bg-background rounded p-2 border">{transcript}</p>
+            </div>
+          ) : (
+            <span className="italic text-muted-foreground">Pas de transcription disponible.</span>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
