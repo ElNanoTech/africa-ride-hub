@@ -332,11 +332,22 @@ async function reportAccident(driverId: string, vehicleId: string, rentalId: str
   }).select("id").single();
   if (error) throw new Error(`accident insert: ${error.message}`);
 
-  // Admin investigates and resolves
-  await sb.from("accidents").update({
-    status: atFault ? "RESOLVED_AT_FAULT" : "RESOLVED_NOT_AT_FAULT",
-    closed_at: addDays(atDate, 5).toISOString(),
-  }).eq("id", acc.id);
+  // Walk the enforced status state machine:
+  //   SUBMITTED → UNDER_REVIEW → INVESTIGATING → PENDING_DETERMINATION
+  //   → RESOLVED_(AT|NOT_AT)_FAULT → CLOSED
+  const steps = [
+    "UNDER_REVIEW",
+    "INVESTIGATING",
+    "PENDING_DETERMINATION",
+    atFault ? "RESOLVED_AT_FAULT" : "RESOLVED_NOT_AT_FAULT",
+    "CLOSED",
+  ];
+  for (const next of steps) {
+    const { error: upErr } = await sb.from("accidents")
+      .update({ status: next, closed_at: next === "CLOSED" ? addDays(atDate, 5).toISOString() : null })
+      .eq("id", acc.id);
+    if (upErr) throw new Error(`accident ${acc.id} → ${next}: ${upErr.message}`);
+  }
 
   if (atFault) {
     await sb.from("driver_score_events").insert({
