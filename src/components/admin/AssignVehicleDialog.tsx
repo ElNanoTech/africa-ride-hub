@@ -27,6 +27,9 @@ type DriverOption = {
   id: string;
   full_name: string;
   phone_number: string | null;
+  driver_status: string;
+  kyc_verified: boolean;
+  assignable: boolean;
 };
 
 type VehicleOption = {
@@ -60,14 +63,27 @@ function useAvailableDrivers(enabled: boolean) {
 
       const { data, error } = await supabase
         .from('drivers')
-        .select('id, full_name, phone_number, driver_status')
-        .eq('driver_status', 'active')
+        .select('id, full_name, phone_number, driver_status, kyc_verified')
+        .neq('driver_status', 'suspended')
         .order('full_name', { ascending: true })
         .limit(500);
       if (error) throw error;
       return (data ?? [])
         .filter((d) => !busyIds.has(d.id as string))
-        .map((d) => ({ id: d.id as string, full_name: d.full_name as string, phone_number: (d.phone_number as string) ?? null }));
+        .map((d) => {
+          const status = (d.driver_status as string) ?? 'inactive';
+          const kyc = !!d.kyc_verified;
+          return {
+            id: d.id as string,
+            full_name: d.full_name as string,
+            phone_number: (d.phone_number as string) ?? null,
+            driver_status: status,
+            kyc_verified: kyc,
+            assignable: status === 'active' && kyc,
+          };
+        })
+        // Show assignable first, then blocked, alphabetically within each group
+        .sort((a, b) => Number(b.assignable) - Number(a.assignable) || a.full_name.localeCompare(b.full_name));
     },
   });
 }
