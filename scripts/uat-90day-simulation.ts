@@ -262,26 +262,10 @@ async function simulateDay(
   }).select("id").single();
   if (invErr) throw new Error(`invoice insert ${invoiceNumber}: ${invErr.message}`);
 
-  const paymentStatus = finalStatus === "paid" ? "paid" : finalStatus === "partial" ? "partial" : "pending";
-  const { data: pay, error: payErr } = await sb.from("payments").insert({
-    driver_id: driverId,
-    rental_id: rentalId,
-    customer_id: CUSTOMER_ID,
-    amount: RENT_PER_DAY,
-    amount_paid: amountPaid,
-    payment_type: "rental",
-    due_date: isoDate(dueDay),
-    status: paymentStatus,
-    paid_date: finalStatus === "paid" || finalStatus === "partial" ? isoDate(new Date(paidAt!)) : null,
-    paid_at: paidAt,
-  }).select("id").single();
-  if (payErr) throw new Error(`payment insert: ${payErr.message}`);
-
-  await sb.from("invoice_payment_link").insert({
-    invoice_id: inv.id, payment_id: pay.id, customer_id: CUSTOMER_ID,
-  });
-
-  // Now update invoice to final state if paid/partial
+  // Skip payments table — triggers `trg_payment_auto_invoice` (creates a
+  // conflicting kind='invoice' row per rental) and `trg_payment_score_event`
+  // (duplicates our manual score events). For simulation purposes we update
+  // the invoice directly to reflect collection status.
   if (finalStatus !== "issued") {
     await sb.from("invoice").update({
       status: finalStatus,
@@ -289,27 +273,29 @@ async function simulateDay(
       paid_at: paidAt,
     }).eq("id", inv.id);
   }
+  void dueDay; // referenced for future payment-due simulation
 
+  const refId = inv.id;
   // Score events
   if (outcome.paid_on_time) {
     await sb.from("driver_score_events").insert({
       driver_id: driverId, customer_id: CUSTOMER_ID,
-      delta: ON_TIME_DELTA, reason: `on_time_payment:${pay.id}`,
+      delta: ON_TIME_DELTA, reason: `on_time_payment:${refId}`,
     });
   } else if (outcome.late) {
     await sb.from("driver_score_events").insert({
       driver_id: driverId, customer_id: CUSTOMER_ID,
-      delta: LATE_DELTA, reason: `late_daily_rental:${pay.id}`,
+      delta: LATE_DELTA, reason: `late_daily_rental:${refId}`,
     });
   } else if (outcome.partial) {
     await sb.from("driver_score_events").insert({
       driver_id: driverId, customer_id: CUSTOMER_ID,
-      delta: PARTIAL_DELTA, reason: `partial_payment:${pay.id}`,
+      delta: PARTIAL_DELTA, reason: `partial_payment:${refId}`,
     });
   } else if (outcome.unpaid) {
     await sb.from("driver_score_events").insert({
       driver_id: driverId, customer_id: CUSTOMER_ID,
-      delta: UNPAID_DELTA, reason: `unpaid_invoice:${pay.id}`,
+      delta: UNPAID_DELTA, reason: `unpaid_invoice:${refId}`,
     });
   }
   if (outcome.aggressive) {
