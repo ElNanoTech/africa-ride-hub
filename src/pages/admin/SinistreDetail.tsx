@@ -338,23 +338,30 @@ export default function AdminSinistreDetail() {
                     {files.length === 0 ? (
                       <p className="text-sm text-muted-foreground italic">Aucune preuve.</p>
                     ) : (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {files.map((f) => (
-                          <a key={f.id} href={f.file_url} target="_blank" rel="noreferrer" className="block group">
-                            {f.file_type === 'PHOTO' ? (
-                              <img src={f.file_url} alt="" className="aspect-square object-cover rounded border group-hover:border-primary" />
-                            ) : (
-                              <div className="aspect-square bg-muted rounded border flex flex-col items-center justify-center text-xs p-2 group-hover:border-primary">
-                                <FileText className="h-6 w-6 mb-1" />
-                                <span className="truncate w-full text-center">{f.original_filename ?? f.file_type}</span>
-                              </div>
-                            )}
-                            {f.checklist_tag && (
-                              <div className="text-[10px] text-muted-foreground mt-1 truncate">{f.checklist_tag}</div>
-                            )}
-                          </a>
+                      <>
+                        {/* Audio voice notes — full-width with transcript */}
+                        {files.filter((f) => f.file_type === 'AUDIO').map((f) => (
+                          <AudioEvidence key={f.id} file={f} />
                         ))}
-                      </div>
+                        {/* Non-audio gallery */}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {files.filter((f) => f.file_type !== 'AUDIO').map((f) => (
+                            <a key={f.id} href={f.file_url} target="_blank" rel="noreferrer" className="block group">
+                              {f.file_type === 'PHOTO' ? (
+                                <img src={f.file_url} alt="" className="aspect-square object-cover rounded border group-hover:border-primary" />
+                              ) : (
+                                <div className="aspect-square bg-muted rounded border flex flex-col items-center justify-center text-xs p-2 group-hover:border-primary">
+                                  <FileText className="h-6 w-6 mb-1" />
+                                  <span className="truncate w-full text-center">{f.original_filename ?? f.file_type}</span>
+                                </div>
+                              )}
+                              {f.checklist_tag && (
+                                <div className="text-[10px] text-muted-foreground mt-1 truncate">{f.checklist_tag}</div>
+                              )}
+                            </a>
+                          ))}
+                        </div>
+                      </>
                     )}
                   </CardContent>
                 </Card>
