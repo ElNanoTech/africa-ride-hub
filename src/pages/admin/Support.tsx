@@ -115,6 +115,7 @@ export default function AdminSupport() {
         message: '🎤 Message vocal',
         senderId: 'admin',
         attachmentUrl: signed.signedUrl,
+        voiceStoragePath: fileName,
       });
     } catch (err) {
       console.error('Voice upload error:', err);
