@@ -220,7 +220,7 @@ async function main() {
     "Alerts",
     "alerts",
     {
-      alert_type: "system",
+      alert_type: "low_score",
       title: "E2E alert",
       dedupe_key: `e2e-${Date.now()}`,
       severity: "low",
@@ -252,7 +252,7 @@ async function main() {
       "loans",
       {
         driver_id: driverId,
-        loan_type: "tv",
+        loan_type: "tv_loan",
         amount_requested: 50000,
         status: "pending",
       },
