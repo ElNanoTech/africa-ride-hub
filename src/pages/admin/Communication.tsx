@@ -279,7 +279,7 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
   const [editing, setEditing] = useState<Module | null>(null);
   const [form, setForm] = useState<any>({});
 
-  const openNew = () => { setEditing(null); setForm({ title: "", description: "", category: "safety", video_url: "", duration_minutes: 5, is_mandatory: false, is_published: true, order_index: 0 }); setOpen(true); };
+  const openNew = () => { setEditing(null); setForm({ title: "", description: "", category: "safety", video_url: "", duration_minutes: 5, is_mandatory: false, is_published: true, order_index: 0, due_days: null }); setOpen(true); };
   const openEdit = (m: Module) => { setEditing(m); setForm(m); setOpen(true); };
 
   const save = async () => {
@@ -289,6 +289,7 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
       duration_minutes: Number(form.duration_minutes) || 0,
       order_index: Number(form.order_index) || 0,
       is_mandatory: !!form.is_mandatory, is_published: !!form.is_published,
+      due_days: form.due_days === "" || form.due_days == null ? null : Number(form.due_days),
     };
     const res = editing
       ? await supabase.from("training_modules").update(payload).eq("id", editing.id)
