@@ -154,6 +154,36 @@ export default function DriverWallet() {
   const balance = data?.wallet?.balance ?? 0;
   const txns = data?.transactions ?? [];
 
+  // Open invoices that wallet credit will auto-apply to (oldest first).
+  const { data: openInvoices = [] } = useQuery({
+    queryKey: ['driver-wallet-open-invoices', driverId],
+    enabled: !!driverId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('invoice')
+        .select('id, invoice_number, total_ttc, amount_paid, remaining_due, status, issued_at, period_start, period_end')
+        .eq('driver_id', driverId!)
+        .in('status', ['issued', 'partial', 'overdue'])
+        .order('issued_at', { ascending: true })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  // Compute how much of the balance is "reserved" against each invoice in order.
+  let remainingBalance = balance;
+  const autoPayPlan = openInvoices.map((inv: any) => {
+    const due = Number(inv.remaining_due ?? 0);
+    const applied = Math.max(0, Math.min(remainingBalance, due));
+    remainingBalance -= applied;
+    return { ...inv, applied, leftover: due - applied };
+  });
+  const reserved = balance - remainingBalance;
+  const available = remainingBalance;
+
   return (
     <DriverLayout>
       <div className="space-y-4 pb-24">
@@ -186,6 +216,77 @@ export default function DriverWallet() {
         </Card>
 
         <TopUpSheet open={topUpOpen} onOpenChange={setTopUpOpen} />
+
+        {/* Balance breakdown: Available vs Reserved + auto-pay plan */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Détail du solde</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-lg border bg-success/5 p-3">
+                <p className="text-xs text-muted-foreground">Disponible</p>
+                <p className="text-lg font-bold text-success">{formatCurrency(available)}</p>
+              </div>
+              <div className="rounded-lg border bg-primary/5 p-3">
+                <p className="text-xs text-muted-foreground">Réservé (auto)</p>
+                <p className="text-lg font-bold text-primary">{formatCurrency(reserved)}</p>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-2">
+                Factures réglées automatiquement
+              </p>
+              {autoPayPlan.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-2">
+                  Aucune facture ouverte. Votre solde reste 100 % disponible.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {autoPayPlan.map((inv: any) => {
+                    const due = Number(inv.remaining_due ?? 0);
+                    const fullyCovered = inv.applied >= due && due > 0;
+                    return (
+                      <li key={inv.id} className="py-2 flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <Link
+                            to={`/driver/factures/${inv.id}`}
+                            className="text-sm font-medium text-primary hover:underline"
+                          >
+                            {inv.invoice_number || 'Facture'}
+                          </Link>
+                          <p className="text-[11px] text-muted-foreground">
+                            Restant dû : {formatCurrency(due)}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          {inv.applied > 0 ? (
+                            <>
+                              <p className="text-sm font-semibold text-primary">
+                                −{formatCurrency(inv.applied)}
+                              </p>
+                              <Badge
+                                variant="secondary"
+                                className="mt-0.5 text-[9px] px-1.5 py-0"
+                              >
+                                {fullyCovered ? 'Sera soldée' : 'Partiel'}
+                              </Badge>
+                            </>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] px-1.5 py-0">
+                              En attente de crédit
+                            </Badge>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>
