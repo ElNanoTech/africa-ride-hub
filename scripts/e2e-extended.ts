@@ -239,7 +239,7 @@ async function main() {
       gross_income: 28000,
       net_income: 22000,
       trip_count: 14,
-      source: "manual",
+      source: "driver_declared",
       status: "pending",
     })
     .select("id, customer_id, status")
@@ -283,7 +283,9 @@ async function main() {
         driver_id: driverId,
         amount: 5000,
         type: "credit",
-        reason: "Bonus test",
+        direction: "credit",
+        balance_after: 5000,
+        note: "Bonus test",
       })
       .select("id")
       .single();
@@ -298,6 +300,7 @@ async function main() {
   const inv = await c
     .from("invoice")
     .insert({
+      customer_id: creds.customer_id,
       driver_id: driverId,
       invoice_kind: "invoice",
       status: "issued",
@@ -340,9 +343,12 @@ async function main() {
     .from("geofence_zones")
     .insert({
       name: `Zone Test ${stamp}`,
-      zone_type: "allowed",
-      polygon: { type: "Polygon", coordinates: [[[-4.0,5.3],[-4.0,5.4],[-3.9,5.4],[-3.9,5.3],[-4.0,5.3]]] },
+      zone_type: "circle",
+      center_lat: 5.345,
+      center_lng: -4.005,
+      radius_meters: 2000,
       is_active: true,
+      customer_id: creds.customer_id,
     })
     .select("id, customer_id")
     .single();
@@ -360,12 +366,14 @@ async function main() {
   const pos = await c
     .from("vehicle_positions")
     .insert({
-      vehicle_id: vehicleId,
-      latitude: 5.345,
-      longitude: -4.005,
-      recorded_at: new Date().toISOString(),
-      speed_kph: 42,
+      vehicle_no: `EX-${stamp.toString().slice(-6)}`,
+      imei_no: `imei-${stamp}`,
+      lat: 5.345,
+      lng: -4.005,
+      speed: 42,
       heading: 90,
+      status: "online",
+      customer_id: creds.customer_id,
     })
     .select("id")
     .single();
