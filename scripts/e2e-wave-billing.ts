@@ -110,7 +110,6 @@ async function main() {
       requested_rate: 12000,
       approved_rate: 12000,
       final_rate: 12000,
-      payment_frequency: "weekly",
     })
     .select("id").single();
   if (rentalErr) log({ module: "Setup", step: "rental", ok: false, detail: rentalErr.message });
