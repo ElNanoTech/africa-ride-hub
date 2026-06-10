@@ -83,7 +83,17 @@ Deno.serve(async (req) => {
             role: "user",
             content: [
               { type: "text", text: "Transcribe this voice note from a driver reporting an accident." },
-              { type: "input_audio", input_audio: { data: base64, format: mime.includes("mp3") ? "mp3" : "wav" } },
+              {
+                type: "input_audio",
+                input_audio: {
+                  data: base64,
+                  format: mime.includes("mp3") ? "mp3"
+                    : mime.includes("wav") ? "wav"
+                    : mime.includes("ogg") ? "ogg"
+                    : mime.includes("mp4") || mime.includes("m4a") ? "m4a"
+                    : "webm",
+                },
+              },
             ],
           },
         ],
