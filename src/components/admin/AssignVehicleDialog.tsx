@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/routeClient';
 import { useAdminCreateRental } from '@/hooks/useAdminData';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 const OPEN_RENTAL_STATUSES = [
   'pending',
@@ -227,21 +228,38 @@ export function AssignVehicleDialog({
                         </div>
                       ) : (
                         <>
-                          <CommandEmpty>Aucun conducteur disponible.</CommandEmpty>
+                          <CommandEmpty>Aucun conducteur trouvé.</CommandEmpty>
                           <CommandGroup>
                             {(driversQuery.data ?? []).map((d) => (
                               <CommandItem
                                 key={d.id}
                                 value={`${d.full_name} ${d.phone_number ?? ''}`}
+                                disabled={!d.assignable}
                                 onSelect={() => {
+                                  if (!d.assignable) return;
                                   setSelectedDriverId(d.id);
                                   setDriverPickerOpen(false);
                                 }}
+                                className={cn(!d.assignable && 'opacity-60')}
                               >
-                                <div className="flex flex-col">
-                                  <span>{d.full_name}</span>
+                                <div className="flex flex-col w-full gap-0.5">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span>{d.full_name}</span>
+                                    {!d.assignable && (
+                                      <Badge variant="outline" className="text-[10px] shrink-0">
+                                        {d.driver_status !== 'active' ? 'Inactif' : 'KYC en attente'}
+                                      </Badge>
+                                    )}
+                                  </div>
                                   {d.phone_number && (
                                     <span className="text-xs text-muted-foreground">{d.phone_number}</span>
+                                  )}
+                                  {!d.assignable && (
+                                    <span className="text-[11px] text-muted-foreground">
+                                      {d.driver_status !== 'active'
+                                        ? 'Activez ce conducteur avant de lui allouer un véhicule.'
+                                        : 'Le KYC doit être vérifié avant l\'allocation.'}
+                                    </span>
                                   )}
                                 </div>
                               </CommandItem>
