@@ -230,11 +230,12 @@ function TicketDetailDialog({
   const handleSendVoice = async (audioBlob: Blob) => {
     setIsSendingVoice(true);
     try {
-      const publicUrl = await uploadVoice.mutateAsync({ ticketId: ticket.id, audioBlob });
+      const { signedUrl, storagePath } = await uploadVoice.mutateAsync({ ticketId: ticket.id, audioBlob });
       await addMessage.mutateAsync({
         ticketId: ticket.id,
         message: '🎤 Message vocal',
-        attachmentUrl: publicUrl,
+        attachmentUrl: signedUrl,
+        voiceStoragePath: storagePath,
       });
       onMessageSent();
     } finally {
