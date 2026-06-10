@@ -232,13 +232,13 @@ async function simulateDay(
   const periodStart = isoDate(day);
   const dueDay = addDays(day, 1); // due tomorrow 12pm CI time
   const invoiceNumber = `${SIM_TAG}-${invoiceSeq++}`;
-  let invStatus: "issued" | "paid" | "partial" = "issued";
+  let finalStatus: "issued" | "paid" | "partial" = "issued";
   let amountPaid = 0;
   let paidAt: string | null = null;
 
-  if (outcome.paid_on_time) { invStatus = "paid"; amountPaid = RENT_PER_DAY; paidAt = addDays(day, 0).toISOString(); }
-  else if (outcome.partial) { invStatus = "partial"; amountPaid = Math.round(RENT_PER_DAY * 0.5); paidAt = addDays(day, 3).toISOString(); }
-  else if (outcome.late) { invStatus = "paid"; amountPaid = RENT_PER_DAY; paidAt = addDays(day, 3).toISOString(); }
+  if (outcome.paid_on_time) { finalStatus = "paid"; amountPaid = RENT_PER_DAY; paidAt = addDays(day, 0).toISOString(); }
+  else if (outcome.partial) { finalStatus = "partial"; amountPaid = Math.round(RENT_PER_DAY * 0.5); paidAt = addDays(day, 3).toISOString(); }
+  else if (outcome.late) { finalStatus = "paid"; amountPaid = RENT_PER_DAY; paidAt = addDays(day, 3).toISOString(); }
   // unpaid → stays issued, 0 paid
 
   const { data: inv, error: invErr } = await sb.from("invoice").insert({
@@ -247,7 +247,7 @@ async function simulateDay(
     rental_id: rentalId,
     invoice_kind: "daily_rental",
     invoice_number: invoiceNumber,
-    status: invStatus,
+    status: "issued",
     driver_snapshot_name: driverName,
     subtotal_ht: RENT_PER_DAY,
     vat_amount: 0,
@@ -257,13 +257,12 @@ async function simulateDay(
     legal_name_snapshot: "Test Fleet Co",
     period_start: periodStart,
     period_end: periodStart,
-    amount_paid: amountPaid,
+    amount_paid: 0,
     issued_at: day.toISOString(),
-    paid_at: paidAt,
   }).select("id").single();
   if (invErr) throw new Error(`invoice insert ${invoiceNumber}: ${invErr.message}`);
 
-  const paymentStatus = invStatus === "paid" ? "paid" : invStatus === "partial" ? "partial" : "pending";
+  const paymentStatus = finalStatus === "paid" ? "paid" : finalStatus === "partial" ? "partial" : "pending";
   const { data: pay, error: payErr } = await sb.from("payments").insert({
     driver_id: driverId,
     rental_id: rentalId,
@@ -273,7 +272,7 @@ async function simulateDay(
     payment_type: "rental",
     due_date: isoDate(dueDay),
     status: paymentStatus,
-    paid_date: invStatus === "paid" || invStatus === "partial" ? isoDate(new Date(paidAt!)) : null,
+    paid_date: finalStatus === "paid" || finalStatus === "partial" ? isoDate(new Date(paidAt!)) : null,
     paid_at: paidAt,
   }).select("id").single();
   if (payErr) throw new Error(`payment insert: ${payErr.message}`);
@@ -281,6 +280,15 @@ async function simulateDay(
   await sb.from("invoice_payment_link").insert({
     invoice_id: inv.id, payment_id: pay.id, customer_id: CUSTOMER_ID,
   });
+
+  // Now update invoice to final state if paid/partial
+  if (finalStatus !== "issued") {
+    await sb.from("invoice").update({
+      status: finalStatus,
+      amount_paid: amountPaid,
+      paid_at: paidAt,
+    }).eq("id", inv.id);
+  }
 
   // Score events
   if (outcome.paid_on_time) {
