@@ -67,6 +67,13 @@ serve(async (req) => {
       );
     }
 
+    // Resolve base URL for success/error redirects.
+    // Origin header (preferred) → fallback to PUBLIC_APP_URL env → fallback to a sane default.
+    const origin = req.headers.get("Origin")
+      ?? req.headers.get("origin")
+      ?? Deno.env.get("PUBLIC_APP_URL")
+      ?? "https://damafricahub.com";
+
     // Create Wave Checkout Session
     const waveResponse = await fetch(`${WAVE_API_URL}/checkout/sessions`, {
       method: "POST",
@@ -77,8 +84,8 @@ serve(async (req) => {
       body: JSON.stringify({
         amount: String(Math.round(amount)),
         currency: "XOF",
-        error_url: errorUrl || `${supabaseUrl.replace(".supabase.co", "")}/driver/rental?payment=error`,
-        success_url: successUrl || `${supabaseUrl.replace(".supabase.co", "")}/driver/rental?payment=success`,
+        error_url: errorUrl || `${origin}/driver/rental?payment=error`,
+        success_url: successUrl || `${origin}/driver/rental?payment=success`,
         client_reference: paymentId,
         ...(driverPhone ? { restrict_payer_mobile: driverPhone } : {}),
       }),

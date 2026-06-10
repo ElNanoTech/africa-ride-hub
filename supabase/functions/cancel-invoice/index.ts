@@ -94,6 +94,7 @@ Deno.serve(async (req) => {
       status: "cancelled",
       cancel_reason: reason,
       cancelled_by: userData.user.id,
+      cancelled_at: new Date().toISOString(),
     };
     if (tagsUpdate !== undefined) updatePayload.tags = tagsUpdate;
 
