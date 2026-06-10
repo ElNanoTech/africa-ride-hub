@@ -89,6 +89,25 @@ Deno.serve(async (req) => {
         .eq("id", existingAdmin.id);
     }
 
+    // 4. Ensure billing settings exist for invoice generation tests.
+    const { data: bs } = await admin
+      .from("customer_billing_settings")
+      .select("id")
+      .eq("customer_id", cust!.id)
+      .maybeSingle();
+    if (!bs) {
+      await admin.from("customer_billing_settings").insert({
+        customer_id: cust!.id,
+        invoice_slug: "e2e",
+        legal_name: "E2E Test Fleet Co",
+        legal_address: "Abidjan, Côte d'Ivoire",
+        legal_footer: "Document de test — ne pas comptabiliser",
+        vat_enabled: false,
+        vat_rate: 0,
+        module_enabled: true,
+      });
+    }
+
     return new Response(
       JSON.stringify({
         ok: true,
