@@ -398,6 +398,21 @@ export default function AdminSupport() {
                           {msg.message !== '🎤 Message vocal' && (
                             <p className="text-sm">{msg.message}</p>
                           )}
+                          {msg.attachment_url && (msg as any).transcript_status && (
+                            <div className={`mt-2 text-xs italic whitespace-pre-wrap ${
+                              msg.sender_type === 'admin' ? 'opacity-90' : 'text-muted-foreground'
+                            }`}>
+                              {(msg as any).transcript_status === 'ready' && (
+                                <>
+                                  <span className="font-medium">📝 {(msg as any).transcript_lang || 'Transcription'}:</span>{' '}
+                                  {(msg as any).transcript}
+                                </>
+                              )}
+                              {(msg as any).transcript_status === 'processing' && '⏳ Transcription en cours…'}
+                              {(msg as any).transcript_status === 'pending' && '⏳ Transcription en attente…'}
+                              {(msg as any).transcript_status === 'failed' && '⚠️ Transcription indisponible'}
+                            </div>
+                          )}
                           <p className={`text-xs mt-1 ${
                             msg.sender_type === 'admin' ? 'text-primary-foreground/70' : 'text-muted-foreground'
                           }`}>
