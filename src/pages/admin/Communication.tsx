@@ -362,6 +362,13 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
               <div className="flex items-center justify-between"><Label>Obligatoire</Label><Switch checked={!!form.is_mandatory} onCheckedChange={(v) => setForm({ ...form, is_mandatory: v })} /></div>
               <div className="flex items-center justify-between"><Label>Publié</Label><Switch checked={!!form.is_published} onCheckedChange={(v) => setForm({ ...form, is_published: v })} /></div>
             </div>
+            {form.is_mandatory && (
+              <div>
+                <Label>Délai (jours après publication)</Label>
+                <Input type="number" min={1} placeholder="Ex: 14" value={form.due_days ?? ""} onChange={(e) => setForm({ ...form, due_days: e.target.value })} />
+                <p className="text-xs text-muted-foreground mt-1">Rappels automatiques envoyés aux chauffeurs qui n'ont pas terminé.</p>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Annuler</Button>
