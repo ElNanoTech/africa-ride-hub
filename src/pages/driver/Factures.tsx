@@ -16,7 +16,10 @@ export default function DriverFactures() {
   const { data: invoices, isLoading } = useDriverInvoices(driver?.id);
   useFinancialRealtime({ scope: 'driver', driverId: driver?.id ?? null });
 
-  const facts = invoices?.filter((i) => i.invoice_kind === "invoice") ?? [];
+  // Include both the initial rental invoice and daily rental invoices so the
+  // driver actually sees their billing history. Previously only `invoice_kind`
+  // === "invoice" was shown, which hid every daily rental bill.
+  const facts = invoices?.filter((i) => i.invoice_kind === "invoice" || i.invoice_kind === "daily_rental") ?? [];
   const stats = invoices?.filter((i) => i.invoice_kind === "monthly_statement") ?? [];
 
   const allIds = useMemo(() => (invoices ?? []).map((i) => i.id), [invoices]);

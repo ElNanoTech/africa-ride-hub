@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
     const nowIso = new Date().toISOString();
     const { data: overdue, error: overdueErr } = await supabase
       .from("payments")
-      .select("id, driver_id, customer_id, amount, due_date, rental_id, invoice_id")
+      .select("id, driver_id, customer_id, amount, due_date, rental_id")
       .eq("payment_type", "rental")
       .in("status", ["pending", "partial"])
       .lt("due_date", nowIso.slice(0, 10))
