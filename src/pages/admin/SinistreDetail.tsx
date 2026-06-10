@@ -22,6 +22,8 @@ import { RequestInfoModal } from '@/components/sinistres/RequestInfoModal';
 import { LoadingState } from '@/components/LoadingState';
 import { AdminFileUploader } from '@/components/sinistres/AdminFileUploader';
 import { AdminCaseDetailsEditor } from '@/components/sinistres/AdminCaseDetailsEditor';
+import { Languages, Loader2, RefreshCw } from 'lucide-react';
+import { toast } from 'sonner';
 import {
   useAdminAccident, useAccidentFiles, useAccidentParties, useAccidentTimeline,
   useTransitionAccidentStatus, useAssignAccident, useAddAdminNote, useAdminUsersList,
