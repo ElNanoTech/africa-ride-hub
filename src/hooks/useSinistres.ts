@@ -50,6 +50,10 @@ export interface AccidentFile {
   size_bytes: number | null;
   checklist_tag: string | null;
   created_at: string;
+  transcript?: string | null;
+  transcript_lang?: string | null;
+  transcript_status?: string | null;
+  duration_seconds?: number | null;
 }
 
 export interface AccidentParty {
