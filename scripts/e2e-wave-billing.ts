@@ -107,9 +107,10 @@ async function main() {
       vehicle_id: vehicleId,
       status: "active",
       start_date: new Date().toISOString().slice(0, 10),
-      daily_rate: 12000,
+      requested_rate: 12000,
+      approved_rate: 12000,
+      final_rate: 12000,
       payment_frequency: "weekly",
-      weekly_rate: 60000,
     })
     .select("id").single();
   if (rentalErr) log({ module: "Setup", step: "rental", ok: false, detail: rentalErr.message });
