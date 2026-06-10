@@ -4098,6 +4098,7 @@ export type Database = {
           created_by: string | null
           customer_id: string | null
           description: string | null
+          due_days: number | null
           duration_minutes: number | null
           id: string
           is_mandatory: boolean
@@ -4116,6 +4117,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           description?: string | null
+          due_days?: number | null
           duration_minutes?: number | null
           id?: string
           is_mandatory?: boolean
@@ -4134,6 +4136,7 @@ export type Database = {
           created_by?: string | null
           customer_id?: string | null
           description?: string | null
+          due_days?: number | null
           duration_minutes?: number | null
           id?: string
           is_mandatory?: boolean
@@ -5201,6 +5204,17 @@ export type Database = {
           score: number
           score_change: number
           tier: string
+        }[]
+      }
+      get_module_completion_stats: {
+        Args: { p_module_id: string }
+        Returns: {
+          avg_score: number
+          completed: number
+          completion_rate: number
+          in_progress: number
+          not_started: number
+          total_drivers: number
         }[]
       }
       get_platform_setting: { Args: { p_setting_key: string }; Returns: Json }
