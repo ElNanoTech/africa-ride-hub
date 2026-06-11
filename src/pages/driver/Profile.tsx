@@ -26,7 +26,8 @@ import {
   Phone, Mail, Building2, Shield, 
   Bell, Languages, Info, LogOut, ChevronRight,
   HelpCircle, Edit2, CreditCard, Calendar, Download, RotateCcw, Moon, Sun,
-  Fingerprint, ScanFace, Loader2, Smartphone, ShieldCheck, ShieldX, Receipt
+  Fingerprint, ScanFace, Loader2, Smartphone, ShieldCheck, ShieldX, Receipt,
+  GraduationCap
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
