@@ -22,10 +22,11 @@ Deno.serve(async (req) => {
       userId = created.user.id;
     } else {
       // Try to find existing
-      for (let page = 1; page <= 20 && !userId; page++) {
+      const target = email.toLowerCase();
+      for (let page = 1; page <= 50 && !userId; page++) {
         const { data } = await admin.auth.admin.listUsers({ page, perPage: 200 });
-        const m = data?.users?.find((u: any) => u.email === email);
-        if (m) userId = m.id;
+        const m = data?.users?.find((u: any) => (u.email ?? "").toLowerCase() === target);
+        if (m) { userId = m.id; break; }
         if (!data?.users?.length || data.users.length < 200) break;
       }
       if (!userId) return new Response(JSON.stringify({ error: cErr?.message }), { status: 400, headers: corsHeaders });
