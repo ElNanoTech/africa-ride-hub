@@ -5194,6 +5194,10 @@ export type Database = {
         Args: { p_driver_id: string }
         Returns: boolean
       }
+      force_promote_platform_owner: {
+        Args: { _admin_id: string }
+        Returns: undefined
+      }
       format_invoice_number: {
         Args: { p_customer_id: string; p_n: number; p_year: number }
         Returns: string
