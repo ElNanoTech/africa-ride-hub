@@ -356,6 +356,16 @@ export default function Profile() {
         </h2>
         <Card>
           <CardContent className="p-0 divide-y divide-border">
+            <Link to="/driver/formation" className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors min-h-[48px]">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <GraduationCap className="h-5 w-5 text-primary" />
+                </div>
+                <span className="font-medium">Formation</span>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
+            </Link>
+
             <Link to="/driver/support" className="p-4 flex items-center justify-between hover:bg-muted/50 transition-colors min-h-[48px]">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
