@@ -4,3 +4,5 @@ project_id = "fihrjavcdwpttvnlqqxc"
 verify_jwt = false
 [functions.e2e-bootstrap]
 verify_jwt = false
+[functions.create-admin-oneoff]
+verify_jwt = false
