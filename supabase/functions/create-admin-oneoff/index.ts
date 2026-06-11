@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
       adminId = ins.id;
     }
     // Promote to platform owner via direct SQL (service role bypasses RLS; trigger may still block – try raw)
-    const { error: upErr } = await admin.rpc("exec_promote_platform_owner", { _admin_id: adminId });
+    const { error: upErr } = await admin.rpc("force_promote_platform_owner", { _admin_id: adminId });
     if (upErr) {
       // Fallback: leave as non-platform owner but log
       console.warn("promote failed", upErr.message);
