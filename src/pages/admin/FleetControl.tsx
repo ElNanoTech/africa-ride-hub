@@ -80,8 +80,8 @@ export default function FleetControl() {
           id, vehicle_id, driver_id, status, due_at, submitted_at, reviewed_at,
           rejection_reason, reminder_count, last_reminder_at,
           immobilization_state, immobilization_command_ref,
-          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model, fleet_group ),
-          drivers:drivers!vehicle_inspections_driver_id_fkey ( first_name, last_name )
+          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name, fleet_group ),
+          drivers:drivers!vehicle_inspections_driver_id_fkey ( full_name )
         `)
         .order('due_at', { ascending: true })
         .limit(500);
@@ -132,8 +132,8 @@ export default function FleetControl() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const plate = r.vehicles?.license_plate?.toLowerCase() ?? '';
-        const model = `${r.vehicles?.make ?? ''} ${r.vehicles?.model ?? ''}`.toLowerCase();
-        const driver = `${r.drivers?.first_name ?? ''} ${r.drivers?.last_name ?? ''}`.toLowerCase();
+        const model = `${r.vehicles?.make ?? ''} ${r.vehicles?.model_name ?? ''}`.toLowerCase();
+        const driver = (r.drivers?.full_name ?? '').toLowerCase();
         if (!plate.includes(q) && !model.includes(q) && !driver.includes(q)) return false;
       }
       return true;
@@ -247,8 +247,8 @@ function ControlCard({
   onOpen: () => void;
 }) {
   const plate = row.vehicles?.license_plate ?? '—';
-  const model = [row.vehicles?.make, row.vehicles?.model].filter(Boolean).join(' ') || 'Véhicule';
-  const driverName = row.drivers ? [row.drivers.first_name, row.drivers.last_name].filter(Boolean).join(' ') : null;
+  const model = [row.vehicles?.make, row.vehicles?.model_name].filter(Boolean).join(' ') || 'Véhicule';
+  const driverName = row.drivers?.full_name ?? null;
   const overdueDays = effective === 'overdue' || effective === 'blocked' ? daysOverdue(row.due_at) : 0;
   const totalSubmitted = (agg?.approved ?? 0) + (agg?.rejected ?? 0) + (agg?.submitted ?? 0);
 
