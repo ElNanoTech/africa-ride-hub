@@ -587,7 +587,7 @@ Deno.serve(async (req) => {
     const { data: rental, error: rerr } = await c.from("rentals").insert({
       driver_id: drv!.id, vehicle_id: veh!.id, customer_id: cust!.id,
       status: "active", start_date: new Date().toISOString().slice(0, 10),
-      rental_days: 30, requested_rate: 15000, approved_rate: 15000, final_rate: 15000,
+      rental_days: 1, requested_rate: 15000, approved_rate: 15000, final_rate: 15000,
     }).select("id").single();
     if (rerr) throw new Error(`rental insert: ${rerr.message}`);
 
