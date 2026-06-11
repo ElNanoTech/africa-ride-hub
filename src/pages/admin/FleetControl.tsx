@@ -80,7 +80,7 @@ export default function FleetControl() {
           id, vehicle_id, driver_id, status, due_at, submitted_at, reviewed_at,
           rejection_reason, reminder_count, last_reminder_at,
           immobilization_state, immobilization_command_ref,
-          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model, fleet_group ),
+          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name, fleet_group ),
           drivers:drivers!vehicle_inspections_driver_id_fkey ( first_name, last_name )
         `)
         .order('due_at', { ascending: true })
