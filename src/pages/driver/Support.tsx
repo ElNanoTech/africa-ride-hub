@@ -21,6 +21,7 @@ import { useDriverSupportTickets, useCreateSupportTicket, useDriverId, useAddTic
 import { useSupportRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { VoiceRecorder } from '@/components/VoiceRecorder';
 import { VoicePlayer } from '@/components/VoicePlayer';
+import { Mic } from 'lucide-react';
 
 type TicketStatus = 'open' | 'in_progress' | 'resolved' | 'closed';
 type TicketCategory = 'payment' | 'technical' | 'loan' | 'rental' | 'other';
@@ -92,26 +93,60 @@ function CreateTicketDialog({ onCreated }: { onCreated: () => void }) {
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
-  
+  const [voiceBlob, setVoiceBlob] = useState<Blob | null>(null);
+  const [isSubmittingVoice, setIsSubmittingVoice] = useState(false);
+
   const createTicket = useCreateSupportTicket();
-  const canSubmit = category && subject.length >= 5 && description.length >= 10;
+  const addMessage = useAddTicketMessage();
+  const uploadVoice = useUploadVoiceNote();
+
+  const hasVoice = !!voiceBlob;
+  const canSubmit =
+    !!category &&
+    subject.length >= 5 &&
+    (hasVoice || description.length >= 10);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
 
-    createTicket.mutate(
-      { category, subject, description },
-      {
-        onSuccess: () => {
-          setIsOpen(false);
-          setCategory('');
-          setSubject('');
-          setDescription('');
-          onCreated();
-        },
+    const reset = () => {
+      setIsOpen(false);
+      setCategory('');
+      setSubject('');
+      setDescription('');
+      setVoiceBlob(null);
+      onCreated();
+    };
+
+    try {
+      setIsSubmittingVoice(hasVoice);
+      const ticket = await createTicket.mutateAsync({
+        category,
+        subject,
+        description: description.trim() || '🎤 Message vocal (voir pièce jointe)',
+      });
+
+      if (voiceBlob && ticket?.id) {
+        const { signedUrl, storagePath } = await uploadVoice.mutateAsync({
+          ticketId: ticket.id,
+          audioBlob: voiceBlob,
+        });
+        await addMessage.mutateAsync({
+          ticketId: ticket.id,
+          message: '🎤 Message vocal',
+          attachmentUrl: signedUrl,
+          voiceStoragePath: storagePath,
+        });
       }
-    );
+
+      reset();
+    } catch (err) {
+      // toasts already raised by hooks
+      console.error('Create ticket with voice failed', err);
+    } finally {
+      setIsSubmittingVoice(false);
+    }
   };
 
   return (
@@ -163,10 +198,39 @@ function CreateTicketDialog({ onCreated }: { onCreated: () => void }) {
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Décrivez votre problème en détail..."
+              placeholder={hasVoice ? 'Optionnel — vous avez ajouté un message vocal' : 'Décrivez votre problème en détail...'}
               rows={4}
               maxLength={1000}
             />
+          </div>
+
+          <div className="space-y-2 rounded-lg border border-dashed p-3">
+            <Label className="flex items-center gap-2 text-sm">
+              <Mic className="h-4 w-4 text-primary" />
+              Message vocal (optionnel)
+            </Label>
+            <p className="text-xs text-muted-foreground">
+              Parlez en français, dioula, bambara ou autre — nous transmettrons votre voix au support.
+            </p>
+            <VoiceRecorder
+              onSend={(blob) => setVoiceBlob(blob)}
+              isSending={false}
+              disabled={createTicket.isPending || isSubmittingVoice}
+            />
+            {voiceBlob && (
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-success">✓ Vocal prêt à envoyer</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setVoiceBlob(null)}
+                  className="h-7"
+                >
+                  Retirer
+                </Button>
+              </div>
+            )}
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -181,10 +245,10 @@ function CreateTicketDialog({ onCreated }: { onCreated: () => void }) {
             <HapticButton
               type="submit"
               className="flex-1"
-              disabled={!canSubmit || createTicket.isPending}
+              disabled={!canSubmit || createTicket.isPending || isSubmittingVoice}
               hapticType="success"
             >
-              {createTicket.isPending ? UI.LOADING : SUPPORT.SUBMIT_TICKET}
+              {createTicket.isPending || isSubmittingVoice ? UI.LOADING : SUPPORT.SUBMIT_TICKET}
             </HapticButton>
           </div>
         </form>
