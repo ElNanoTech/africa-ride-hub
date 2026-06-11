@@ -10,6 +10,7 @@ import { useTheme } from 'next-themes';
 import { Settings as SettingsIcon, Bell, Shield, Database, Loader2, KeyRound, Smartphone, MessageCircle, Building2, CheckCircle2 } from 'lucide-react';
 import { useAdminPreferences, useUpdateAdminPreferences } from '@/hooks/useAdminPreferences';
 import { useDriverAuthModeAdmin, type DriverAuthMode } from '@/hooks/useDriverAuthMode';
+import { FleetControlSettingsCard } from '@/components/admin/FleetControlSettingsCard';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useQueryClient } from '@tanstack/react-query';
@@ -343,6 +344,10 @@ export default function AdminSettings() {
           {updatePreferences.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Enregistrer les modifications
         </Button>
+      </div>
+
+      <div className="mt-6">
+        <FleetControlSettingsCard />
       </div>
 
       <AlertDialog open={!!pendingMode} onOpenChange={(o) => !o && setPendingMode(null)}>

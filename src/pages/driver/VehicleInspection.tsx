@@ -6,51 +6,42 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
 import { compressImage } from '@/lib/imageCompression';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import {
+  PHOTO_ZONES,
+  DOCUMENT_ZONES,
+  ALL_ZONES,
+  REQUIRED_ITEM_COUNT,
+  STATUS_LABEL,
+  STATUS_CLASS,
+  effectiveStatus,
+  type ZoneKey,
+  type FleetControlStatus,
+  type ItemValidation,
+} from '@/lib/fleetControl';
 
-// Cast for new Phase 3 tables until types regenerate
+// Supabase types lag the migration sync; cast for the new item-review columns.
 const supabase = _supabase as any;
-
-type Zone =
-  | 'front' | 'rear' | 'left' | 'right' | 'dash' | 'interior' | 'tires'
-  | 'doc_vignette' | 'doc_assurance' | 'doc_carte_parking' | 'doc_carte_grise';
-
-const VISUAL_ZONES: { key: Zone; label: string; help: string }[] = [
-  { key: 'front', label: 'Avant', help: 'Pare-chocs et phares' },
-  { key: 'rear', label: 'Arrière', help: 'Coffre et feux' },
-  { key: 'left', label: 'Côté gauche', help: 'Portes côté conducteur' },
-  { key: 'right', label: 'Côté droit', help: 'Portes côté passager' },
-  { key: 'dash', label: 'Tableau de bord', help: 'Compteur kilométrique visible' },
-  { key: 'interior', label: 'Intérieur', help: 'Sièges et propreté' },
-  { key: 'tires', label: 'Pneus', help: 'État et usure' },
-];
-
-const DOC_ZONES: { key: Zone; label: string; help: string }[] = [
-  { key: 'doc_vignette', label: 'Vignette', help: 'Photo lisible de la vignette' },
-  { key: 'doc_assurance', label: 'Assurance', help: 'Attestation en cours de validité' },
-  { key: 'doc_carte_parking', label: 'Carte parking', help: 'Carte de stationnement' },
-  { key: 'doc_carte_grise', label: 'Carte grise', help: 'Recto lisible' },
-];
-
-const ZONES = [...VISUAL_ZONES, ...DOC_ZONES];
 
 interface Photo {
   id: string;
-  zone: Zone;
+  zone: ZoneKey;
   storage_path: string;
+  validation_status: ItemValidation;
+  rejection_reason: string | null;
 }
 
 interface Inspection {
   id: string;
   vehicle_id: string;
   driver_id: string;
-  status: 'draft' | 'submitted' | 'validated' | 'rejected' | 'expired';
+  status: FleetControlStatus;
   due_at: string;
   submitted_at: string | null;
   rejection_reason: string | null;
@@ -62,19 +53,18 @@ export default function VehicleInspection() {
   const { driverProfile } = useDriverAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [uploadingZone, setUploadingZone] = useState<Zone | null>(null);
+  const [uploadingZone, setUploadingZone] = useState<ZoneKey | null>(null);
   const [notes, setNotes] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
-  const [pendingZone, setPendingZone] = useState<Zone | null>(null);
+  const [pendingZone, setPendingZone] = useState<ZoneKey | null>(null);
 
   const driverId = driverProfile?.id;
 
-  // Get or create the current open inspection for this driver
+  // Get-or-create the current open fleet control for this driver.
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['driver-inspection', driverId],
     enabled: !!driverId,
     queryFn: async () => {
-      // Find current open inspection
       const { data: existing, error } = await supabase
         .from('vehicle_inspections')
         .select(`
@@ -82,7 +72,7 @@ export default function VehicleInspection() {
           vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model )
         `)
         .eq('driver_id', driverId)
-        .in('status', ['draft', 'submitted', 'rejected'])
+        .in('status', ['pending', 'submitted', 'rejected', 'overdue', 'blocked'])
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -91,7 +81,6 @@ export default function VehicleInspection() {
       let inspection: Inspection | null = existing as any;
 
       if (!inspection) {
-        // Find assigned vehicle via active rental
         const { data: rental } = await supabase
           .from('rentals')
           .select('vehicle_id')
@@ -99,8 +88,7 @@ export default function VehicleInspection() {
           .eq('status', 'active')
           .limit(1)
           .maybeSingle();
-
-        if (!rental?.vehicle_id) return { inspection: null, photos: [] as Photo[], vehicle: null };
+        if (!rental?.vehicle_id) return { inspection: null, photos: [] as Photo[] };
 
         const { data: created, error: cErr } = await supabase
           .from('vehicle_inspections')
@@ -108,7 +96,7 @@ export default function VehicleInspection() {
             vehicle_id: rental.vehicle_id,
             driver_id: driverId,
             customer_id: driverProfile?.customer_id ?? null,
-            status: 'draft',
+            status: 'pending',
           })
           .select(`
             id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
@@ -121,7 +109,7 @@ export default function VehicleInspection() {
 
       const { data: photos } = await supabase
         .from('vehicle_inspection_photos')
-        .select('id, zone, storage_path')
+        .select('id, zone, storage_path, validation_status, rejection_reason')
         .eq('inspection_id', inspection!.id);
 
       return { inspection, photos: (photos || []) as Photo[] };
@@ -137,10 +125,13 @@ export default function VehicleInspection() {
     return map;
   }, [photos]);
 
-  const completedCount = ZONES.filter(z => photosByZone[z.key]).length;
-  const canSubmit = completedCount === ZONES.length && inspection?.status !== 'submitted' && inspection?.status !== 'validated';
+  const completedCount = ALL_ZONES.filter(z => photosByZone[z.key]).length;
+  const canSubmit =
+    completedCount === REQUIRED_ITEM_COUNT &&
+    inspection?.status !== 'submitted' &&
+    inspection?.status !== 'approved';
 
-  const handlePickPhoto = (zone: Zone) => {
+  const handlePickPhoto = (zone: ZoneKey) => {
     if (!inspection) return;
     setPendingZone(zone);
     fileRef.current?.click();
@@ -162,34 +153,49 @@ export default function VehicleInspection() {
         .upload(path, compressed, { contentType: compressed.type, upsert: true });
       if (upErr) throw upErr;
 
-      // Upsert photo row (unique on inspection_id+zone)
+      const zoneDef = ALL_ZONES.find(z => z.key === zone)!;
       const existing = photosByZone[zone];
       if (existing) {
-        // Remove the old storage object (best-effort)
         await supabase.storage.from('vehicle-inspections').remove([existing.storage_path]).catch(() => {});
         await supabase
           .from('vehicle_inspection_photos')
-          .update({ storage_path: path })
+          .update({
+            storage_path: path,
+            validation_status: 'pending', // reset review on re-upload
+            rejection_reason: null,
+            submitted_at: new Date().toISOString(),
+          })
           .eq('id', existing.id);
       } else {
         await supabase
           .from('vehicle_inspection_photos')
-          .insert({ inspection_id: inspection.id, zone, storage_path: path });
+          .insert({
+            inspection_id: inspection.id,
+            zone,
+            storage_path: path,
+            customer_id: driverProfile?.customer_id ?? null,
+            vehicle_id: inspection.vehicle_id,
+            driver_id: driverId,
+            item_type: zoneDef.kind === 'document' ? 'document' : 'photo',
+            label: zoneDef.label,
+            validation_status: 'pending',
+            submitted_at: new Date().toISOString(),
+          });
       }
 
-      // Move back to draft if previously rejected
+      // Reset previous rejection so the driver can resubmit cleanly.
       if (inspection.status === 'rejected') {
         await supabase
           .from('vehicle_inspections')
-          .update({ status: 'draft', rejection_reason: null })
+          .update({ status: 'pending', rejection_reason: null })
           .eq('id', inspection.id);
       }
 
-      toast.success('Photo enregistrée');
+      toast.success('Pièce enregistrée');
       queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
     } catch (err: any) {
       console.error(err);
-      toast.error("Échec de l'envoi de la photo");
+      toast.error("Échec de l'envoi de la pièce");
     } finally {
       setUploadingZone(null);
     }
@@ -198,20 +204,17 @@ export default function VehicleInspection() {
   const handleSubmit = async () => {
     if (!inspection || !canSubmit) return;
     try {
-      const { error } = await supabase
-        .from('vehicle_inspections')
-        .update({
-          status: 'submitted',
-          submitted_at: new Date().toISOString(),
-          notes: notes || inspection.notes,
-        })
-        .eq('id', inspection.id);
+      if (notes && notes !== (inspection.notes ?? '')) {
+        await supabase.from('vehicle_inspections').update({ notes }).eq('id', inspection.id);
+      }
+      // SECURITY DEFINER RPC: rechecks completeness, flips items pending→submitted, logs audit.
+      const { error } = await supabase.rpc('fleet_control_submit', { p_control: inspection.id });
       if (error) throw error;
-      toast.success('Inspection envoyée pour validation');
+      toast.success('Contrôle envoyé pour validation');
       queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
     } catch (err: any) {
       console.error(err);
-      toast.error("Échec de l'envoi");
+      toast.error(err?.message ?? "Échec de l'envoi");
     }
   };
 
@@ -245,26 +248,39 @@ export default function VehicleInspection() {
     );
   }
 
-  const isLate = new Date(inspection.due_at).getTime() < Date.now() && inspection.status !== 'validated';
+  const eff = effectiveStatus(inspection.status, inspection.due_at);
+  const isLate = eff === 'overdue';
+  const locked = inspection.status === 'submitted' || inspection.status === 'approved';
 
-  const renderZoneTile = (z: { key: Zone; label: string; help: string }, kind: 'camera' | 'doc') => {
+  const renderZoneTile = (z: { key: ZoneKey; label: string; help: string }, kind: 'camera' | 'doc') => {
     const photo = photosByZone[z.key];
     const busy = uploadingZone === z.key;
-    const locked = inspection.status === 'submitted' || inspection.status === 'validated';
     const Icon = kind === 'doc' ? FileText : Camera;
+    const rejected = photo?.validation_status === 'rejected';
+    const approved = photo?.validation_status === 'approved';
     return (
       <button
         key={z.key}
         onClick={() => handlePickPhoto(z.key)}
         disabled={busy || locked}
         className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
-          photo ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30' : 'border-dashed border-muted-foreground/40 bg-card'
+          rejected
+            ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30'
+            : approved
+              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
+              : photo
+                ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/20'
+                : 'border-dashed border-muted-foreground/40 bg-card'
         } disabled:opacity-60`}
       >
         <div className="flex items-center justify-between">
           <div className="font-medium">{z.label}</div>
-          {photo ? (
+          {approved ? (
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          ) : rejected ? (
+            <AlertTriangle className="h-5 w-5 text-rose-600" />
+          ) : photo ? (
+            <CheckCircle2 className="h-5 w-5 text-blue-500" />
           ) : busy ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : (
@@ -273,7 +289,11 @@ export default function VehicleInspection() {
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
         <div className="text-xs mt-3 font-medium">
-          {photo ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo') : (kind === 'doc' ? 'Toucher pour scanner' : 'Toucher pour photographier')}
+          {rejected && photo?.rejection_reason
+            ? `Refusé : ${photo.rejection_reason}`
+            : photo
+              ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
+              : (kind === 'doc' ? 'Toucher pour scanner' : 'Toucher pour photographier')}
         </div>
       </button>
     );
@@ -283,7 +303,6 @@ export default function VehicleInspection() {
     <DriverLayout>
       <PageHeader title="Contrôle du véhicule" subtitle={inspection.vehicles?.license_plate || ''} />
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
-        {/* Status banner */}
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -293,53 +312,53 @@ export default function VehicleInspection() {
                   {format(new Date(inspection.due_at), 'PPP', { locale: fr })}
                 </div>
               </div>
-              <Badge variant={inspection.status === 'submitted' ? 'default' : 'secondary'}>
-                {inspection.status === 'draft' && 'Brouillon'}
-                {inspection.status === 'submitted' && 'En attente'}
-                {inspection.status === 'validated' && 'Conforme'}
-                {inspection.status === 'rejected' && 'Rejeté'}
-                {inspection.status === 'expired' && 'En retard'}
-              </Badge>
+              <Badge className={STATUS_CLASS[eff]}>{STATUS_LABEL[eff]}</Badge>
             </div>
             <div className="text-sm">
-              {completedCount}/{ZONES.length} photos prises
+              {completedCount}/{REQUIRED_ITEM_COUNT} pièces fournies
             </div>
             {inspection.status === 'rejected' && inspection.rejection_reason && (
               <div className="rounded-md bg-rose-50 dark:bg-rose-950/30 p-3 text-sm text-rose-700 dark:text-rose-300">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                   <div>
-                    <div className="font-medium">Inspection refusée</div>
+                    <div className="font-medium">Contrôle refusé</div>
                     <div className="opacity-90">{inspection.rejection_reason}</div>
                   </div>
+                </div>
+              </div>
+            )}
+            {inspection.status === 'blocked' && (
+              <div className="rounded-md bg-rose-100 dark:bg-rose-950/40 p-3 text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
+                <Ban className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Véhicule bloqué</div>
+                  <div className="opacity-90">Contactez le gestionnaire pour débloquer le véhicule.</div>
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Visual zones grid */}
         <div>
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
             Photos du véhicule
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {VISUAL_ZONES.map((z) => renderZoneTile(z, 'camera'))}
+            {PHOTO_ZONES.map((z) => renderZoneTile(z, 'camera'))}
           </div>
         </div>
 
-        {/* Documents grid */}
         <div>
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
             Documents
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {DOC_ZONES.map((z) => renderZoneTile(z, 'doc'))}
+            {DOCUMENT_ZONES.map((z) => renderZoneTile(z, 'doc'))}
           </div>
         </div>
 
-        {/* Notes */}
-        {inspection.status !== 'submitted' && inspection.status !== 'validated' && (
+        {!locked && (
           <Card>
             <CardContent className="p-4 space-y-2">
               <label className="text-sm font-medium">Remarques (facultatif)</label>
@@ -353,7 +372,6 @@ export default function VehicleInspection() {
           </Card>
         )}
 
-        {/* Actions */}
         <div className="space-y-2 pb-8">
           <Button onClick={handleSubmit} disabled={!canSubmit} className="w-full h-12 text-base" size="lg">
             <Send className="h-5 w-5 mr-2" />
