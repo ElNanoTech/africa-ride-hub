@@ -537,7 +537,7 @@ Deno.serve(async (req) => {
       user_id: adminUserId, email: ADMIN_EMAIL, full_name: "FC E2E Admin",
       role_key: "manager", customer_id: cust!.id, is_platform_owner: false,
       is_active: true, email_verified: true,
-    }, { onConflict: "user_id" });
+    }, { onConflict: "email" });
 
     // Driver auth user
     let driverUserId: string;
