@@ -43,7 +43,7 @@ export interface FleetControlRow {
   immobilization_command_ref: string | null;
   notes?: string | null;
   vehicles?: { license_plate: string | null; make: string | null; model_name: string | null; fleet_group: string | null } | null;
-  drivers?: { first_name: string | null; last_name: string | null } | null;
+  drivers?: { full_name: string | null } | null;
 }
 
 interface ItemRow {
@@ -236,7 +236,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
 
   const plate = row.vehicles?.license_plate ?? '—';
   const model = [row.vehicles?.make, row.vehicles?.model_name].filter(Boolean).join(' ') || 'Véhicule';
-  const driverName = row.drivers ? [row.drivers.first_name, row.drivers.last_name].filter(Boolean).join(' ') : '⚠️ Non assigné';
+  const driverName = row.drivers?.full_name ?? '⚠️ Non assigné';
   const eff = effectiveStatus(row.status, row.due_at);
 
   const cooldownActive = !!row.last_reminder_at &&
