@@ -42,7 +42,7 @@ export interface FleetControlRow {
   immobilization_state: ImmobilizationState;
   immobilization_command_ref: string | null;
   notes?: string | null;
-  vehicles?: { license_plate: string | null; make: string | null; model: string | null; fleet_group: string | null } | null;
+  vehicles?: { license_plate: string | null; make: string | null; model_name: string | null; fleet_group: string | null } | null;
   drivers?: { first_name: string | null; last_name: string | null } | null;
 }
 
