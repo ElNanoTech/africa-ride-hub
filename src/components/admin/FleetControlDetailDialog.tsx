@@ -235,7 +235,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
   if (!row) return null;
 
   const plate = row.vehicles?.license_plate ?? '—';
-  const model = [row.vehicles?.make, row.vehicles?.model].filter(Boolean).join(' ') || 'Véhicule';
+  const model = [row.vehicles?.make, row.vehicles?.model_name].filter(Boolean).join(' ') || 'Véhicule';
   const driverName = row.drivers ? [row.drivers.first_name, row.drivers.last_name].filter(Boolean).join(' ') : '⚠️ Non assigné';
   const eff = effectiveStatus(row.status, row.due_at);
 

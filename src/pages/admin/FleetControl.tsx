@@ -132,7 +132,7 @@ export default function FleetControl() {
       if (search.trim()) {
         const q = search.toLowerCase();
         const plate = r.vehicles?.license_plate?.toLowerCase() ?? '';
-        const model = `${r.vehicles?.make ?? ''} ${r.vehicles?.model ?? ''}`.toLowerCase();
+        const model = `${r.vehicles?.make ?? ''} ${r.vehicles?.model_name ?? ''}`.toLowerCase();
         const driver = `${r.drivers?.first_name ?? ''} ${r.drivers?.last_name ?? ''}`.toLowerCase();
         if (!plate.includes(q) && !model.includes(q) && !driver.includes(q)) return false;
       }
@@ -247,7 +247,7 @@ function ControlCard({
   onOpen: () => void;
 }) {
   const plate = row.vehicles?.license_plate ?? '—';
-  const model = [row.vehicles?.make, row.vehicles?.model].filter(Boolean).join(' ') || 'Véhicule';
+  const model = [row.vehicles?.make, row.vehicles?.model_name].filter(Boolean).join(' ') || 'Véhicule';
   const driverName = row.drivers ? [row.drivers.first_name, row.drivers.last_name].filter(Boolean).join(' ') : null;
   const overdueDays = effective === 'overdue' || effective === 'blocked' ? daysOverdue(row.due_at) : 0;
   const totalSubmitted = (agg?.approved ?? 0) + (agg?.rejected ?? 0) + (agg?.submitted ?? 0);
