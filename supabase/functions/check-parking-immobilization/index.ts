@@ -95,7 +95,6 @@ Deno.serve(async (req) => {
           notification_type: "fleet_control_blocked",
           title: "Véhicule bloqué",
           message: "Soumettez votre contrôle pour débloquer le véhicule.",
-          priority: "high",
         });
       }
 
