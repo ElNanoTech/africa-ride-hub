@@ -2289,6 +2289,81 @@ export type Database = {
           },
         ]
       }
+      fleet_control_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          customer_id: string | null
+          driver_id: string | null
+          fleet_control_id: string | null
+          id: string
+          metadata: Json
+          vehicle_id: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type: string
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          fleet_control_id?: string | null
+          id?: string
+          metadata?: Json
+          vehicle_id?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          fleet_control_id?: string | null
+          id?: string
+          metadata?: Json
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fleet_control_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_control_audit_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_control_audit_fleet_control_id_fkey"
+            columns: ["fleet_control_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_control_audit_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_control_audit_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       geofence_alerts: {
         Row: {
           acknowledged: boolean
@@ -4352,37 +4427,95 @@ export type Database = {
       vehicle_inspection_photos: {
         Row: {
           created_at: string
+          customer_id: string | null
+          driver_id: string | null
           id: string
           inspection_id: string
+          item_type: string
+          label: string | null
           notes: string | null
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           storage_path: string
+          submitted_at: string | null
           updated_at: string
+          validation_status: string
+          vehicle_id: string | null
           zone: string
         }
         Insert: {
           created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
           id?: string
           inspection_id: string
+          item_type?: string
+          label?: string | null
           notes?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           storage_path: string
+          submitted_at?: string | null
           updated_at?: string
+          validation_status?: string
+          vehicle_id?: string | null
           zone: string
         }
         Update: {
           created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
           id?: string
           inspection_id?: string
+          item_type?: string
+          label?: string | null
           notes?: string | null
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           storage_path?: string
+          submitted_at?: string | null
           updated_at?: string
+          validation_status?: string
+          vehicle_id?: string | null
           zone?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vehicle_inspection_photos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspection_photos_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vehicle_inspection_photos_inspection_id_fkey"
             columns: ["inspection_id"]
             isOneToOne: false
             referencedRelation: "vehicle_inspections"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspection_photos_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspection_photos_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -4391,15 +4524,25 @@ export type Database = {
         Row: {
           created_at: string
           customer_id: string | null
+          cycle_days: number
           driver_id: string | null
           due_at: string
           id: string
+          immobilization_cancelled_at: string | null
+          immobilization_command_ref: string | null
           immobilization_reason: string | null
+          immobilization_requested_at: string | null
+          immobilization_requested_by: string | null
+          immobilization_state: string
           immobilized_at: string | null
           last_reminder_at: string | null
+          last_validated_at: string | null
           notes: string | null
           rejection_reason: string | null
           reminder_count: number
+          rental_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
           status: string
           submitted_at: string | null
           updated_at: string
@@ -4410,15 +4553,25 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_id?: string | null
+          cycle_days?: number
           driver_id?: string | null
           due_at?: string
           id?: string
+          immobilization_cancelled_at?: string | null
+          immobilization_command_ref?: string | null
           immobilization_reason?: string | null
+          immobilization_requested_at?: string | null
+          immobilization_requested_by?: string | null
+          immobilization_state?: string
           immobilized_at?: string | null
           last_reminder_at?: string | null
+          last_validated_at?: string | null
           notes?: string | null
           rejection_reason?: string | null
           reminder_count?: number
+          rental_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
           submitted_at?: string | null
           updated_at?: string
@@ -4429,15 +4582,25 @@ export type Database = {
         Update: {
           created_at?: string
           customer_id?: string | null
+          cycle_days?: number
           driver_id?: string | null
           due_at?: string
           id?: string
+          immobilization_cancelled_at?: string | null
+          immobilization_command_ref?: string | null
           immobilization_reason?: string | null
+          immobilization_requested_at?: string | null
+          immobilization_requested_by?: string | null
+          immobilization_state?: string
           immobilized_at?: string | null
           last_reminder_at?: string | null
+          last_validated_at?: string | null
           notes?: string | null
           rejection_reason?: string | null
           reminder_count?: number
+          rental_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
           status?: string
           submitted_at?: string | null
           updated_at?: string
@@ -4458,6 +4621,13 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_rental_id_fkey"
+            columns: ["rental_id"]
+            isOneToOne: false
+            referencedRelation: "rentals"
             referencedColumns: ["id"]
           },
           {
@@ -5223,6 +5393,36 @@ export type Database = {
         Args: { p_driver_id: string }
         Returns: boolean
       }
+      fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
+      fleet_control_immobilize_cancel: {
+        Args: { p_control: string }
+        Returns: undefined
+      }
+      fleet_control_immobilize_request: {
+        Args: { p_control: string; p_reason?: string }
+        Returns: undefined
+      }
+      fleet_control_item_review: {
+        Args: { p_item: string; p_reason?: string; p_status: string }
+        Returns: undefined
+      }
+      fleet_control_log: {
+        Args: {
+          p_action: string
+          p_actor_type?: string
+          p_control: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      fleet_control_reject: {
+        Args: { p_control: string; p_reason: string }
+        Returns: undefined
+      }
+      fleet_control_remind: { Args: { p_control: string }; Returns: Json }
+      fleet_control_settings: { Args: never; Returns: Json }
+      fleet_control_submit: { Args: { p_control: string }; Returns: undefined }
+      fleet_control_unblock: { Args: { p_control: string }; Returns: undefined }
       format_invoice_number: {
         Args: { p_customer_id: string; p_n: number; p_year: number }
         Returns: string
