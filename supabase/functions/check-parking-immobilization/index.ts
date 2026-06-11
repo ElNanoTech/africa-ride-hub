@@ -33,12 +33,21 @@ Deno.serve(async (req) => {
     let cutSent = 0;
 
     for (const row of rows ?? []) {
-      // Latest GPS position for this vehicle
+      // Resolve the vehicle's Uffizio IMEI — vehicle_positions is keyed by imei_no.
+      const { data: veh } = await supabase
+        .from("vehicles")
+        .select("uffizio_imei")
+        .eq("id", row.vehicle_id)
+        .maybeSingle();
+
+      const imei = veh?.uffizio_imei ?? null;
+      if (!imei) continue; // no telemetry possible — never falsely advance
+
       const { data: pos } = await supabase
         .from("vehicle_positions")
-        .select("speed, ignition, recorded_at")
-        .eq("vehicle_id", row.vehicle_id)
-        .order("recorded_at", { ascending: false })
+        .select("speed, ignition, synced_at")
+        .eq("imei_no", imei)
+        .order("synced_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
