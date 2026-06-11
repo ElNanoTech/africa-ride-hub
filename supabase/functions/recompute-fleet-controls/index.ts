@@ -49,7 +49,6 @@ Deno.serve(async (req) => {
         notification_type: "fleet_control_overdue",
         title: "Contrôle en retard",
         message: `Soumettez vos photos pour ${plate} dès que possible.`,
-        priority: "high",
       });
       await supabase.rpc("fleet_control_log", {
         p_control: r.id,

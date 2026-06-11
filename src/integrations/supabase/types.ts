@@ -5393,6 +5393,7 @@ export type Database = {
         Args: { p_driver_id: string }
         Returns: boolean
       }
+      fc_require_admin: { Args: { p_customer: string }; Returns: undefined }
       fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
       fleet_control_immobilize_cancel: {
         Args: { p_control: string }
