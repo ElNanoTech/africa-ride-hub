@@ -267,7 +267,7 @@ function FleetControlCard() {
   }> = {
     pending: {
       title: 'Contrôle visuel requis',
-      description: `${formatDueDateRelative(inspection.due_at)} — soumettez vos photos.`,
+      description: `${dueRelative} — soumettez vos photos.`,
       cta: 'Commencer',
       icon: Camera,
       bg: 'from-primary/10 to-primary/5 border-primary/30',
@@ -291,7 +291,7 @@ function FleetControlCard() {
     },
     overdue: {
       title: 'Contrôle en retard',
-      description: `${formatDueDateRelative(inspection.due_at)} — soumettez-le rapidement.`,
+      description: `${dueRelative} — soumettez-le rapidement.`,
       cta: 'Soumettre',
       icon: AlertTriangle,
       bg: 'from-warning/10 to-warning/5 border-warning/30',
