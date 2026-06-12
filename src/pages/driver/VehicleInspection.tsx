@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
 import { compressImage } from '@/lib/imageCompression';
@@ -83,6 +91,30 @@ export default function VehicleInspection() {
   const pendingZoneRef = useRef<ZoneKey | null>(null);
   const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
   const [brokenThumbs, setBrokenThumbs] = useState<Record<string, true>>({});
+  const [viewFail, setViewFail] = useState<{
+    zone: ZoneKey;
+    kind: 'camera' | 'doc';
+    label: string;
+    retrying: boolean;
+  } | null>(null);
+
+  const tryOpenSignedUrl = async (storagePath: string): Promise<string | null> => {
+    try {
+      const { data: sig, error } = await supabase.storage
+        .from('vehicle-inspections')
+        .createSignedUrl(storagePath, 3600);
+      if (error || !sig?.signedUrl) return null;
+      try {
+        const head = await fetch(sig.signedUrl, { method: 'HEAD' });
+        if (!head.ok) return null;
+      } catch {
+        // HEAD blocked by CORS in some setups — fall through and trust the URL.
+      }
+      return sig.signedUrl;
+    } catch {
+      return null;
+    }
+  };
 
   const driverId = driverProfile?.id;
 
@@ -412,6 +444,7 @@ export default function VehicleInspection() {
     const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
     // Tile is editable when: never approved, and (no review pending OR this item was rejected).
     const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected && !thumbFailed);
+    const isEmpty = !photo;
     return (
       <div
         key={z.key}
@@ -427,7 +460,14 @@ export default function VehicleInspection() {
         } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
       >
         <div className="flex items-center justify-between">
-          <div className="font-medium">{z.label}</div>
+          <div className="flex items-center gap-2">
+            <div className="font-medium">{z.label}</div>
+            {isEmpty && !busy && (
+              <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-400 text-amber-700 dark:text-amber-300">
+                À envoyer
+              </Badge>
+            )}
+          </div>
           {approved ? (
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           ) : rejected ? (
@@ -441,6 +481,14 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        {isEmpty && !busy && (
+          <div className="mt-2 aspect-video w-full rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground">
+            {kind === 'doc' ? <FileText className="h-6 w-6" /> : <Camera className="h-6 w-6" />}
+            <span className="text-[11px] font-medium">
+              {kind === 'doc' ? 'Aucun document envoyé' : 'Aucune photo envoyée'}
+            </span>
+          </div>
+        )}
         {photo && !thumbFailed && (
           <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {isImageThumb ? (
@@ -505,14 +553,14 @@ export default function VehicleInspection() {
               onClick={async () => {
                 let url = thumbUrl;
                 if (!url) {
-                  const { data: sig, error } = await supabase.storage
-                    .from('vehicle-inspections')
-                    .createSignedUrl(photo.storage_path, 3600);
-                  if (error || !sig?.signedUrl) {
-                    toast.error("Impossible d'ouvrir la pièce", { description: 'Réessayez dans un instant.' });
-                    return;
-                  }
-                  url = sig.signedUrl;
+                  url = await tryOpenSignedUrl(photo.storage_path) || undefined;
+                }
+                if (!url) {
+                  // Mark thumb as broken so the tile reflects the missing file,
+                  // and open the fallback modal so the driver can retry or re-upload.
+                  setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }));
+                  setViewFail({ zone: z.key, kind, label: z.label, retrying: false });
+                  return;
                 }
                 window.open(url, '_blank');
               }}
@@ -721,6 +769,72 @@ export default function VehicleInspection() {
           className="hidden"
           onChange={handleFile}
         />
+
+      <Dialog open={!!viewFail} onOpenChange={(o) => !o && setViewFail(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Pièce introuvable</DialogTitle>
+            <DialogDescription>
+              Nous n'avons pas pu ouvrir « {viewFail?.label} ». Le fichier semble manquant ou inaccessible.
+              Vous pouvez réessayer ou renvoyer la pièce maintenant.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={!!viewFail?.retrying}
+              onClick={async () => {
+                if (!viewFail) return;
+                const photo = photosByZone[viewFail.zone];
+                if (!photo) {
+                  setViewFail(null);
+                  return;
+                }
+                setViewFail({ ...viewFail, retrying: true });
+                const url = await tryOpenSignedUrl(photo.storage_path);
+                if (url) {
+                  // Recovered — clear the broken flag and open the file.
+                  setBrokenThumbs((prev) => {
+                    const next = { ...prev };
+                    delete next[photo.id];
+                    return next;
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['driver-inspection-thumbs'] });
+                  window.open(url, '_blank');
+                  setViewFail(null);
+                } else {
+                  toast.error('La pièce est toujours indisponible.', {
+                    description: 'Renvoyez le fichier pour la remplacer.',
+                  });
+                  setViewFail({ ...viewFail, retrying: false });
+                }
+              }}
+            >
+              {viewFail?.retrying ? (
+                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Nouvelle tentative…</>
+              ) : (
+                <><RefreshCw className="h-4 w-4 mr-1" /> Réessayer</>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              className="w-full"
+              onClick={() => {
+                if (!viewFail) return;
+                const { zone, kind } = viewFail;
+                setViewFail(null);
+                handlePickPhoto(zone, kind === 'doc' ? 'document' : 'camera');
+              }}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              {viewFail?.kind === 'doc' ? 'Renvoyer le document' : 'Reprendre la photo'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DriverLayout>
   );
 }
