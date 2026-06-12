@@ -81,8 +81,21 @@ const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'active': return 'active';
     case 'suspended': return 'rejected';
+    case 'blocked': return 'rejected';
+    case 'pending_kyc': return 'pending';
     case 'inactive': return 'pending';
     default: return 'default';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'active': return 'Actif';
+    case 'suspended': return 'Suspendu';
+    case 'blocked': return 'Bloqué';
+    case 'pending_kyc': return 'KYC en attente';
+    case 'inactive': return 'Inactif';
+    default: return status;
   }
 };
 
@@ -658,6 +671,8 @@ export default function AdminDrivers() {
                 <SelectItem value="active">Actif ({filterCounts.status.active})</SelectItem>
                 <SelectItem value="suspended">Suspendu ({filterCounts.status.suspended})</SelectItem>
                 <SelectItem value="inactive">Inactif ({filterCounts.status.inactive})</SelectItem>
+                <SelectItem value="pending_kyc">KYC en attente</SelectItem>
+                <SelectItem value="blocked">Bloqué</SelectItem>
               </SelectContent>
             </Select>
             {(search || kycFilter !== 'all' || statusFilter !== 'all') && (
@@ -773,7 +788,7 @@ export default function AdminDrivers() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(driver.driver_status) as never}>
-                        {driver.driver_status === 'active' ? 'Actif' : driver.driver_status === 'suspended' ? 'Suspendu' : 'Inactif'}
+                        {getStatusLabel(driver.driver_status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
@@ -808,9 +823,36 @@ export default function AdminDrivers() {
                           {driver.driver_status === 'active' ? (
                             <DropdownMenuItem
                               className="text-destructive"
-                              onClick={() => handleStatusUpdate(driver.id, 'suspended')}
+                              onClick={async () => {
+                                const reason = window.prompt('Motif de la suspension ?');
+                                if (!reason || !reason.trim()) return;
+                                const { error } = await supabase.rpc('driver_suspend', {
+                                  p_driver: driver.id,
+                                  p_reason: reason.trim(),
+                                });
+                                if (error) toast.error(error.message);
+                                else {
+                                  toast.success(`${driver.full_name} suspendu`);
+                                  queryClient.invalidateQueries({ queryKey: ['admin-drivers'] });
+                                }
+                              }}
                             >
                               {ADMIN.DRIVERS.SUSPEND}
+                            </DropdownMenuItem>
+                          ) : (driver.driver_status === 'suspended' || driver.driver_status === 'blocked') ? (
+                            <DropdownMenuItem
+                              className="text-primary"
+                              onClick={async () => {
+                                const { error } = await supabase.rpc('driver_reactivate', { p_driver: driver.id });
+                                if (error) toast.error(error.message);
+                                else {
+                                  toast.success(`${driver.full_name} réactivé`);
+                                  queryClient.invalidateQueries({ queryKey: ['admin-drivers'] });
+                                }
+                              }}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Réactiver
                             </DropdownMenuItem>
                           ) : driver.kyc_status !== 'verified' ? (
                             // B7 — Block activation when KYC not verified
@@ -830,6 +872,20 @@ export default function AdminDrivers() {
                               {ADMIN.DRIVERS.ACTIVATE}
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={async () => {
+                              const { data, error } = await supabase.rpc('driver_generate_access_code', { p_driver: driver.id });
+                              if (error || !data) { toast.error(error?.message || 'Erreur'); return; }
+                              const row = Array.isArray(data) ? data[0] : data;
+                              const code = (row as { code?: string })?.code;
+                              if (!code) { toast.error('Code non généré'); return; }
+                              try { await navigator.clipboard.writeText(code); } catch { /* ignore */ }
+                              toast.success(`Code: ${code}`, { description: 'Copié dans le presse-papier' });
+                            }}
+                          >
+                            Générer code d'accès
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

@@ -37,6 +37,10 @@ import {
   DriverTicketsPanel,
   DriverActivityPanel,
 } from '@/components/admin/driver360/panels';
+import { DriverNotesPanel } from '@/components/admin/driver360/DriverNotesPanel';
+import { DriverAuditPanel } from '@/components/admin/driver360/DriverAuditPanel';
+import { DriverDocumentsPanel } from '@/components/admin/driver360/DriverDocumentsPanel';
+import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DriverWalletCard } from '@/components/admin/DriverWalletCard';
@@ -529,6 +533,12 @@ export default function AdminDriverDetail() {
               <Pencil className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Modifier</span>
             </Button>
+            <DriverActionsMenu
+              driverId={driver.id}
+              driverName={driver.full_name}
+              driverStatus={driver.driver_status}
+              onChanged={() => { refetch(); }}
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
@@ -877,6 +887,9 @@ export default function AdminDriverDetail() {
           <TabsTrigger value="invoices">Factures</TabsTrigger>
           <TabsTrigger value="accidents">Sinistres</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="audit">Audit</TabsTrigger>
           <TabsTrigger value="activity">Activité</TabsTrigger>
         </TabsList>
 
@@ -1265,6 +1278,21 @@ export default function AdminDriverDetail() {
         {/* Tickets Tab */}
         <TabsContent value="tickets">
           <DriverTicketsPanel driverId={driver.id} />
+        </TabsContent>
+
+        {/* Documents Tab */}
+        <TabsContent value="documents">
+          <DriverDocumentsPanel driverId={driver.id} customerId={(driver as { customer_id?: string | null }).customer_id ?? null} />
+        </TabsContent>
+
+        {/* Notes Tab */}
+        <TabsContent value="notes">
+          <DriverNotesPanel driverId={driver.id} customerId={(driver as { customer_id?: string | null }).customer_id ?? null} />
+        </TabsContent>
+
+        {/* Audit Tab */}
+        <TabsContent value="audit">
+          <DriverAuditPanel driverId={driver.id} />
         </TabsContent>
 
         {/* Activité Tab */}
