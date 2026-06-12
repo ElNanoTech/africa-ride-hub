@@ -77,6 +77,7 @@ const AdminResetPassword = lazy(() => import("./pages/admin/ResetPassword"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminDrivers = lazy(() => import("./pages/admin/Drivers"));
 const AdminDriverDetail = lazy(() => import("./pages/admin/DriverDetail"));
+const AdminDriverCreate = lazy(() => import("./pages/admin/DriverCreate"));
 const AdminVehicles = lazy(() => import("./pages/admin/Vehicles"));
 const AdminGpsMapping = lazy(() => import("./pages/admin/GpsMapping"));
 const AdminRentals = lazy(() => import("./pages/admin/Rentals"));
@@ -237,6 +238,7 @@ const App = () => {
                   <Route element={<AdminRouteGuard />}>
                     <Route path="/admin" element={<AdminDashboard />} />
                     <Route path="/admin/drivers" element={<AdminDrivers />} />
+                    <Route path="/admin/drivers/new" element={<AdminDriverCreate />} />
                     <Route path="/admin/drivers/:id" element={<AdminDriverDetail />} />
                     <Route path="/admin/vehicles" element={<AdminVehicles />} />
                     <Route path="/admin/vehicles/gps-mapping" element={<AdminGpsMapping />} />
