@@ -132,6 +132,12 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours, settings
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['fleet-control'] });
+    // The driver-profile Fleet Control panel uses its own keys
+    // (['driver-fleet-controls', driverId] / ['driver-fleet-controls-items',
+    // …]) — prefix-invalidate them so approve/reject/remind/unblock from this
+    // dialog refreshes the open profile too.
+    qc.invalidateQueries({ queryKey: ['driver-fleet-controls'] });
+    qc.invalidateQueries({ queryKey: ['driver-fleet-controls-items'] });
   };
 
   // Narrow realtime scope for the OPEN dialog only: photos + control row
