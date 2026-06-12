@@ -171,6 +171,7 @@ export default function VehicleInspection() {
   });
 
   const completedCount = ALL_ZONES.filter(z => photosByZone[z.key]).length;
+  const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
   const canSubmit =
     completedCount === REQUIRED_ITEM_COUNT &&
     inspection?.status !== 'submitted' &&
