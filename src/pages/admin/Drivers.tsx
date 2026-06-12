@@ -529,9 +529,12 @@ export default function AdminDrivers() {
         description={`${drivers?.length || 0} conducteurs enregistrés`}
         action={
           <div className="flex gap-2">
-            <Button size="sm" className="gap-2" onClick={() => setShowCreateDriver(true)}>
+            <Button size="sm" className="gap-2" onClick={() => navigate('/admin/drivers/new')}>
               <UserPlus className="h-4 w-4" />
               Nouveau conducteur
+            </Button>
+            <Button size="sm" variant="ghost" className="gap-2 hidden sm:inline-flex" onClick={() => setShowCreateDriver(true)} title="Création rapide (ancien formulaire)">
+              Rapide
             </Button>
             <Button 
               variant="outline" 
