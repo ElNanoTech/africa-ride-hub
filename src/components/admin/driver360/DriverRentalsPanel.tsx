@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,37 +12,14 @@ import { supabase } from '@/integrations/supabase/routeClient';
 import { useConfirmRentalReturn } from '@/hooks/useAdminData';
 import { logAction } from '@/hooks/useAuditLog';
 import { formatCurrency, formatDateShort } from '@/lib/format';
+// Rental status labels/variants come from the central registry
+// (src/lib/statusBadges.tsx) — per its mandate, never redeclared locally.
+import { StatusBadge } from '@/lib/statusBadges';
 
 // Same set as the admin Rentals page — statuses an admin can close out.
 const RETURNABLE_STATUSES = [
   'approved', 'active', 'paid', 'return_pending', 'overdue_return', 'payment_overdue', 'vehicle_disabled',
 ];
-
-export const RENTAL_STATUS_LABEL: Record<string, string> = {
-  pending: 'En attente',
-  approved: 'Approuvée',
-  active: 'Active',
-  paid: 'Payée',
-  return_pending: 'Retour à confirmer',
-  overdue_return: 'Retour en retard',
-  payment_overdue: 'Paiement en retard',
-  vehicle_disabled: 'Véhicule immobilisé',
-  completed: 'Terminée',
-  rejected: 'Rejetée',
-  cancelled: 'Annulée',
-};
-
-export function rentalStatusLabel(status: string): string {
-  return RENTAL_STATUS_LABEL[status] ?? status;
-}
-
-const STATUS_VARIANT = (status: string): 'verified' | 'pending' | 'rejected' | 'default' | 'outline' => {
-  if (['active', 'approved', 'paid'].includes(status)) return 'verified';
-  if (['pending', 'return_pending'].includes(status)) return 'pending';
-  if (['rejected', 'overdue_return', 'payment_overdue', 'vehicle_disabled'].includes(status)) return 'rejected';
-  if (status === 'completed') return 'outline';
-  return 'default';
-};
 
 interface RentalRow {
   id: string;
@@ -110,7 +86,6 @@ export function DriverRentalsPanel({ driverId, driverName }: DriverRentalsPanelP
             },
           });
           qc.invalidateQueries({ queryKey: ['admin-driver-rentals-full', driverId] });
-          qc.invalidateQueries({ queryKey: ['admin-driver-rentals', driverId] });
           qc.invalidateQueries({ queryKey: ['driver-360', driverId] });
           qc.invalidateQueries({ queryKey: ['driver-fleet-controls', driverId] });
           qc.invalidateQueries({ queryKey: ['admin-driver-detail', driverId] });
@@ -167,9 +142,7 @@ export function DriverRentalsPanel({ driverId, driverName }: DriverRentalsPanelP
                         : '—'}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={STATUS_VARIANT(rental.status) as never}>
-                      {rentalStatusLabel(rental.status)}
-                    </Badge>
+                    <StatusBadge kind="rental" status={rental.status} />
                   </TableCell>
                   <TableCell className="text-right">
                     {RETURNABLE_STATUSES.includes(rental.status) ? (
