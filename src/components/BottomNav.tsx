@@ -1,8 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Star, Car, User, Banknote, KeyRound, AlertTriangle, Clock, Wallet } from 'lucide-react';
+import { Home, Star, Car, User, Banknote, KeyRound, AlertTriangle, Clock, Wallet, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDriverRentals } from '@/hooks/useDriverData';
+import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import { differenceInDays, isToday, isPast, parseISO, differenceInHours, differenceInMinutes } from 'date-fns';
 import { supabase } from '@/integrations/supabase/routeClient';
@@ -22,6 +23,7 @@ const baseNavItems: NavItem[] = [
   { to: '/driver/score', icon: Star },
   { to: '/driver/income', icon: Banknote },
   { to: '/driver/vehicles', icon: Car },
+  { to: '/driver/fleet-control', icon: ClipboardCheck },
   { to: '/driver/loans', icon: Wallet },
   { to: '/driver/sinistres', icon: AlertTriangle },
   { to: '/driver/profile', icon: User },
@@ -31,6 +33,7 @@ export function BottomNav() {
   const location = useLocation();
   const haptic = useHapticFeedback();
   const { data: rentals = [] } = useDriverRentals();
+  const { data: activeInspection } = useDriverActiveInspection();
   const [showNewAnimation, setShowNewAnimation] = useState(false);
   const [previousHadRental, setPreviousHadRental] = useState<boolean | null>(null);
   const [previousPaymentStatus, setPreviousPaymentStatus] = useState<string | null>(null);
@@ -130,8 +133,18 @@ export function BottomNav() {
   };
 
   const navItems = useMemo(() => {
-    if (!hasActiveRental) return baseNavItems;
-    const items: NavItem[] = [...baseNavItems];
+    const withControl = baseNavItems.map(item => {
+      if (item.to !== '/driver/fleet-control') return item;
+      if (!activeInspection) return item;
+      const s = activeInspection.effective_status;
+      const variant: NavItem['badgeVariant'] =
+        s === 'rejected' || s === 'overdue' || s === 'blocked' ? 'danger'
+        : s === 'pending' ? 'warning'
+        : 'default';
+      return { ...item, badge: '!', badgeVariant: variant };
+    });
+    if (!hasActiveRental) return withControl;
+    const items: NavItem[] = [...withControl];
     items.splice(items.length - 1, 0, {
       to: '/driver/rental',
       icon: getRentalIcon(),
@@ -140,7 +153,7 @@ export function BottomNav() {
       isNew: showNewAnimation,
     });
     return items;
-  }, [hasActiveRental, rentalBadge, badgeVariant, showNewAnimation, paymentStatus, countdown]);
+  }, [hasActiveRental, rentalBadge, badgeVariant, showNewAnimation, paymentStatus, countdown, activeInspection]);
 
   const handleNavClick = (to: string) => {
     const isActive = location.pathname === to || 
