@@ -21,24 +21,11 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAdminUser } from '@/hooks/useAdminUser';
-
-type ViolationStatus = 'pending_payment' | 'paid' | 'contested' | 'cancelled' | 'liquidated';
-
-const STATUS_LABEL: Record<ViolationStatus, string> = {
-  pending_payment: 'En attente',
-  paid: 'Payé',
-  liquidated: 'Liquidé',
-  contested: 'En recours',
-  cancelled: 'Annulé',
-};
-
-const STATUS_COLOR: Record<ViolationStatus, string> = {
-  pending_payment: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  paid: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  liquidated: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  contested: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  cancelled: 'bg-muted text-muted-foreground',
-};
+import {
+  VIOLATION_STATUS_LABEL as STATUS_LABEL,
+  VIOLATION_STATUS_CLASS as STATUS_COLOR,
+  type ViolationStatus,
+} from '@/lib/violations';
 
 const VIOLATION_TYPES = [
   'Excès de vitesse',
