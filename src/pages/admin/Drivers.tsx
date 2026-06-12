@@ -18,7 +18,6 @@ import { TierBadge } from '@/components/ScoreGauge';
 import { ADMIN, KYC, UI } from '@/lib/i18n';
 import { Search, Eye, CheckCircle, XCircle, MoreHorizontal, Download, FileSpreadsheet, FileText, Upload, AlertCircle, Loader2, FileCheck, X, UserPlus } from 'lucide-react';
 import { AdminCreateDriverDialog } from '@/components/AdminCreateDriverDialog';
-import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
