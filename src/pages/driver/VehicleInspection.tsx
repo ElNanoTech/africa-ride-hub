@@ -769,6 +769,72 @@ export default function VehicleInspection() {
           className="hidden"
           onChange={handleFile}
         />
+
+      <Dialog open={!!viewFail} onOpenChange={(o) => !o && setViewFail(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Pièce introuvable</DialogTitle>
+            <DialogDescription>
+              Nous n'avons pas pu ouvrir « {viewFail?.label} ». Le fichier semble manquant ou inaccessible.
+              Vous pouvez réessayer ou renvoyer la pièce maintenant.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col gap-2 sm:flex-col">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={!!viewFail?.retrying}
+              onClick={async () => {
+                if (!viewFail) return;
+                const photo = photosByZone[viewFail.zone];
+                if (!photo) {
+                  setViewFail(null);
+                  return;
+                }
+                setViewFail({ ...viewFail, retrying: true });
+                const url = await tryOpenSignedUrl(photo.storage_path);
+                if (url) {
+                  // Recovered — clear the broken flag and open the file.
+                  setBrokenThumbs((prev) => {
+                    const next = { ...prev };
+                    delete next[photo.id];
+                    return next;
+                  });
+                  queryClient.invalidateQueries({ queryKey: ['driver-inspection-thumbs'] });
+                  window.open(url, '_blank');
+                  setViewFail(null);
+                } else {
+                  toast.error('La pièce est toujours indisponible.', {
+                    description: 'Renvoyez le fichier pour la remplacer.',
+                  });
+                  setViewFail({ ...viewFail, retrying: false });
+                }
+              }}
+            >
+              {viewFail?.retrying ? (
+                <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Nouvelle tentative…</>
+              ) : (
+                <><RefreshCw className="h-4 w-4 mr-1" /> Réessayer</>
+              )}
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              className="w-full"
+              onClick={() => {
+                if (!viewFail) return;
+                const { zone, kind } = viewFail;
+                setViewFail(null);
+                handlePickPhoto(zone, kind === 'doc' ? 'document' : 'camera');
+              }}
+            >
+              <Upload className="h-4 w-4 mr-1" />
+              {viewFail?.kind === 'doc' ? 'Renvoyer le document' : 'Reprendre la photo'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DriverLayout>
   );
 }
