@@ -366,6 +366,16 @@ export default function VehicleInspection() {
           </CardContent>
         </Card>
 
+        {inspection.immobilization_state && inspection.immobilization_state !== 'none' && (
+          <ImmobilizationPanel
+            state={inspection.immobilization_state}
+            commandRef={inspection.immobilization_command_ref}
+            requestedAt={inspection.immobilization_requested_at}
+            cancelledAt={inspection.immobilization_cancelled_at}
+            audit={audit}
+          />
+        )}
+
         <div>
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
             Photos du véhicule
