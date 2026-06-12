@@ -153,6 +153,23 @@ export default function VehicleInspection() {
     return map;
   }, [photos]);
 
+  // Resolve signed URLs for every uploaded item so we can show real thumbnails
+  // (PDFs return a URL too; the tile falls back to a doc icon).
+  const { data: thumbs = {} } = useQuery({
+    queryKey: ['driver-inspection-thumbs', inspection?.id, photos.map(p => p.id + p.storage_path).join('|')],
+    enabled: !!inspection && photos.length > 0,
+    queryFn: async () => {
+      const out: Record<string, string> = {};
+      await Promise.all(photos.map(async (p) => {
+        const { data: sig } = await supabase.storage
+          .from('vehicle-inspections')
+          .createSignedUrl(p.storage_path, 3600);
+        if (sig?.signedUrl) out[p.id] = sig.signedUrl;
+      }));
+      return out;
+    },
+  });
+
   const completedCount = ALL_ZONES.filter(z => photosByZone[z.key]).length;
   const canSubmit =
     completedCount === REQUIRED_ITEM_COUNT &&
