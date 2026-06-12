@@ -46,7 +46,7 @@ interface Inspection {
   submitted_at: string | null;
   rejection_reason: string | null;
   notes: string | null;
-  vehicles?: { license_plate: string | null; make: string | null; model: string | null } | null;
+  vehicles?: { license_plate: string | null; make: string | null; model_name: string | null } | null;
 }
 
 export default function VehicleInspection() {
@@ -69,7 +69,7 @@ export default function VehicleInspection() {
         .from('vehicle_inspections')
         .select(`
           id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
-          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model )
+          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
         `)
         .eq('driver_id', driverId)
         .in('status', ['pending', 'submitted', 'rejected', 'overdue', 'blocked'])
