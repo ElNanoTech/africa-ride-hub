@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
@@ -63,6 +63,13 @@ interface AuditRow {
   created_at: string;
 }
 
+interface ThumbsResult {
+  urls: Record<string, string>;
+  failed: Record<string, true>;
+}
+
+const EMPTY_THUMBS: ThumbsResult = { urls: {}, failed: {} };
+
 export default function VehicleInspection() {
   const { driverProfile } = useDriverAuth();
   const navigate = useNavigate();
@@ -73,6 +80,9 @@ export default function VehicleInspection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingZone, setPendingZone] = useState<ZoneKey | null>(null);
   const [pendingKind, setPendingKind] = useState<'camera' | 'gallery' | 'document' | null>(null);
+  const pendingZoneRef = useRef<ZoneKey | null>(null);
+  const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
+  const [brokenThumbs, setBrokenThumbs] = useState<Record<string, true>>({});
 
   const driverId = driverProfile?.id;
 
@@ -155,22 +165,36 @@ export default function VehicleInspection() {
 
   // Resolve signed URLs for every uploaded item so we can show real thumbnails
   // (PDFs return a URL too; the tile falls back to a doc icon).
-  const { data: thumbs = {} } = useQuery({
+  const { data: thumbs = EMPTY_THUMBS, isFetching: thumbsLoading } = useQuery<ThumbsResult>({
     queryKey: ['driver-inspection-thumbs', inspection?.id, photos.map(p => p.id + p.storage_path).join('|')],
     enabled: !!inspection && photos.length > 0,
     queryFn: async () => {
-      const out: Record<string, string> = {};
+      const urls: Record<string, string> = {};
+      const failed: Record<string, true> = {};
       await Promise.all(photos.map(async (p) => {
-        const { data: sig } = await supabase.storage
+        const { data: sig, error } = await supabase.storage
           .from('vehicle-inspections')
           .createSignedUrl(p.storage_path, 3600);
-        if (sig?.signedUrl) out[p.id] = sig.signedUrl;
+        if (error || !sig?.signedUrl) {
+          failed[p.id] = true;
+          return;
+        }
+        try {
+          const head = await fetch(sig.signedUrl, { method: 'HEAD' });
+          if (!head.ok) failed[p.id] = true;
+          else urls[p.id] = sig.signedUrl;
+        } catch {
+          urls[p.id] = sig.signedUrl;
+        }
       }));
-      return out;
+      return { urls, failed };
     },
   });
 
-  const completedCount = ALL_ZONES.filter(z => photosByZone[z.key]).length;
+  const completedCount = ALL_ZONES.filter((z) => {
+    const photo = photosByZone[z.key];
+    return !!photo && !thumbs.failed[photo.id] && !brokenThumbs[photo.id];
+  }).length;
   const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
   const canSubmit =
     completedCount === REQUIRED_ITEM_COUNT &&
@@ -181,17 +205,27 @@ export default function VehicleInspection() {
     if (!inspection) return;
     setPendingZone(zone);
     setPendingKind(kind);
-    // Wait for the input to reflect the new `accept`/`capture` before opening.
-    requestAnimationFrame(() => fileRef.current?.click());
+    pendingZoneRef.current = zone;
+    pendingKindRef.current = kind;
+    const input = fileRef.current;
+    if (!input) return;
+    input.accept = kind === 'document' ? 'image/*,application/pdf' : 'image/*';
+    if (kind === 'camera') input.setAttribute('capture', 'environment');
+    else input.removeAttribute('capture');
+    input.click();
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !pendingZone || !inspection) return;
-    const zone = pendingZone;
+    const selectedZone = pendingZoneRef.current ?? pendingZone;
+    const selectedKind = pendingKindRef.current ?? pendingKind;
+    pendingZoneRef.current = null;
+    pendingKindRef.current = null;
+    if (!file || !selectedZone || !inspection) return;
+    const zone = selectedZone;
     setPendingZone(null);
-    const kind = pendingKind;
+    const kind = selectedKind;
     setPendingKind(null);
     setUploadingZone(zone);
     setUploadProgress(0);
@@ -373,10 +407,11 @@ export default function VehicleInspection() {
     const Icon = kind === 'doc' ? FileText : Camera;
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
-    const thumbUrl = photo ? thumbs[photo.id] : undefined;
+    const thumbUrl = photo ? thumbs.urls[photo.id] : undefined;
+    const thumbFailed = !!photo && (!!thumbs.failed[photo.id] || !!brokenThumbs[photo.id]);
     const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
     // Tile is editable when: never approved, and (no review pending OR this item was rejected).
-    const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected);
+    const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected && !thumbFailed);
     return (
       <div
         key={z.key}
@@ -406,18 +441,32 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
-        {photo && (
+        {photo && !thumbFailed && (
           <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {isImageThumb ? (
-              <img src={thumbUrl} alt={z.label} className="w-full h-full object-cover" loading="lazy" />
+              <img
+                src={thumbUrl}
+                alt={z.label}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={() => photo && setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }))}
+              />
             ) : thumbUrl ? (
               <a href={thumbUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center text-xs text-muted-foreground">
                 <FileText className="h-6 w-6 mb-1" />
                 Ouvrir le document
               </a>
-            ) : (
+            ) : thumbsLoading ? (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <ImageOff className="h-5 w-5 text-muted-foreground" />
             )}
+          </div>
+        )}
+        {thumbFailed && (
+          <div className="mt-2 aspect-video w-full rounded-md border border-rose-200 bg-rose-50 dark:bg-rose-950/30 flex flex-col items-center justify-center gap-1 text-rose-700 dark:text-rose-300">
+            <ImageOff className="h-5 w-5" />
+            <span className="text-[11px] font-medium">Pièce non disponible</span>
           </div>
         )}
         {busy && (
@@ -438,6 +487,8 @@ export default function VehicleInspection() {
             ? <span className="text-rose-700 dark:text-rose-300">Motif du refus : {photo.rejection_reason}</span>
             : approved
               ? <span className="text-emerald-700 dark:text-emerald-300">Validé par le gestionnaire</span>
+            : thumbFailed
+              ? <span className="text-rose-700 dark:text-rose-300">Photo absente — reprenez l'envoi</span>
               : photo && itemLocked
                 ? 'Envoyé — en attente de validation'
                 : photo
