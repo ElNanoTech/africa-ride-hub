@@ -360,7 +360,11 @@ export default function VehicleInspection() {
 
   const eff = effectiveStatus(inspection.status, inspection.due_at);
   const isLate = eff === 'overdue';
-  const locked = inspection.status === 'submitted' || inspection.status === 'approved';
+  // The cycle is locked once approved. While `submitted`, only items that the
+  // admin has explicitly rejected can be re-uploaded — approved/submitted
+  // items stay read-only until the next cycle.
+  const cycleLocked = inspection.status === 'approved';
+  const reviewInProgress = inspection.status === 'submitted';
 
   const renderZoneTile = (z: { key: ZoneKey; label: string; help: string }, kind: 'camera' | 'doc') => {
     const photo = photosByZone[z.key];
@@ -369,6 +373,10 @@ export default function VehicleInspection() {
     const Icon = kind === 'doc' ? FileText : Camera;
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
+    const thumbUrl = photo ? thumbs[photo.id] : undefined;
+    const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
+    // Tile is editable when: never approved, and (no review pending OR this item was rejected).
+    const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected);
     return (
       <div
         key={z.key}
@@ -380,7 +388,7 @@ export default function VehicleInspection() {
               : photo
                 ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/20'
                 : 'border-dashed border-muted-foreground/40 bg-card'
-        } ${busy || locked ? 'opacity-60 pointer-events-none' : ''}`}
+        } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
       >
         <div className="flex items-center justify-between">
           <div className="font-medium">{z.label}</div>
@@ -397,6 +405,20 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        {photo && (
+          <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
+            {isImageThumb ? (
+              <img src={thumbUrl} alt={z.label} className="w-full h-full object-cover" loading="lazy" />
+            ) : thumbUrl ? (
+              <a href={thumbUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center text-xs text-muted-foreground">
+                <FileText className="h-6 w-6 mb-1" />
+                Ouvrir le document
+              </a>
+            ) : (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+        )}
         {busy && (
           <div className="mt-2">
             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -412,13 +434,39 @@ export default function VehicleInspection() {
         )}
         <div className="text-xs mt-2 font-medium">
           {rejected && photo?.rejection_reason
-            ? `Refusé : ${photo.rejection_reason}`
-            : photo
-              ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
-              : (kind === 'doc' ? 'Ajoutez un document ou une photo' : 'Prenez une photo de cette zone')}
+            ? <span className="text-rose-700 dark:text-rose-300">Motif du refus : {photo.rejection_reason}</span>
+            : approved
+              ? <span className="text-emerald-700 dark:text-emerald-300">Validé par le gestionnaire</span>
+              : photo && itemLocked
+                ? 'Envoyé — en attente de validation'
+                : photo
+                  ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
+                  : (kind === 'doc' ? 'Ajoutez un document ou une photo' : 'Prenez une photo de cette zone')}
         </div>
         <div className="flex gap-2 mt-3">
-          {kind === 'camera' ? (
+          {itemLocked && photo ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="flex-1 h-9"
+              onClick={() => thumbUrl && window.open(thumbUrl, '_blank')}
+              disabled={!thumbUrl}
+            >
+              <Eye className="h-4 w-4 mr-1" /> Voir la {kind === 'doc' ? 'pièce' : 'photo'}
+            </Button>
+          ) : rejected ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="flex-1 h-9"
+              onClick={() => handlePickPhoto(z.key, kind === 'doc' ? 'document' : 'camera')}
+              disabled={busy}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> Reprendre {kind === 'doc' ? 'le document' : 'la photo'}
+            </Button>
+          ) : kind === 'camera' ? (
             <>
               <Button
                 type="button"
@@ -426,7 +474,7 @@ export default function VehicleInspection() {
                 variant="secondary"
                 className="flex-1 h-9"
                 onClick={() => handlePickPhoto(z.key, 'camera')}
-                disabled={busy || locked}
+                disabled={busy}
               >
                 <Camera className="h-4 w-4 mr-1" /> Photo
               </Button>
@@ -436,7 +484,7 @@ export default function VehicleInspection() {
                 variant="outline"
                 className="h-9 px-3"
                 onClick={() => handlePickPhoto(z.key, 'gallery')}
-                disabled={busy || locked}
+                disabled={busy}
                 aria-label="Choisir depuis la galerie"
               >
                 <ImageIcon className="h-4 w-4" />
@@ -450,7 +498,7 @@ export default function VehicleInspection() {
                 variant="secondary"
                 className="flex-1 h-9"
                 onClick={() => handlePickPhoto(z.key, 'document')}
-                disabled={busy || locked}
+                disabled={busy}
               >
                 <Upload className="h-4 w-4 mr-1" /> Fichier
               </Button>
@@ -460,7 +508,7 @@ export default function VehicleInspection() {
                 variant="outline"
                 className="h-9 px-3"
                 onClick={() => handlePickPhoto(z.key, 'camera')}
-                disabled={busy || locked}
+                disabled={busy}
                 aria-label="Photographier le document"
               >
                 <Camera className="h-4 w-4" />
