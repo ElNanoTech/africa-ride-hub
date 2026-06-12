@@ -26,16 +26,32 @@ export function useDriverActiveInspection() {
     queryKey: ['driver-active-inspection', driverId],
     queryFn: async (): Promise<DriverActiveInspection | null> => {
       if (!driverId) return null;
-      const { data, error } = await (supabase as any)
+      // Fetch all relevant inspections, then pick the most actionable one in JS.
+      // Sorting purely by updated_at can surface an already-approved row when
+      // an admin action (e.g. Relancer) bumps its timestamp, hiding a newer
+      // pending/rejected/overdue cycle the driver actually needs to act on.
+      const { data: rows, error } = await (supabase as any)
         .from('vehicle_inspections')
-        .select('id,status,due_at,submitted_at,rejection_reason,immobilization_state,vehicle_id')
+        .select('id,status,due_at,submitted_at,rejection_reason,immobilization_state,vehicle_id,created_at,updated_at')
         .eq('driver_id', driverId)
         .in('status', RELEVANT_STATUSES)
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(10);
       if (error) throw error;
-      if (!data) return null;
+      if (!rows || rows.length === 0) return null;
+
+      // Priority: actionable (pending/rejected/overdue/blocked) > submitted > approved.
+      const priority: Record<string, number> = {
+        rejected: 0, overdue: 0, blocked: 0, pending: 1,
+        submitted: 2, approved: 3,
+      };
+      const sorted = [...rows].sort((a, b) => {
+        const pa = priority[a.status] ?? 9;
+        const pb = priority[b.status] ?? 9;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      });
+      const data = sorted[0];
       return {
         ...data,
         effective_status: effectiveStatus(data.status as FleetControlStatus, data.due_at),
