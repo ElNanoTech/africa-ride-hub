@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { logAction } from '@/hooks/useAuditLog';
+import { useAdminUser } from '@/hooks/useAdminUser';
 
 const MOBILE_MONEY_OPERATORS = [
   { value: 'Wave', label: 'Wave' },
@@ -75,6 +76,7 @@ const NO_VEHICLE = '__none__';
 
 export function EditDriverDialog({ open, onOpenChange, driver, kycSubmission }: EditDriverDialogProps) {
   const queryClient = useQueryClient();
+  const { customerId } = useAdminUser();
   const [tab, setTab] = useState<'profile' | 'pin'>('profile');
   const [submitting, setSubmitting] = useState(false);
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -176,10 +178,14 @@ export function EditDriverDialog({ open, onOpenChange, driver, kycSubmission }: 
 
   const handleConfirmUpload = async () => {
     if (!pendingFile) return;
+    if (!customerId) {
+      toast.error('Aucun client sélectionné');
+      return;
+    }
     setPhotoUploading(true);
     try {
       const ext = pendingFile.name.split('.').pop() || 'jpg';
-      const path = `${driver.id}/${Date.now()}.${ext}`;
+      const path = `${customerId}/${driver.id}/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('profile-photos')
         .upload(path, pendingFile, { upsert: true, contentType: pendingFile.type });
