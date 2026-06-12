@@ -5041,6 +5041,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      admin_can_write_customer_storage_path: {
+        Args: { p_name: string }
+        Returns: boolean
+      }
       admin_create_rental: {
         Args: { p_driver_id: string; p_rate: number; p_vehicle_id: string }
         Returns: string
@@ -5740,6 +5744,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      storage_first_path_customer_id: {
+        Args: { p_name: string }
+        Returns: string
       }
       sweep_wallet_auto_apply: { Args: never; Returns: Json }
       test_wallet_settlement_paths: { Args: never; Returns: Json }
