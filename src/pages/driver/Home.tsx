@@ -1222,6 +1222,14 @@ export default function DriverHome() {
               </CardContent>
             </Card>
           </Link>
+          <Link to="/driver/fleet-control">
+            <Card interactive className="h-24">
+              <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+                <ClipboardCheck className="h-6 w-6 text-primary mb-2" />
+                <span className="text-xs text-center font-medium">Contrôle</span>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       </div>
 
