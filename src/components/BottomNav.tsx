@@ -137,6 +137,9 @@ export function BottomNav() {
       if (item.to !== '/driver/fleet-control') return item;
       if (!activeInspection) return item;
       const s = activeInspection.effective_status;
+      // Only badge when driver action is required.
+      // approved = done, submitted = waiting on admin → no "!" needed.
+      if (s === 'approved' || s === 'submitted') return item;
       const variant: NavItem['badgeVariant'] =
         s === 'rejected' || s === 'overdue' || s === 'blocked' ? 'danger'
         : s === 'pending' ? 'warning'
