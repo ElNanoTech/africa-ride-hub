@@ -37,6 +37,10 @@ import {
   DriverTicketsPanel,
   DriverActivityPanel,
 } from '@/components/admin/driver360/panels';
+import { DriverNotesPanel } from '@/components/admin/driver360/DriverNotesPanel';
+import { DriverAuditPanel } from '@/components/admin/driver360/DriverAuditPanel';
+import { DriverDocumentsPanel } from '@/components/admin/driver360/DriverDocumentsPanel';
+import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DriverWalletCard } from '@/components/admin/DriverWalletCard';
@@ -529,6 +533,12 @@ export default function AdminDriverDetail() {
               <Pencil className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Modifier</span>
             </Button>
+            <DriverActionsMenu
+              driverId={driver.id}
+              driverName={driver.full_name}
+              driverStatus={driver.driver_status}
+              onChanged={() => { refetch(); }}
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
