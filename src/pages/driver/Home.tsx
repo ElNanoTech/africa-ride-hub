@@ -1181,6 +1181,9 @@ export default function DriverHome() {
         </div>
       )}
 
+      {/* Fleet Control entry-point */}
+      <FleetControlCard />
+
       {/* Quick Actions */}
       <div className="px-4 mt-6">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
