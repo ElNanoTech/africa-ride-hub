@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { resolveVehicleImage } from '@/lib/vehicleImages';
-import { Car, CreditCard, Wallet, Bell, ChevronRight, TrendingUp, Award, Flame, Target, Shield, Calendar, ArrowRight, AlertCircle, Download, X, Sparkles, Zap, Heart, Star, CheckCircle, Clock, XCircle, Trophy, Crown, Medal, TrendingDown, Minus, Banknote, MapPin, ShieldAlert, ClipboardCheck, Camera, Ban } from 'lucide-react';
+import { Car, CreditCard, Wallet, Bell, ChevronRight, TrendingUp, Award, Flame, Target, Shield, Calendar, ArrowRight, AlertCircle, AlertTriangle, Download, X, Sparkles, Zap, Heart, Star, CheckCircle, Clock, XCircle, Trophy, Crown, Medal, TrendingDown, Minus, Banknote, MapPin, ShieldAlert, ClipboardCheck, Camera, Ban } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { usePWA } from '@/hooks/usePWA';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
