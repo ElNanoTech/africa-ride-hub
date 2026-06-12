@@ -55,10 +55,20 @@ import {
   ArrowLeft,
   Link2,
   ChevronDown,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useVehicles } from '@/hooks/useAdminData';
+import { useCreateVehicle } from '@/hooks/useAdminData';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { useUffizioLiveData, type UffizioVehicle } from '@/hooks/useUffizioLiveData';
 import { supabase } from '@/integrations/supabase/routeClient';
 
@@ -181,6 +191,14 @@ export default function AdminGpsMapping() {
     plate: string;
     existingImei: string;
   } | null>(null);
+  const [creatingFromDevice, setCreatingFromDevice] = useState<MappingRow | null>(null);
+  const [newVehicle, setNewVehicle] = useState({
+    model_name: '',
+    license_plate: '',
+    vehicle_type: 'car',
+    rent_per_day: 8000,
+  });
+  const createVehicle = useCreateVehicle();
 
   const queryClient = useQueryClient();
   const { data: vehicles, isLoading } = useVehicles();
@@ -409,6 +427,37 @@ export default function AdminGpsMapping() {
       return;
     }
     performLink(vehicleId);
+  };
+
+  const openCreateFromDevice = (row: MappingRow) => {
+    setCreatingFromDevice(row);
+    setNewVehicle({
+      model_name: row.deviceName || row.uffizioVehicleNo || 'Véhicule GPS',
+      license_plate: row.uffizioVehicleNo || '',
+      vehicle_type: 'car',
+      rent_per_day: 8000,
+    });
+  };
+
+  const submitCreateFromDevice = async () => {
+    if (!creatingFromDevice) return;
+    if (!newVehicle.model_name.trim() || !newVehicle.license_plate.trim()) {
+      toast.error('Modèle et immatriculation requis');
+      return;
+    }
+    try {
+      await createVehicle.mutateAsync({
+        model_name: newVehicle.model_name.trim(),
+        license_plate: newVehicle.license_plate.trim(),
+        vehicle_type: newVehicle.vehicle_type,
+        rent_per_day: Number(newVehicle.rent_per_day) || 0,
+        uffizio_device_id: creatingFromDevice.imei,
+        status: 'available',
+      });
+      setCreatingFromDevice(null);
+    } catch {
+      /* toast handled in hook */
+    }
   };
 
   // ---------- CSV export ----------
@@ -767,18 +816,29 @@ export default function AdminGpsMapping() {
                         </Button>
                       )}
                       {r.kind === 'unmatched-device' && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="h-7 text-xs"
-                          onClick={() => {
-                            setLinkingDevice(r);
-                            setLinkSearch('');
-                          }}
-                        >
-                          <Link2 className="h-3 w-3 mr-1" />
-                          Associer
-                        </Button>
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setLinkingDevice(r);
+                              setLinkSearch('');
+                            }}
+                          >
+                            <Link2 className="h-3 w-3 mr-1" />
+                            Associer
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => openCreateFromDevice(r)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Créer véhicule
+                          </Button>
+                        </div>
                       )}
                       {r.kind === 'matched' && r.vehicleId && (
                         <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
@@ -963,6 +1023,103 @@ export default function AdminGpsMapping() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create vehicle from orphan device dialog */}
+      <Dialog
+        open={!!creatingFromDevice}
+        onOpenChange={(open) => !open && !createVehicle.isPending && setCreatingFromDevice(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Créer un véhicule depuis le module</DialogTitle>
+            <DialogDescription>
+              {creatingFromDevice && (
+                <span className="block text-xs">
+                  Module GPS : <span className="font-mono">{creatingFromDevice.imei}</span>
+                  {creatingFromDevice.deviceName && <> · {creatingFromDevice.deviceName}</>}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="nv-model">Marque / Modèle</Label>
+              <Input
+                id="nv-model"
+                value={newVehicle.model_name}
+                onChange={(e) => setNewVehicle((s) => ({ ...s, model_name: e.target.value }))}
+                placeholder="Toyota Corolla"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nv-plate">Immatriculation</Label>
+              <Input
+                id="nv-plate"
+                value={newVehicle.license_plate}
+                onChange={(e) => setNewVehicle((s) => ({ ...s, license_plate: e.target.value }))}
+                placeholder="AB-1234-CD"
+                className="font-mono"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select
+                  value={newVehicle.vehicle_type}
+                  onValueChange={(v) => setNewVehicle((s) => ({ ...s, vehicle_type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="car">Voiture</SelectItem>
+                    <SelectItem value="sedan">Berline</SelectItem>
+                    <SelectItem value="compact">Compacte</SelectItem>
+                    <SelectItem value="bike">Moto</SelectItem>
+                    <SelectItem value="cargo">Cargo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="nv-rent">Location / jour (FCFA)</Label>
+                <Input
+                  id="nv-rent"
+                  type="number"
+                  min={0}
+                  value={newVehicle.rent_per_day}
+                  onChange={(e) =>
+                    setNewVehicle((s) => ({ ...s, rent_per_day: Number(e.target.value) }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreatingFromDevice(null)}
+              disabled={createVehicle.isPending}
+            >
+              Annuler
+            </Button>
+            <Button onClick={submitCreateFromDevice} disabled={createVehicle.isPending}>
+              {createVehicle.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Création…
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Créer & associer
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
