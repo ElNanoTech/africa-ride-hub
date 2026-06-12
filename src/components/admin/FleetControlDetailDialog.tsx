@@ -244,6 +244,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
 
   const canApproveFull = filledCount === ALL_ZONES.length &&
     Object.values(items ?? {}).every((it) => it.validation_status !== 'rejected');
+  const controlApproved = row.status === 'approved' || eff === 'approved';
 
   const immoState = row.immobilization_state;
   const showImmoRequest = immoState === 'none' || immoState === 'cancelled' || immoState === 'unblocked';
@@ -381,13 +382,21 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
             )}
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => setShowFullReject((v) => !v)}>
-              <XCircle className="h-4 w-4 mr-1" /> Refuser
-            </Button>
-            <Button size="sm" disabled={!canApproveFull || busy} onClick={() => approveControl.mutate(row.id)}>
-              {approveControl.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-              Approuver
-            </Button>
+            {controlApproved ? (
+              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 h-9 px-3 inline-flex items-center">
+                <CheckCircle2 className="h-4 w-4 mr-1" /> Contrôle validé
+              </Badge>
+            ) : (
+              <>
+                <Button size="sm" variant="outline" disabled={busy} onClick={() => setShowFullReject((v) => !v)}>
+                  <XCircle className="h-4 w-4 mr-1" /> Refuser
+                </Button>
+                <Button size="sm" disabled={!canApproveFull || busy} onClick={() => approveControl.mutate(row.id)}>
+                  {approveControl.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                  Approuver
+                </Button>
+              </>
+            )}
           </div>
         </DialogFooter>
 

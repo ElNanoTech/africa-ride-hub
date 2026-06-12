@@ -14,7 +14,7 @@ export interface DriverActiveInspection {
   vehicle_id: string;
 }
 
-const OPEN_STATUSES = ['pending', 'submitted', 'rejected', 'overdue', 'blocked'];
+const RELEVANT_STATUSES = ['pending', 'submitted', 'rejected', 'overdue', 'blocked', 'approved'];
 
 /**
  * Returns the driver's most-relevant open Fleet Control inspection, or null.
@@ -30,8 +30,8 @@ export function useDriverActiveInspection() {
         .from('vehicle_inspections')
         .select('id,status,due_at,submitted_at,rejection_reason,immobilization_state,vehicle_id')
         .eq('driver_id', driverId)
-        .in('status', OPEN_STATUSES)
-        .order('due_at', { ascending: true })
+        .in('status', RELEVANT_STATUSES)
+        .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) throw error;
