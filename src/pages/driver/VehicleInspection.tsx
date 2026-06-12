@@ -136,14 +136,11 @@ export default function VehicleInspection() {
         .limit(8);
       if (error) throw error;
 
-      // Prefer what the driver most likely wants to see right now:
-      //   1. Any active work (submitted/rejected/blocked) — they're in the middle of a cycle.
-      //   2. A control approved within the last 24h — so they see the validated outcome
-      //      instead of being dropped onto a brand-new empty cycle right after approval.
-      //   3. Otherwise, the most recent pending/overdue (current actionable cycle).
+      // Prefer what the driver must act on now. A relance creates/surfaces a
+      // pending cycle, so pending/overdue must win over a recently approved row.
       const list = (candidates ?? []) as any[];
       const pickActive = list.find((r) =>
-        ['submitted', 'rejected', 'blocked'].includes(r.status),
+        ['pending', 'overdue', 'rejected', 'blocked'].includes(r.status),
       );
       const recentlyApproved = list.find(
         (r) =>
@@ -151,9 +148,8 @@ export default function VehicleInspection() {
           r.reviewed_at &&
           Date.now() - new Date(r.reviewed_at).getTime() < 24 * 60 * 60 * 1000,
       );
-      const pickPending = list.find((r) => ['pending', 'overdue'].includes(r.status));
       let inspection: Inspection | null =
-        (pickActive ?? recentlyApproved ?? pickPending ?? list[0] ?? null) as any;
+        (pickActive ?? recentlyApproved ?? list[0] ?? null) as any;
 
       if (!inspection) {
         const { data: rental } = await supabase
