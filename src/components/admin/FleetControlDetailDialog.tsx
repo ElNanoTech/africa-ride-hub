@@ -164,7 +164,26 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
       const { error } = await supabase.rpc('fleet_control_approve', { p_control: id });
       if (error) throw error;
     },
-    onSuccess: () => { toast.success('Contrôle approuvé'); invalidate(); onClose(); },
+    onSuccess: (_data, id) => {
+      const now = new Date().toISOString();
+      qc.setQueryData<FleetControlRow[]>(['fleet-control', 'list'], (old) =>
+        old?.map((r) => r.id === id
+          ? { ...r, status: 'approved', reviewed_at: now, rejection_reason: null }
+          : r,
+        ) ?? old,
+      );
+      qc.setQueryData<Record<string, ItemRow>>(['fleet-control', 'items', id], (old) => {
+        if (!old) return old;
+        const next: Record<string, ItemRow> = {};
+        for (const [zone, item] of Object.entries(old)) {
+          next[zone] = { ...item, validation_status: 'approved', reviewed_at: item.reviewed_at ?? now, rejection_reason: null };
+        }
+        return next;
+      });
+      toast.success('Contrôle approuvé');
+      invalidate();
+      onClose();
+    },
     onError: (e: any) => toast.error(e?.message ?? 'Erreur'),
   });
 
