@@ -254,10 +254,14 @@ export function AdminCreateDriverDialog({ open, onOpenChange, onViewProfile }: A
 
   const handlePhotoUpload = async () => {
     if (!pendingPhoto) return;
+    if (!customerId) {
+      toast.error('Aucun client sélectionné');
+      return;
+    }
     setUploadingPhoto(true);
     try {
       const ext = pendingPhoto.file.name.split('.').pop() || 'jpg';
-      const path = `new/${Date.now()}.${ext}`;
+      const path = `${customerId}/new/${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('profile-photos')
         .upload(path, pendingPhoto.file, { upsert: false, contentType: pendingPhoto.file.type });
