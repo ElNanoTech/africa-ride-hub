@@ -3,28 +3,37 @@ import autoTable from 'jspdf-autotable';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
+/**
+ * Render one CSV cell: quotes/commas/newlines are escaped, and string values
+ * starting with =, +, - or @ are prefixed with a single quote — the standard
+ * spreadsheet formula-injection mitigation. Numbers (and other non-strings)
+ * are NOT touched, so numeric columns stay numeric in Excel.
+ */
+export function csvCell(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  let stringValue = String(value);
+  if (typeof value === 'string' && /^[=+\-@]/.test(stringValue)) {
+    stringValue = `'${stringValue}`;
+  }
+  if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+    return `"${stringValue.replace(/"/g, '""')}"`;
+  }
+  return stringValue;
+}
+
 // CSV Export
 export function exportToCSV(data: Record<string, unknown>[], filename: string, headers?: Record<string, string>) {
   if (!data.length) return;
 
   // Get all keys from the first row or use provided headers
   const keys = Object.keys(headers || data[0]);
-  
+
   // Create header row
-  const headerRow = keys.map(key => headers?.[key] || key).join(',');
-  
+  const headerRow = keys.map(key => csvCell(headers?.[key] || key)).join(',');
+
   // Create data rows
-  const rows = data.map(row => 
-    keys.map(key => {
-      const value = row[key];
-      // Handle values that might contain commas or quotes
-      if (value === null || value === undefined) return '';
-      const stringValue = String(value);
-      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
-        return `"${stringValue.replace(/"/g, '""')}"`;
-      }
-      return stringValue;
-    }).join(',')
+  const rows = data.map(row =>
+    keys.map(key => csvCell(row[key])).join(',')
   );
 
   const csv = [headerRow, ...rows].join('\n');
