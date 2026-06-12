@@ -9,6 +9,7 @@ import { InvoiceTagPicker } from '@/components/admin/InvoiceTagPicker';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGenerateInvoice, useActiveRentalsForDriver } from '@/hooks/useBilling';
+import type { Invoice } from '@/types/billing';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatDateShort } from '@/lib/format';
 
@@ -28,7 +29,7 @@ interface CreateInvoiceDialogProps {
   initialNotes?: string;
   initialTags?: string[];
   /** Called after the invoice is issued (in addition to query invalidation). */
-  onIssued?: () => void;
+  onIssued?: (invoice: Invoice) => void;
 }
 
 const EMPTY_LINE: InvoiceDraftLine = { designation: '', quantity: 1, unit_price: 0 };
@@ -83,7 +84,7 @@ export function CreateInvoiceDialog({
     if (!customerId) { toast.error('Aucun client actif'); return; }
     if (needsRentalChoice && !rentalId) { toast.error('Sélectionnez la location à rattacher'); return; }
     try {
-      await generate.mutateAsync({
+      const res = await generate.mutateAsync({
         driver_id: driverId,
         customer_id: customerId,
         rental_id: effectiveRentalId,
@@ -95,7 +96,7 @@ export function CreateInvoiceDialog({
       qc.invalidateQueries({ queryKey: ['driver-invoices', driverId] });
       qc.invalidateQueries({ queryKey: ['driver-360', driverId] });
       qc.invalidateQueries({ queryKey: ['driver-activity-timeline', driverId] });
-      onIssued?.();
+      onIssued?.(res.invoice);
       onOpenChange(false);
     } catch {
       /* toast already shown by the hook */

@@ -21,8 +21,10 @@ import {
   VIOLATION_STATUS_LABEL,
   VIOLATION_STATUS_CLASS,
   violationChargeReference,
+  parseViolationChargeReference,
   type ViolationStatus,
 } from '@/lib/violations';
+import type { Invoice } from '@/types/billing';
 
 const supabase = _supabase as any;
 
@@ -39,7 +41,6 @@ interface ViolationRow {
   paid_at: string | null;
   customer_id: string | null;
   vehicle_id: string | null;
-  vehicles: { license_plate: string | null; make: string | null; model: string | null } | null;
 }
 
 interface DriverViolationsPanelProps {
@@ -66,9 +67,12 @@ export function DriverViolationsPanel({ driverId, driverName, customerId }: Driv
   const { data: violations, isLoading, error } = useQuery({
     queryKey: ['driver-violations', driverId],
     queryFn: async (): Promise<ViolationRow[]> => {
+      // No FK exists between traffic_violations.vehicle_id and vehicles, so a
+      // PostgREST embed is impossible — the row's own license_plate text
+      // column is the vehicle display.
       const { data, error } = await supabase
         .from('traffic_violations')
-        .select('id, pv_number, violation_type, violation_date, location, amount, status, license_plate, notes, paid_at, customer_id, vehicle_id, vehicles:vehicles!traffic_violations_vehicle_id_fkey ( license_plate, make, model:model_name )')
+        .select('id, pv_number, violation_type, violation_date, location, amount, status, license_plate, notes, paid_at, customer_id, vehicle_id')
         .eq('driver_id', driverId)
         .order('violation_date', { ascending: false });
       if (error) throw error;
@@ -93,8 +97,8 @@ export function DriverViolationsPanel({ driverId, driverName, customerId }: Driv
       if (error) throw error;
       const map: Record<string, { id: string; label: string; amount: number }> = {};
       for (const c of (data as any[] ?? [])) {
-        const violationId = String(c.reference).replace('violation:', '');
-        map[violationId] = { id: c.id, label: c.label, amount: c.amount };
+        const violationId = parseViolationChargeReference(c.reference);
+        if (violationId) map[violationId] = { id: c.id, label: c.label, amount: c.amount };
       }
       return map;
     },
@@ -143,6 +147,24 @@ export function DriverViolationsPanel({ driverId, driverName, customerId }: Driv
     },
     onSuccess: () => { toast.success('Contravention marquée payée'); invalidate(); },
     onError: (e: Error) => toast.error(e.message),
+  });
+
+  // After a successful "Facturer au chauffeur": persist the linkage so the
+  // violation cannot be billed twice — status → 'invoiced' (documented in
+  // src/lib/violations.ts) and "Facture {invoice_number}" appended to notes.
+  const markInvoiced = useMutation({
+    mutationFn: async ({ v, invoice }: { v: ViolationRow; invoice: Invoice }) => {
+      const ref = `Facture ${invoice.invoice_number ?? invoice.id}`;
+      const appended = `${v.notes ? `${v.notes}\n` : ''}${ref}`;
+      const { error } = await supabase
+        .from('traffic_violations')
+        .update({ status: 'invoiced', notes: appended })
+        .eq('id', v.id);
+      if (error) throw error;
+    },
+    onSuccess: () => invalidate(),
+    onError: (e: Error) =>
+      toast.error('Facture émise, mais le marquage de la contravention a échoué', { description: e.message }),
   });
 
   const contest = useMutation({
@@ -224,7 +246,7 @@ export function DriverViolationsPanel({ driverId, driverName, customerId }: Driv
                     </TableCell>
                     <TableCell className="font-medium whitespace-nowrap">{formatCurrency(v.amount)}</TableCell>
                     <TableCell>{statusBadge(v.status)}</TableCell>
-                    <TableCell className="text-xs">{v.vehicles?.license_plate ?? v.license_plate}</TableCell>
+                    <TableCell className="text-xs">{v.license_plate}</TableCell>
                     <TableCell className="text-xs">
                       {charge ? (
                         <span className="inline-flex items-center gap-1 text-muted-foreground" title={charge.label}>
@@ -247,13 +269,15 @@ export function DriverViolationsPanel({ driverId, driverName, customerId }: Driv
                               <Receipt className="h-4 w-4 mr-2" /> Créer une charge
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem
-                            disabled={!customerId}
-                            title={!customerId ? 'Aucun client actif' : undefined}
-                            onClick={() => customerId && setInvoiceTarget(v)}
-                          >
-                            <FileText className="h-4 w-4 mr-2" /> Facturer au chauffeur
-                          </DropdownMenuItem>
+                          {v.status !== 'invoiced' && (
+                            <DropdownMenuItem
+                              disabled={!customerId}
+                              title={!customerId ? 'Aucun client actif' : undefined}
+                              onClick={() => customerId && setInvoiceTarget(v)}
+                            >
+                              <FileText className="h-4 w-4 mr-2" /> Facturer au chauffeur
+                            </DropdownMenuItem>
+                          )}
                           {payable && (
                             <DropdownMenuItem onClick={() => markPaid.mutate(v)} disabled={markPaid.isPending}>
                               <CheckCircle2 className="h-4 w-4 mr-2" /> Marquer payée
@@ -349,6 +373,9 @@ export function DriverViolationsPanel({ driverId, driverName, customerId }: Driv
         customerId={customerId}
         initialLines={invoiceLines}
         initialNotes={invoiceTarget ? `Contravention du ${format(new Date(invoiceTarget.violation_date), 'dd/MM/yyyy')}${invoiceTarget.pv_number ? ` — PV ${invoiceTarget.pv_number}` : ''}` : ''}
+        onIssued={(invoice) => {
+          if (invoiceTarget) markInvoiced.mutate({ v: invoiceTarget, invoice });
+        }}
       />
     </Card>
   );
