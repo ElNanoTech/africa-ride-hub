@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { CheckCircle, XCircle, FileText, CreditCard, Smartphone, ExternalLink, Loader2, Eye } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, CreditCard, Smartphone, ExternalLink, Loader2, Eye, AlertTriangle } from 'lucide-react';
 import { formatDateShort } from '@/lib/format';
 import { useUpdateKycStatus, useKycSubmissions } from '@/hooks/useAdminData';
 import { logAction } from '@/hooks/useAuditLog';
@@ -150,9 +150,15 @@ export function KycReviewModal({ open, onOpenChange, driver }: KycReviewModalPro
               {/* Mobile Money Information */}
               <Card>
                 <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
                     <Smartphone className="h-4 w-4 text-muted-foreground" />
                     <h3 className="font-semibold">Compte mobile</h3>
+                    {!kycSubmission.bank_account_number?.trim() && (
+                      <Badge className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15">
+                        <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                        Mobile Money non renseigné
+                      </Badge>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -161,7 +167,11 @@ export function KycReviewModal({ open, onOpenChange, driver }: KycReviewModalPro
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Numéro mobile</p>
-                      <p className="font-medium font-mono">{kycSubmission.bank_account_number}</p>
+                      {kycSubmission.bank_account_number?.trim() ? (
+                        <p className="font-medium font-mono">{kycSubmission.bank_account_number}</p>
+                      ) : (
+                        <p className="font-medium text-muted-foreground">Non renseigné</p>
+                      )}
                     </div>
                   </div>
                 </CardContent>

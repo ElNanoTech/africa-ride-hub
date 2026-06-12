@@ -19,8 +19,13 @@ import { getScoreLevel } from '@/lib/scoreLevel';
 import { cn } from '@/lib/utils';
 import { useDriverCurrentScore, useDriverId, useDriverCreditScores, useDriverRentals, useDriverNotifications, useDriverLoans, useDriverPayments, useIsAuthResolving } from '@/hooks/useDriverData';
 import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
-import { format, differenceInCalendarDays } from 'date-fns';
-import { fr as frLocale } from 'date-fns/locale';
+import {
+  CLOSED_FLEET_CONTROL_STATUSES,
+  formatDueDateRelative,
+  immobilizationBanner,
+  type FleetControlStatus,
+  type ImmobilizationState,
+} from '@/lib/fleetControl';
 import { formatCurrency as fmtCurrency, formatNumber } from '@/lib/format';
 import { useDriverDashboardRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
@@ -189,11 +194,67 @@ function InsightCard({ title, value, icon: Icon, trend, trendValue, className }:
 // Fleet Control summary card (driver-side companion to the admin module).
 function FleetControlCard() {
   const { data: inspection, isLoading } = useDriverActiveInspection();
-  if (isLoading || !inspection) return null;
+  const { data: driverId } = useDriverId();
+
+  // FC-D1: when there is no active control, surface the history entry point
+  // (only if the driver actually has closed cycles to look at).
+  const { data: hasHistory = false } = useQuery({
+    queryKey: ['driver-inspection-has-history', driverId],
+    enabled: !!driverId && !isLoading && !inspection,
+    queryFn: async () => {
+      const { count, error } = await (supabase as any)
+        .from('vehicle_inspections')
+        .select('id', { count: 'exact', head: true })
+        .eq('driver_id', driverId)
+        .in('status', [...CLOSED_FLEET_CONTROL_STATUSES]);
+      if (error) throw error;
+      return (count ?? 0) > 0;
+    },
+  });
+
+  if (isLoading) return null;
+
+  if (!inspection) {
+    if (!hasHistory) return null;
+    return (
+      <div className="px-4 mt-6">
+        <Link to="/driver/fleet-control/history" aria-label="Voir l'historique des contrôles">
+          <Card className="border bg-gradient-to-r from-muted/60 to-muted/30 overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-muted text-muted-foreground">
+                  <ClipboardCheck className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm">Contrôles véhicule</h3>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Aucun contrôle en cours. Consultez vos contrôles passés.
+                  </p>
+                  <div className="mt-2">
+                    <Button variant="ghost" size="sm" className="h-7 px-2 -ml-2 text-xs">
+                      Voir l'historique
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+    );
+  }
 
   const status = inspection.effective_status;
-  const due = new Date(inspection.due_at);
-  const daysLeft = differenceInCalendarDays(due, new Date());
+  // FC-D6: honest immobilization copy via the shared helper — never claims an
+  // engine cut unless cut_sent, never claims that submitting lifts the restriction.
+  const immoBanner = immobilizationBanner(
+    inspection.immobilization_state as ImmobilizationState,
+    status as FleetControlStatus,
+  );
+  const dueRelative = formatDueDateRelative(inspection.due_at);
 
   const config: Record<string, {
     title: string;
@@ -202,12 +263,11 @@ function FleetControlCard() {
     icon: typeof ClipboardCheck;
     bg: string;
     iconBg: string;
+    to?: string;
   }> = {
     pending: {
       title: 'Contrôle visuel requis',
-      description: daysLeft >= 0
-        ? `Soumettez les photos avant le ${format(due, 'd MMM', { locale: frLocale })}.`
-        : 'À soumettre dès que possible.',
+      description: `${dueRelative} — soumettez vos photos.`,
       cta: 'Commencer',
       icon: Camera,
       bg: 'from-primary/10 to-primary/5 border-primary/30',
@@ -231,15 +291,25 @@ function FleetControlCard() {
     },
     overdue: {
       title: 'Contrôle en retard',
-      description: `En retard de ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) > 1 ? 's' : ''} — soumettez-le rapidement.`,
+      description: `${dueRelative} — soumettez-le rapidement.`,
       cta: 'Soumettre',
       icon: AlertTriangle,
       bg: 'from-warning/10 to-warning/5 border-warning/30',
       iconBg: 'bg-warning/20 text-warning',
     },
+    approved: {
+      title: 'Contrôle véhicule à jour',
+      description: `Prochain contrôle : ${dueRelative.charAt(0).toLocaleLowerCase('fr-FR')}${dueRelative.slice(1)}`,
+      cta: "Voir l'historique",
+      icon: CheckCircle,
+      bg: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/30',
+      iconBg: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300',
+      to: '/driver/fleet-control/history',
+    },
     blocked: {
-      title: 'Véhicule immobilisé',
-      description: 'Contactez votre gestionnaire.',
+      title: immoBanner?.title ?? 'Restriction demandée',
+      description: immoBanner?.description
+        ?? 'En attente de vérification du stationnement. Contactez votre gestionnaire.',
       cta: 'Voir les détails',
       icon: Ban,
       bg: 'from-destructive/10 to-destructive/5 border-destructive/40',
@@ -247,12 +317,13 @@ function FleetControlCard() {
     },
   };
 
+  // Unknown statuses fall back to pending; `approved` has its own entry above.
   const c = config[status] || config.pending;
   const Icon = c.icon;
 
   return (
     <div className="px-4 mt-6">
-      <Link to="/driver/fleet-control" aria-label="Ouvrir le contrôle visuel">
+      <Link to={c.to ?? '/driver/fleet-control'} aria-label="Ouvrir le contrôle visuel">
         <Card className={cn('border bg-gradient-to-r overflow-hidden', c.bg)}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">

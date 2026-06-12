@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { checkIsAdminWithRetry } from './adminAuthCheck';
-import { supabase } from '@/integrations/supabase/routeClient';
+import { supabaseAdmin } from '@/integrations/supabase/clients';
 
-vi.mock('@/integrations/supabase/client', () => ({
-  supabase: {
+vi.mock('@/integrations/supabase/clients', () => ({
+  supabaseAdmin: {
     rpc: vi.fn(),
   },
 }));
 
-const rpcMock = vi.mocked(supabase.rpc);
+const rpcMock = vi.mocked(supabaseAdmin.rpc);
 
 describe('checkIsAdminWithRetry', () => {
   beforeEach(() => {

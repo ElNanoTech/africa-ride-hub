@@ -21,24 +21,11 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useAdminUser } from '@/hooks/useAdminUser';
-
-type ViolationStatus = 'pending_payment' | 'paid' | 'contested' | 'cancelled' | 'liquidated';
-
-const STATUS_LABEL: Record<ViolationStatus, string> = {
-  pending_payment: 'En attente',
-  paid: 'Payé',
-  liquidated: 'Liquidé',
-  contested: 'En recours',
-  cancelled: 'Annulé',
-};
-
-const STATUS_COLOR: Record<ViolationStatus, string> = {
-  pending_payment: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
-  paid: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  liquidated: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300',
-  contested: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
-  cancelled: 'bg-muted text-muted-foreground',
-};
+import {
+  VIOLATION_STATUS_LABEL as STATUS_LABEL,
+  VIOLATION_STATUS_CLASS as STATUS_COLOR,
+  type ViolationStatus,
+} from '@/lib/violations';
 
 const VIOLATION_TYPES = [
   'Excès de vitesse',
@@ -55,6 +42,13 @@ function fcfa(n: number) {
   return new Intl.NumberFormat('fr-FR').format(n || 0) + ' FCFA';
 }
 
+/** Display name of an attributed driver (first/last may be null — fall back to full_name). */
+function violationDriverName(d: { first_name?: string | null; last_name?: string | null; full_name?: string | null } | null): string | null {
+  if (!d) return null;
+  const name = `${d.first_name || ''} ${d.last_name || ''}`.trim();
+  return name || d.full_name || null;
+}
+
 export default function Contraventions() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<'all' | ViolationStatus>('all');
@@ -66,12 +60,37 @@ export default function Contraventions() {
   const { data: violations = [], isLoading } = useQuery<any[]>({
     queryKey: ['contraventions', 'violations'],
     queryFn: async () => {
+      // traffic_violations has NO foreign keys on vehicle_id/driver_id, so
+      // PostgREST embeds are impossible (the whole query would 400). Fetch the
+      // rows, then resolve the linked drivers/vehicles with two batched
+      // lookups joined client-side. The vehicle display falls back to the
+      // row's own license_plate text column.
       const { data, error } = await supabase
         .from('traffic_violations')
-        .select('*, vehicles:vehicles!traffic_violations_vehicle_id_fkey ( id, license_plate, make, model ), drivers:drivers!traffic_violations_driver_id_fkey ( id, first_name, last_name )')
+        .select('*')
         .order('violation_date', { ascending: false });
       if (error) throw error;
-      return data || [];
+      const rows: any[] = data || [];
+
+      const driverIds = [...new Set(rows.map((r) => r.driver_id).filter(Boolean))];
+      const vehicleIds = [...new Set(rows.map((r) => r.vehicle_id).filter(Boolean))];
+      const [driversRes, vehiclesRes] = await Promise.all([
+        driverIds.length
+          ? supabase.from('drivers').select('id, first_name, last_name, full_name').in('id', driverIds)
+          : Promise.resolve({ data: [], error: null }),
+        vehicleIds.length
+          ? supabase.from('vehicles').select('id, license_plate, make, model:model_name').in('id', vehicleIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+      if (driversRes.error) throw driversRes.error;
+      if (vehiclesRes.error) throw vehiclesRes.error;
+      const driverById = new Map((driversRes.data || []).map((d: any) => [d.id, d]));
+      const vehicleById = new Map((vehiclesRes.data || []).map((v: any) => [v.id, v]));
+      return rows.map((r) => ({
+        ...r,
+        drivers: r.driver_id ? driverById.get(r.driver_id) ?? null : null,
+        vehicles: r.vehicle_id ? vehicleById.get(r.vehicle_id) ?? null : null,
+      }));
     },
   });
 
@@ -91,7 +110,7 @@ export default function Contraventions() {
       if (tab !== 'all' && v.status !== tab) return false;
       if (search) {
         const s = search.toLowerCase();
-        const driver = v.drivers ? `${v.drivers.first_name || ''} ${v.drivers.last_name || ''}` : '';
+        const driver = violationDriverName(v.drivers) || '';
         const hay = [v.license_plate, v.pv_number, v.violation_type, driver, v.location].filter(Boolean).join(' ').toLowerCase();
         if (!hay.includes(s)) return false;
       }
@@ -162,7 +181,7 @@ export default function Contraventions() {
         v.location || '',
         String(v.amount || 0),
         STATUS_LABEL[v.status as ViolationStatus] || v.status,
-        v.drivers ? `${v.drivers.first_name || ''} ${v.drivers.last_name || ''}`.trim() : '',
+        violationDriverName(v.drivers) || '',
       ]),
     ];
     const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -260,7 +279,7 @@ export default function Contraventions() {
                     <p className="text-sm mt-0.5">{v.violation_type}{v.location ? ` · ${v.location}` : ''}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {format(new Date(v.violation_date), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                      {v.drivers ? ` · ${v.drivers.first_name || ''} ${v.drivers.last_name || ''}` : ' · Non attribué'}
+                      {violationDriverName(v.drivers) ? ` · ${violationDriverName(v.drivers)}` : ' · Non attribué'}
                     </p>
                   </div>
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
@@ -440,7 +459,7 @@ function ViolationDetailDrawer({ violation, onClose, onChanged }: { violation: a
   }
 
   const v = violation;
-  const driverName = v.drivers ? `${v.drivers.first_name || ''} ${v.drivers.last_name || ''}`.trim() : null;
+  const driverName = violationDriverName(v.drivers);
   const vehicleLabel = v.vehicles ? `${v.vehicles.license_plate}${v.vehicles.make ? ` — ${v.vehicles.make} ${v.vehicles.model || ''}` : ''}` : null;
 
   const setStatus = async (status: ViolationStatus) => {

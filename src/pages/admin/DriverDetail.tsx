@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout, AdminPageHeader } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -20,10 +20,10 @@ import { ScoreGauge, TierBadge } from '@/components/ScoreGauge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Phone, Mail, Car, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, Wallet, XCircle, FileText, ExternalLink, Download, FileSpreadsheet, ChevronRight, Pencil, Trash2, Loader2, CarFront } from 'lucide-react';
+import { ArrowLeft, Phone, Mail, Car, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, Wallet, XCircle, FileText, ExternalLink, Download, FileSpreadsheet, ChevronRight, Pencil, Trash2, Loader2, CarFront, Receipt, MessageSquarePlus, Send, IdCard } from 'lucide-react';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
 import { formatCurrency, formatDateShort } from '@/lib/format';
-import { KYC, PAYMENT, RENTAL, LOAN, SCORE, ADMIN, UI } from '@/lib/i18n';
+import { KYC, PAYMENT, LOAN, SCORE, ADMIN, UI } from '@/lib/i18n';
 import { useUpdateKycStatus } from '@/hooks/useAdminData';
 import { exportToCSV, exportDriverDetailToPDF } from '@/lib/export';
 import { toast } from 'sonner';
@@ -40,11 +40,21 @@ import {
 import { DriverNotesPanel } from '@/components/admin/driver360/DriverNotesPanel';
 import { DriverAuditPanel } from '@/components/admin/driver360/DriverAuditPanel';
 import { DriverDocumentsPanel } from '@/components/admin/driver360/DriverDocumentsPanel';
+import { DriverOverviewPanel } from '@/components/admin/driver360/DriverOverviewPanel';
+import { DriverFleetControlPanel } from '@/components/admin/driver360/DriverFleetControlPanel';
+import { DriverViolationsPanel } from '@/components/admin/driver360/DriverViolationsPanel';
+import { DriverRentalsPanel } from '@/components/admin/driver360/DriverRentalsPanel';
 import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
+import { RiskBadge } from '@/components/admin/RiskBadge';
+import { SendDriverMessageDialog } from '@/components/admin/SendDriverMessageDialog';
+import { CreateInvoiceDialog } from '@/components/admin/CreateInvoiceDialog';
+import { useDriverRisk } from '@/hooks/useDriverRisk';
+import { useDriverWallet } from '@/hooks/useAdminData';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DriverWalletCard } from '@/components/admin/DriverWalletCard';
 import { StatusBadge } from '@/lib/statusBadges';
+import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
 
 const TIER_INFO = {
   A: { label: 'Excellent', color: 'hsl(142, 76%, 36%)' },
@@ -146,11 +156,20 @@ function NextStepBanner({ driver, kycSubmission, onApproveKyc, onRejectKyc, onAc
   return null;
 }
 
+// Tab values the ?tab= deep link accepts (CH-L4). 'wallet' is special: it
+// opens the default tab and scrolls the KiraPay card into view.
+const TAB_VALUES = [
+  'overview', 'scores', 'payments', 'rentals', 'loans', 'income', 'invoices',
+  'fleet-control', 'violations', 'accidents', 'tickets', 'documents', 'notes',
+  'audit', 'activity',
+] as const;
+
 export default function AdminDriverDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  
+  const [searchParams] = useSearchParams();
+
   // State for rejection modal
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -158,6 +177,28 @@ export default function AdminDriverDetail() {
   const [showAssignVehicleDialog, setShowAssignVehicleDialog] = useState(false);
   const [showDeletePhotoDialog, setShowDeletePhotoDialog] = useState(false);
   const [deletingPhoto, setDeletingPhoto] = useState(false);
+
+  // CH-P5 quick actions
+  const [showMessageDialog, setShowMessageDialog] = useState(false);
+  const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+  const [notesFocusToken, setNotesFocusToken] = useState(0);
+
+  // CH-L4 — ?tab= deep link (tab=wallet scrolls the KiraPay card into view).
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<string>(
+    tabParam && (TAB_VALUES as readonly string[]).includes(tabParam) ? tabParam : 'overview',
+  );
+  const walletCardRef = useRef<HTMLDivElement>(null);
+  const kycCardRef = useRef<HTMLDivElement>(null);
+
+  const scrollToKycCard = () => {
+    kycCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  const handleAddNote = () => {
+    setActiveTab('notes');
+    setNotesFocusToken((t) => t + 1);
+  };
 
   const handleDeletePhoto = async () => {
     if (!id) return;
@@ -182,6 +223,12 @@ export default function AdminDriverDetail() {
   // KYC mutation
   const updateKycStatus = useUpdateKycStatus();
 
+  // CH-P4 — header chips: computed risk + wallet balance (shared query keys
+  // with the overview panel and the wallet card, so no extra round-trips).
+  const driverRisk = useDriverRisk(id);
+  const { data: walletData } = useDriverWallet(id);
+  const walletBalance = walletData?.wallet?.balance ?? null;
+
   // Fetch driver details
   const { data: driver, isLoading: driverLoading, error: driverError, refetch } = useQuery({
     queryKey: ['admin-driver-detail', id],
@@ -205,6 +252,20 @@ export default function AdminDriverDetail() {
     },
     enabled: !!id,
   });
+
+  // CH-L4 — apply the ?tab= deep link once the page content is rendered.
+  // tab=wallet scrolls the KiraPay card (it lives above the tabs).
+  useEffect(() => {
+    if (!tabParam || driverLoading) return;
+    if ((TAB_VALUES as readonly string[]).includes(tabParam)) {
+      setActiveTab(tabParam);
+    } else if (tabParam === 'wallet') {
+      const t = setTimeout(() => {
+        walletCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+      return () => clearTimeout(t);
+    }
+  }, [tabParam, driverLoading]);
 
   // Fetch KYC submission
   const { data: kycSubmission, refetch: refetchKyc } = useQuery({
@@ -235,27 +296,7 @@ export default function AdminDriverDetail() {
     enabled: !!id,
   });
 
-  // Fetch rentals
-  const { data: rentals } = useQuery({
-    queryKey: ['admin-driver-rentals', id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rentals')
-        .select(`
-          *,
-          vehicles (
-            model_name,
-            license_plate
-          )
-        `)
-        .eq('driver_id', id)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!id,
-  });
+  // Rentals are loaded by DriverRentalsPanel (CH-P6, full history).
 
   // Fetch payments
   const { data: payments } = useQuery({
@@ -303,6 +344,46 @@ export default function AdminDriverDetail() {
     },
     enabled: !!id,
   });
+
+  // CH-B4: live refresh of the open profile — invalidate the exact query
+  // keys backing the page/panels when a row for THIS driver changes.
+  // Trailing-debounced (~2s) so a burst of writes (e.g. deposit → wallet txn
+  // + payment + invoice) triggers one refetch wave, not a storm (same
+  // pattern as the admin Fleet Control list, FC-A2).
+  const rtPendingKeys = useRef<Set<string>>(new Set());
+  const rtTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (rtTimer.current) clearTimeout(rtTimer.current);
+  }, []);
+  const queueInvalidate = (...keys: string[]) => {
+    keys.forEach((k) => rtPendingKeys.current.add(k));
+    if (rtTimer.current) clearTimeout(rtTimer.current);
+    rtTimer.current = setTimeout(() => {
+      rtTimer.current = null;
+      // Prefix match on [key, id] so parameterized keys
+      // (e.g. ['driver-activity-timeline', id, limit]) are covered too.
+      rtPendingKeys.current.forEach((k) =>
+        queryClient.invalidateQueries({ queryKey: [k, id] }),
+      );
+      rtPendingKeys.current.clear();
+    }, 2_000);
+  };
+  const matchesDriver = (p: { new: { driver_id?: string }; old: { driver_id?: string } }) =>
+    (p.new?.driver_id ?? p.old?.driver_id) === id;
+  // Tables limited to what this page actually renders (wallet card, header
+  // 360 summary, Paiements/Factures/Documents tabs, KYC card, Activité tab).
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_wallet_transactions', '*', matchesDriver,
+    () => queueInvalidate('driver-wallet', 'driver-360', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('payments', '*', matchesDriver,
+    () => queueInvalidate('admin-driver-payments', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('invoice', '*', matchesDriver,
+    () => queueInvalidate('driver-invoices', 'driver-360', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_score_events', '*', matchesDriver,
+    () => queueInvalidate('driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_documents', '*', matchesDriver,
+    () => queueInvalidate('driver-documents'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('kyc_submissions', '*', matchesDriver,
+    () => queueInvalidate('admin-driver-kyc', 'driver-360', 'admin-driver-detail'), !!id);
 
   // Process score data for charts
   const scoreChartData = scores?.map(s => ({
@@ -518,7 +599,7 @@ export default function AdminDriverDetail() {
           </Button>
           
           {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
             <Button
               variant="default"
               size="sm"
@@ -528,6 +609,25 @@ export default function AdminDriverDetail() {
             >
               <CarFront className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Allouer un véhicule</span>
+            </Button>
+            {/* CH-P5 quick actions */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowInvoiceDialog(true)}
+              disabled={!(driver as { customer_id?: string | null }).customer_id}
+              title={!(driver as { customer_id?: string | null }).customer_id ? 'Conducteur sans client rattaché' : undefined}
+            >
+              <Receipt className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Créer facture</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleAddNote}>
+              <MessageSquarePlus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Ajouter note</span>
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setShowMessageDialog(true)}>
+              <Send className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Envoyer message</span>
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)}>
               <Pencil className="h-4 w-4 sm:mr-2" />
@@ -588,11 +688,51 @@ export default function AdminDriverDetail() {
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <AdminPageHeader 
+            <AdminPageHeader
               title={driver.full_name}
               description={`ID Yango: ${driver.yango_driver_id}`}
             />
           </div>
+        </div>
+
+        {/* CH-P4 — risk badge, permit number + expiry, wallet balance chip */}
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <RiskBadge
+            level={driverRisk.data?.level}
+            reasons={driverRisk.data?.reasons}
+            loading={driverRisk.isLoading}
+          />
+          {(() => {
+            const permitNumber = (driver as { permit_number?: string | null }).permit_number;
+            const permitExpiry = (driver as { permit_expiry_date?: string | null }).permit_expiry_date;
+            const expired = !!permitExpiry && permitExpiry < new Date().toISOString().split('T')[0];
+            if (!permitNumber && !permitExpiry) {
+              return (
+                <Badge variant="outline" className="gap-1 text-muted-foreground">
+                  <IdCard className="h-3 w-3" /> Permis non renseigné
+                </Badge>
+              );
+            }
+            return (
+              <Badge
+                variant="outline"
+                className={`gap-1 ${expired ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/60' : ''}`}
+                title={expired ? 'Permis expiré' : undefined}
+              >
+                <IdCard className="h-3 w-3" />
+                {permitNumber ? `Permis ${permitNumber}` : 'Permis'}
+                {permitExpiry ? ` · ${expired ? 'expiré le' : 'exp.'} ${formatDateShort(permitExpiry)}` : ''}
+              </Badge>
+            );
+          })()}
+          {walletBalance !== null && (
+            <Badge
+              variant="outline"
+              className={`gap-1 ${walletBalance < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/60' : ''}`}
+            >
+              <Wallet className="h-3 w-3" /> KiraPay : {formatCurrency(walletBalance)}
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -652,7 +792,7 @@ export default function AdminDriverDetail() {
         </Card>
 
         {/* KYC Status */}
-        <Card className={driver.kyc_status === 'pending' ? 'border-amber-500/50' : ''}>
+        <Card ref={kycCardRef} className={driver.kyc_status === 'pending' ? 'border-amber-500/50' : ''}>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Statut KYC</CardTitle>
           </CardHeader>
@@ -788,7 +928,15 @@ export default function AdminDriverDetail() {
             <div className="grid gap-6 md:grid-cols-2">
               {/* Mobile Money Info */}
               <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Compte mobile</h4>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-medium text-sm text-muted-foreground">Compte mobile</h4>
+                  {!kycSubmission.bank_account_number?.trim() && (
+                    <Badge className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15">
+                      <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                      Mobile Money non renseigné
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Opérateur:</span>
@@ -796,7 +944,11 @@ export default function AdminDriverDetail() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Numéro mobile:</span>
-                    <span className="font-medium font-mono">{kycSubmission.bank_account_number}</span>
+                    {kycSubmission.bank_account_number?.trim() ? (
+                      <span className="font-medium font-mono">{kycSubmission.bank_account_number}</span>
+                    ) : (
+                      <span className="font-medium text-muted-foreground">Non renseigné</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -874,17 +1026,24 @@ export default function AdminDriverDetail() {
       {driver?.id && <Driver360HeaderCard driverId={driver.id} />}
 
       {/* Driver wallet (upfront balance) */}
-      {driver?.id && <DriverWalletCard driverId={driver.id} />}
+      {driver?.id && (
+        <div ref={walletCardRef} className="scroll-mt-20">
+          <DriverWalletCard driverId={driver.id} />
+        </div>
+      )}
 
       {/* Tabs for detailed info */}
-      <Tabs defaultValue="scores" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <TabsList className="flex flex-wrap h-auto">
+          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
           <TabsTrigger value="scores">Historique des Scores</TabsTrigger>
           <TabsTrigger value="payments">Paiements</TabsTrigger>
           <TabsTrigger value="rentals">Locations</TabsTrigger>
           <TabsTrigger value="loans">Prêts</TabsTrigger>
           <TabsTrigger value="income">Revenus</TabsTrigger>
           <TabsTrigger value="invoices">Factures</TabsTrigger>
+          <TabsTrigger value="fleet-control">Fleet Control</TabsTrigger>
+          <TabsTrigger value="violations">Contraventions</TabsTrigger>
           <TabsTrigger value="accidents">Sinistres</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
           <TabsTrigger value="documents">Documents</TabsTrigger>
@@ -892,6 +1051,15 @@ export default function AdminDriverDetail() {
           <TabsTrigger value="audit">Audit</TabsTrigger>
           <TabsTrigger value="activity">Activité</TabsTrigger>
         </TabsList>
+
+        {/* Vue d'ensemble Tab — CH-P1 */}
+        <TabsContent value="overview">
+          <DriverOverviewPanel
+            driverId={driver.id}
+            onAssignVehicle={() => setShowAssignVehicleDialog(true)}
+            onVerifyKyc={scrollToKycCard}
+          />
+        </TabsContent>
 
         {/* Scores Tab */}
         <TabsContent value="scores" className="space-y-4">
@@ -1080,63 +1248,9 @@ export default function AdminDriverDetail() {
           </Card>
         </TabsContent>
 
-        {/* Rentals Tab */}
+        {/* Rentals Tab — CH-P6: full history + admin return action */}
         <TabsContent value="rentals">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historique des Locations</CardTitle>
-              <CardDescription>{rentals?.length || 0} locations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Véhicule</TableHead>
-                    <TableHead>Plan</TableHead>
-                    <TableHead>Début</TableHead>
-                    <TableHead>Fin</TableHead>
-                    <TableHead>Statut</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {rentals?.map((rental) => (
-                    <TableRow key={rental.id}>
-                      <TableCell>
-                        <div className="font-medium">{rental.vehicles?.model_name}</div>
-                        <div className="text-sm text-muted-foreground">{rental.vehicles?.license_plate}</div>
-                      </TableCell>
-                      <TableCell>Journalier</TableCell>
-                      <TableCell>{formatDateShort(new Date(rental.start_date))}</TableCell>
-                      <TableCell>
-                        {rental.end_date ? formatDateShort(new Date(rental.end_date)) : '-'}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          variant={
-                            rental.status === 'active' ? 'verified' : 
-                            rental.status === 'pending' ? 'pending' : 
-                            rental.status === 'rejected' ? 'rejected' : 'default'
-                          }
-                        >
-                          {rental.status === 'active' ? RENTAL.ACTIVE :
-                           rental.status === 'pending' ? RENTAL.PENDING :
-                           rental.status === 'approved' ? RENTAL.APPROVED :
-                           rental.status === 'rejected' ? RENTAL.REJECTED :
-                           rental.status === 'completed' ? RENTAL.COMPLETED : rental.status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  )) || (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                        Aucune location
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <DriverRentalsPanel driverId={driver.id} driverName={driver.full_name} />
         </TabsContent>
 
         {/* Loans Tab */}
@@ -1270,6 +1384,20 @@ export default function AdminDriverDetail() {
           <DriverInvoicesPanel driverId={driver.id} />
         </TabsContent>
 
+        {/* Fleet Control Tab — CH-P2 */}
+        <TabsContent value="fleet-control">
+          <DriverFleetControlPanel driverId={driver.id} />
+        </TabsContent>
+
+        {/* Contraventions Tab — CH-P3 (distinct from support "Tickets", D-1) */}
+        <TabsContent value="violations">
+          <DriverViolationsPanel
+            driverId={driver.id}
+            driverName={driver.full_name}
+            customerId={(driver as { customer_id?: string | null }).customer_id ?? null}
+          />
+        </TabsContent>
+
         {/* Sinistres Tab */}
         <TabsContent value="accidents">
           <DriverAccidentsPanel driverId={driver.id} />
@@ -1287,7 +1415,11 @@ export default function AdminDriverDetail() {
 
         {/* Notes Tab */}
         <TabsContent value="notes">
-          <DriverNotesPanel driverId={driver.id} customerId={(driver as { customer_id?: string | null }).customer_id ?? null} />
+          <DriverNotesPanel
+            driverId={driver.id}
+            customerId={(driver as { customer_id?: string | null }).customer_id ?? null}
+            focusToken={notesFocusToken}
+          />
         </TabsContent>
 
         {/* Audit Tab */}
@@ -1410,6 +1542,28 @@ export default function AdminDriverDetail() {
           onOpenChange={setShowAssignVehicleDialog}
           driverId={driver.id}
           driverName={driver.full_name}
+        />
+      )}
+
+      {/* CH-P5 — "Envoyer message" quick action */}
+      {driver && (
+        <SendDriverMessageDialog
+          open={showMessageDialog}
+          onOpenChange={setShowMessageDialog}
+          driverId={driver.id}
+          driverName={driver.full_name}
+          customerId={(driver as { customer_id?: string | null }).customer_id ?? null}
+        />
+      )}
+
+      {/* CH-P5 — "Créer facture" quick action (generate-invoice flow, prefilled driver) */}
+      {driver && (
+        <CreateInvoiceDialog
+          open={showInvoiceDialog}
+          onOpenChange={setShowInvoiceDialog}
+          driverId={driver.id}
+          driverName={driver.full_name}
+          customerId={(driver as { customer_id?: string | null }).customer_id ?? null}
         />
       )}
 

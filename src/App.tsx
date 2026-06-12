@@ -100,6 +100,8 @@ const AdminAIUsage = lazy(() => import("./pages/admin/AIUsageAnalytics"));
 const AdminContracts = lazy(() => import("./pages/admin/Contracts"));
 const DriverOwnership = lazy(() => import("./pages/driver/Ownership"));
 const DriverVehicleInspection = lazy(() => import("./pages/driver/VehicleInspection"));
+const DriverFleetControlHistory = lazy(() => import("./pages/driver/FleetControlHistory"));
+const DriverFleetControlDetail = lazy(() => import("./pages/driver/FleetControlDetail"));
 const DriverSinistresHome = lazy(() => import("./pages/driver/sinistres/SinistresHome"));
 const DriverSinistreType = lazy(() => import("./pages/driver/sinistres/StepType"));
 const DriverSinistreSafety = lazy(() => import("./pages/driver/sinistres/StepSafety"));
@@ -223,6 +225,8 @@ const App = () => {
                     <Route path="/driver/sinistres/success/:id" element={<DriverSinistreSuccess />} />
                     <Route path="/driver/inspection" element={<DriverVehicleInspection />} />
                     <Route path="/driver/fleet-control" element={<DriverVehicleInspection />} />
+                    <Route path="/driver/fleet-control/history" element={<DriverFleetControlHistory />} />
+                    <Route path="/driver/fleet-control/:id" element={<DriverFleetControlDetail />} />
                     <Route path="/driver/formation" element={<DriverFormation />} />
                     <Route path="/driver/alertes" element={<DriverAlertes />} />
                     <Route path="/driver/contraventions" element={<DriverContraventions />} />

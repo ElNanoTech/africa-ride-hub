@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,10 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
+import {
+  useFleetControlSettings,
+  FLEET_CONTROL_SETTINGS_QUERY_KEY,
+} from '@/hooks/useFleetControlSettings';
 import {
   DEFAULT_FLEET_CONTROL_SETTINGS,
   type FleetControlSettings,
@@ -21,11 +26,14 @@ const KEYS: Array<{
   help: string;
   kind: 'int' | 'bool';
   min?: number;
+  readOnly?: boolean;
 }> = [
   { field: 'cycle_days',                  key: 'fleet_control.cycle_days',                  label: 'Période de contrôle (jours)',         help: 'Délai entre deux contrôles consécutifs', kind: 'int', min: 1 },
   { field: 'late_threshold_days',         key: 'fleet_control.late_threshold_days',         label: 'Seuil de retard avant escalade',      help: 'Jours de retard avant immobilisation auto', kind: 'int', min: 0 },
   { field: 'relance_threshold',           key: 'fleet_control.relance_threshold',           label: 'Nombre de relances avant escalade',   help: 'Relances envoyées avant immobilisation auto', kind: 'int', min: 0 },
-  { field: 'parking_check_interval_min',  key: 'fleet_control.parking_check_interval_min',  label: 'Vérification stationnement (min)',    help: 'Fréquence de la vérification GPS', kind: 'int', min: 5 },
+  // FC-A4: the parking-check cron runs on a fixed 15-min schedule server-side.
+  // Honest UI: show the value, do not pretend it is configurable.
+  { field: 'parking_check_interval_min',  key: 'fleet_control.parking_check_interval_min',  label: 'Vérification stationnement (min)',    help: 'Intervalle fixe : 15 min (planifié côté serveur)', kind: 'int', min: 5, readOnly: true },
   { field: 'relance_cooldown_hours',      key: 'fleet_control.relance_cooldown_hours',      label: 'Délai minimum entre deux relances',   help: 'Heures avant qu\'une nouvelle relance soit autorisée', kind: 'int', min: 1 },
   { field: 'auto_immobilisation_enabled', key: 'fleet_control.auto_immobilisation_enabled', label: 'Immobilisation automatique',          help: 'Coupure du véhicule activée automatiquement quand les seuils sont dépassés', kind: 'bool' },
   { field: 'uffizio_immobilization_dry_run', key: 'fleet_control.uffizio_immobilization_dry_run', label: 'Mode test Uffizio (aucune coupure réelle)', help: 'Quand activé, le système contacte Uffizio et vérifie le véhicule mais NE coupe PAS le moteur. Désactiver pour transmettre la commande SET_OUT réelle.', kind: 'bool' },
@@ -34,34 +42,17 @@ const KEYS: Array<{
 ];
 
 export function FleetControlSettingsCard() {
-  const [values, setValues] = useState<FleetControlSettings>(DEFAULT_FLEET_CONTROL_SETTINGS);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
+  // Shared settings query (admin page + driver screens use the same key).
+  const { data: fetched, isLoading: loading } = useFleetControlSettings();
+  // Local draft: starts from the fetched values, diverges on edit.
+  const [draft, setDraft] = useState<FleetControlSettings | null>(null);
+  const values = draft ?? fetched ?? DEFAULT_FLEET_CONTROL_SETTINGS;
+  const setValues = (updater: (v: FleetControlSettings) => FleetControlSettings) =>
+    setDraft(updater(values));
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.rpc('fleet_control_settings');
-      if (data) {
-        setValues({
-          cycle_days:                  Number(data.cycle_days ?? 14),
-          late_threshold_days:         Number(data.late_threshold_days ?? 3),
-          relance_threshold:           Number(data.relance_threshold ?? 2),
-          auto_immobilisation_enabled: Boolean(data.auto_immobilisation_enabled ?? false),
-          parking_check_interval_min:  Number(data.parking_check_interval_min ?? 15),
-          relance_cooldown_hours:      Number(data.relance_cooldown_hours ?? 24),
-          require_all_photos:          Boolean(data.require_all_photos ?? true),
-          require_documents:           Boolean(data.require_documents ?? true),
-          // Default TRUE so the system never cuts an engine until explicitly opted in.
-          uffizio_immobilization_dry_run: data.uffizio_immobilization_dry_run === false ? false : true,
-        });
-      }
-      setLoading(false);
-    })();
-  }, []);
-
-  const save = async () => {
-    setSaving(true);
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       const rows = KEYS.map((k) => ({
         setting_key: k.key,
         setting_value: (values[k.field] as any) ?? null,
@@ -70,15 +61,18 @@ export function FleetControlSettingsCard() {
         .from('platform_settings')
         .upsert(rows, { onConflict: 'setting_key' });
       if (error) throw error;
+    },
+    onSuccess: () => {
+      // Every consumer of the shared settings query sees the new values.
+      qc.invalidateQueries({ queryKey: FLEET_CONTROL_SETTINGS_QUERY_KEY });
       toast.success('Réglages enregistrés', {
         description: 'Les changements s\'appliquent aux prochains contrôles.',
       });
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Erreur');
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+    onError: (e: any) => toast.error(e?.message ?? 'Erreur'),
+  });
+  const saving = saveMutation.isPending;
+  const save = () => saveMutation.mutate();
 
   return (
     <Card id="fleet-control">
@@ -105,6 +99,8 @@ export function FleetControlSettingsCard() {
                     type="number"
                     min={k.min}
                     value={values[k.field] as number}
+                    readOnly={k.readOnly}
+                    disabled={k.readOnly}
                     onChange={(e) =>
                       setValues((v) => ({ ...v, [k.field]: Math.max(k.min ?? 0, Number(e.target.value)) }))
                     }

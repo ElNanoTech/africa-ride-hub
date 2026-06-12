@@ -44,34 +44,71 @@ export function useRealtimePostgresChanges<T = Record<string, unknown>>(
   useEffect(() => {
     if (!enabled) return;
 
-    // Unique channel name per (table,event,mount) so multiple listeners
-    // for the same table can coexist without stomping on each other.
-    const channelName = `rt:${table}:${event}:${Math.random().toString(36).slice(2, 8)}`;
-    const channel: RealtimeChannel = supabase
-      .channel(channelName)
-      .on(
-        // @ts-expect-error - supabase-js types for postgres_changes are loose
-        'postgres_changes',
-        { event, schema: 'public', table },
-        (payload: ChangePayload<T>) => {
-          try {
-            if (filterRef.current(payload)) {
-              callbackRef.current(payload);
+    // Resubscribe with backoff on transport failures (flaky 3G/Edge, server
+    // restarts): 5s → 15s → 60s, then keep retrying forever at 60s. The
+    // backoff resets once a subscription succeeds.
+    const BACKOFF_MS = [5_000, 15_000, 60_000];
+    let disposed = false;
+    let channel: RealtimeChannel | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let attempt = 0;
+
+    const scheduleResubscribe = () => {
+      if (disposed || retryTimer) return;
+      const delay = BACKOFF_MS[Math.min(attempt, BACKOFF_MS.length - 1)];
+      attempt += 1;
+      // eslint-disable-next-line no-console
+      console.warn(`[Realtime] ${table}:${event} dropped — retrying in ${delay / 1000}s`);
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        if (disposed) return;
+        if (channel) supabase.removeChannel(channel);
+        channel = null;
+        subscribe();
+      }, delay);
+    };
+
+    const subscribe = () => {
+      if (disposed) return;
+      // Unique channel name per (table,event,mount) so multiple listeners
+      // for the same table can coexist without stomping on each other.
+      const channelName = `rt:${table}:${event}:${Math.random().toString(36).slice(2, 8)}`;
+      const self: RealtimeChannel = supabase
+        .channel(channelName)
+        .on(
+          // @ts-expect-error - supabase-js types for postgres_changes are loose
+          'postgres_changes',
+          { event, schema: 'public', table },
+          (payload: ChangePayload<T>) => {
+            try {
+              if (filterRef.current(payload)) {
+                callbackRef.current(payload);
+              }
+            } catch (err) {
+              console.error(`[Realtime ${table}] handler error`, err);
             }
-          } catch (err) {
-            console.error(`[Realtime ${table}] handler error`, err);
-          }
-        },
-      )
-      .subscribe((status) => {
+          },
+        );
+      channel = self;
+      self.subscribe((status) => {
+        // Ignore status callbacks from channels we already replaced/removed.
+        if (disposed || channel !== self) return;
         if (status === 'SUBSCRIBED') {
+          attempt = 0;
           // eslint-disable-next-line no-console
           console.log(`[Realtime] subscribed to ${table}:${event}`);
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          scheduleResubscribe();
         }
       });
+    };
+
+    subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      disposed = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (channel) supabase.removeChannel(channel);
     };
     // We intentionally exclude callback/filter — they're handled via refs.
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -13,6 +13,13 @@ interface PushNotificationPayload {
   icon?: string;
   url?: string;
   tag?: string;
+  /**
+   * When true, the function does NOT insert the backup in-app notifications
+   * row. Callers that already persist their own (properly typed) row — e.g.
+   * SendDriverMessageDialog — pass this to avoid a duplicate notification.
+   * Optional, defaults to false: all existing callers keep the backup row.
+   */
+  skipInApp?: boolean;
 }
 
 // Send via FCM HTTP v1 API (works for both Android and iOS via APNs proxy)
@@ -101,7 +108,7 @@ serve(async (req) => {
     const fcmServerKey = Deno.env.get("FCM_SERVER_KEY") || "";
 
     const payload: PushNotificationPayload = await req.json();
-    const { driverId, title, body, icon, url, tag } = payload;
+    const { driverId, title, body, icon, url, tag, skipInApp } = payload;
 
     console.log(`Sending push notification to driver: ${driverId}`);
     console.log(`Title: ${title}, Body: ${body}`);
@@ -173,14 +180,17 @@ serve(async (req) => {
       webPushSent = webResults.filter(Boolean).length;
     }
 
-    // 3. Always create an in-app notification as backup
-    await supabase.from("notifications").insert({
-      driver_id: driverId,
-      title,
-      message: body,
-      notification_type: tag || "kyc_update",
-      is_read: false,
-    });
+    // 3. Create an in-app notification as backup — unless the caller already
+    // inserted its own row (skipInApp), in which case this would duplicate it.
+    if (!skipInApp) {
+      await supabase.from("notifications").insert({
+        driver_id: driverId,
+        title,
+        message: body,
+        notification_type: tag || "kyc_update",
+        is_read: false,
+      });
+    }
 
     const totalPushSent = nativePushSent + webPushSent;
     console.log(`Push notifications sent: ${totalPushSent} (native: ${nativePushSent}, web: ${webPushSent})`);

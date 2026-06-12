@@ -359,6 +359,62 @@ export interface ActiveRentalOption {
   payment_due_at_initial: string | null;
 }
 
+// ---------- Shared invoice-issue rules ----------
+// Single source of truth for BOTH issue paths (CreateInvoiceDialog and the
+// /admin/billing page) so the rules cannot drift.
+
+/**
+ * Rental auto-attachment rule:
+ *  - 0 active rentals  → no attachment (invoice recorded without driver payment)
+ *  - 1 active rental   → auto-attach it
+ *  - 2+ active rentals → an explicit selection is REQUIRED before issuing
+ */
+export function resolveRentalAttachment(
+  activeRentals: ActiveRentalOption[],
+  selectedRentalId: string,
+): { needsRentalChoice: boolean; autoRentalId: string | null; effectiveRentalId: string | null } {
+  const needsRentalChoice = activeRentals.length > 1;
+  const autoRentalId = activeRentals.length === 1 ? activeRentals[0].id : null;
+  return {
+    needsRentalChoice,
+    autoRentalId,
+    effectiveRentalId: needsRentalChoice ? (selectedRentalId || null) : autoRentalId,
+  };
+}
+
+export interface InvoiceLineDraft {
+  designation: string;
+  quantity: number;
+  unit_price: number;
+}
+
+/**
+ * Line validation: keeps lines with a designation and unit_price > 0, rejects
+ * the draft when none remain or when a billable line has quantity <= 0.
+ * `error` is French, ready for a toast; `lines` is null exactly when `error`
+ * is set (plain shape because the app compiles without strictNullChecks,
+ * which defeats discriminated-union narrowing).
+ */
+export function validateInvoiceLines(
+  lines: InvoiceLineDraft[],
+): { lines: InvoiceLineDraft[] | null; error: string | null } {
+  const billable = lines.filter((l) => l.designation.trim() && Number(l.unit_price) > 0);
+  if (billable.length === 0) {
+    return { lines: null, error: "Au moins une ligne avec désignation et prix > 0" };
+  }
+  if (billable.some((l) => !(Number(l.quantity) > 0))) {
+    return { lines: null, error: "La quantité doit être supérieure à 0 pour chaque ligne facturée" };
+  }
+  return {
+    error: null,
+    lines: billable.map((l) => ({
+      designation: l.designation.trim(),
+      quantity: Number(l.quantity),
+      unit_price: Number(l.unit_price),
+    })),
+  };
+}
+
 export function useActiveRentalsForDriver(driverId: string | null | undefined) {
   return useQuery({
     queryKey: ["active-rentals-for-driver", driverId],

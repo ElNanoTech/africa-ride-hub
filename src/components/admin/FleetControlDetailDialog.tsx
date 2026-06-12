@@ -12,15 +12,19 @@ import { fr } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { fleetCategoryLabel } from '@/lib/fleetCategories';
+import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
 import {
   PHOTO_ZONES,
   DOCUMENT_ZONES,
-  ALL_ZONES,
   STATUS_LABEL,
   STATUS_CLASS,
   IMMO_LABEL,
   effectiveStatus,
+  requiredZones,
+  approvalRequiredZones,
+  signInspectionPhotoUrls,
   type FleetControlStatus,
+  type FleetControlSettings,
   type ImmobilizationState,
   type ZoneKey,
   type ItemValidation,
@@ -69,6 +73,7 @@ interface Props {
   row: FleetControlRow | null;
   onClose: () => void;
   cooldownHours: number;
+  settings: FleetControlSettings;
 }
 
 const ACTION_LABEL: Record<string, string> = {
@@ -84,7 +89,7 @@ const ACTION_LABEL: Record<string, string> = {
   status_recomputed: 'Statut recalculé',
 };
 
-export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props) {
+export function FleetControlDetailDialog({ row, onClose, cooldownHours, settings }: Props) {
   const open = !!row;
   const qc = useQueryClient();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -102,14 +107,10 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
         .eq('inspection_id', row!.id);
       if (error) throw error;
       const rows = (data ?? []) as Omit<ItemRow, 'url'>[];
-      const withUrls = await Promise.all(rows.map(async (it) => {
-        const { data: sig } = await supabase.storage
-          .from('vehicle-inspections')
-          .createSignedUrl(it.storage_path, 3600);
-        return { ...it, url: sig?.signedUrl ?? null } as ItemRow;
-      }));
+      // One batched createSignedUrls round-trip instead of N createSignedUrl.
+      const { urls } = await signInspectionPhotoUrls(supabase, rows);
       const byZone: Record<string, ItemRow> = {};
-      for (const it of withUrls) byZone[it.zone] = it;
+      for (const it of rows) byZone[it.zone] = { ...it, url: urls[it.id] ?? null };
       return byZone;
     },
   });
@@ -131,7 +132,36 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ['fleet-control'] });
+    // The driver-profile Fleet Control panel uses its own keys
+    // (['driver-fleet-controls', driverId] / ['driver-fleet-controls-items',
+    // …]) — prefix-invalidate them so approve/reject/remind/unblock from this
+    // dialog refreshes the open profile too.
+    qc.invalidateQueries({ queryKey: ['driver-fleet-controls'] });
+    qc.invalidateQueries({ queryKey: ['driver-fleet-controls-items'] });
   };
+
+  // Narrow realtime scope for the OPEN dialog only: photos + control row
+  // filtered to this control id, invalidating only this dialog's keys (the
+  // page list has its own debounced channel).
+  useRealtimePostgresChanges<{ inspection_id?: string }>(
+    'vehicle_inspection_photos',
+    '*',
+    (p) => (p.new?.inspection_id ?? p.old?.inspection_id) === row?.id,
+    () => {
+      qc.invalidateQueries({ queryKey: ['fleet-control', 'items', row?.id], exact: true });
+    },
+    open && !!row?.id,
+  );
+  useRealtimePostgresChanges<{ id?: string }>(
+    'vehicle_inspections',
+    '*',
+    (p) => (p.new?.id ?? p.old?.id) === row?.id,
+    () => {
+      qc.invalidateQueries({ queryKey: ['fleet-control', 'items', row?.id], exact: true });
+      qc.invalidateQueries({ queryKey: ['fleet-control', 'audit', row?.id], exact: true });
+    },
+    open && !!row?.id,
+  );
 
   const approveItem = useMutation({
     mutationFn: async (id: string) => {
@@ -246,9 +276,23 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
     onError: (e: any) => toast.error(e?.message ?? 'Erreur'),
   });
 
+  // FC-A3: required zone set derived from settings (mirrors the server check).
+  const reqZones = useMemo(() => requiredZones(settings), [settings]);
   const filledCount = useMemo(
-    () => ALL_ZONES.filter((z) => items?.[z.key]).length,
-    [items],
+    () => reqZones.filter((z) => items?.[z.key]).length,
+    [items, reqZones],
+  );
+  // Approval gate mirrors fleet_control_approve exactly: when both require
+  // flags are off the check is skipped (empty zone list → approvable);
+  // otherwise every REQUIRED zone needs an item in submitted/approved.
+  // Rejected items in NON-required zones must not block.
+  const approvalZones = useMemo(() => approvalRequiredZones(settings), [settings]);
+  const canApproveFull = useMemo(
+    () => approvalZones.every((z) => {
+      const it = items?.[z.key];
+      return !!it && (it.validation_status === 'submitted' || it.validation_status === 'approved');
+    }),
+    [approvalZones, items],
   );
 
   if (!row) return null;
@@ -261,8 +305,6 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
   const cooldownActive = row.status !== 'approved' && !!row.last_reminder_at &&
     new Date(row.last_reminder_at).getTime() + cooldownHours * 3_600_000 > Date.now();
 
-  const canApproveFull = filledCount === ALL_ZONES.length &&
-    Object.values(items ?? {}).every((it) => it.validation_status !== 'rejected');
   const controlApproved = row.status === 'approved' || eff === 'approved';
 
   const immoState = row.immobilization_state;
@@ -282,7 +324,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
               <Badge variant="outline" className="text-[10px]">{fleetCategoryLabel(row.vehicles.fleet_group)}</Badge>
             )}
             <Badge className={STATUS_CLASS[eff] + ' text-[10px]'}>{STATUS_LABEL[eff]}</Badge>
-            <Badge variant="secondary" className="text-[10px]">{filledCount}/{ALL_ZONES.length} pièces</Badge>
+            <Badge variant="secondary" className="text-[10px]">{filledCount}/{reqZones.length} pièces</Badge>
             {immoState !== 'none' && (
               <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 text-[10px]">
                 <Ban className="h-3 w-3 mr-1" /> {IMMO_LABEL[immoState]}
@@ -400,21 +442,28 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
               </Button>
             )}
           </div>
-          <div className="flex gap-2">
-            {controlApproved ? (
-              <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 h-9 px-3 inline-flex items-center">
-                <CheckCircle2 className="h-4 w-4 mr-1" /> Contrôle validé
-              </Badge>
-            ) : (
-              <>
-                <Button size="sm" variant="outline" disabled={busy} onClick={() => setShowFullReject((v) => !v)}>
-                  <XCircle className="h-4 w-4 mr-1" /> Refuser
-                </Button>
-                <Button size="sm" disabled={!canApproveFull || busy} onClick={() => approveControl.mutate(row.id)}>
-                  {approveControl.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
-                  Approuver
-                </Button>
-              </>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex gap-2">
+              {controlApproved ? (
+                <Badge className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 h-9 px-3 inline-flex items-center">
+                  <CheckCircle2 className="h-4 w-4 mr-1" /> Contrôle validé
+                </Badge>
+              ) : (
+                <>
+                  <Button size="sm" variant="outline" disabled={busy} onClick={() => setShowFullReject((v) => !v)}>
+                    <XCircle className="h-4 w-4 mr-1" /> Refuser
+                  </Button>
+                  <Button size="sm" disabled={!canApproveFull || busy} onClick={() => approveControl.mutate(row.id)}>
+                    {approveControl.isPending ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-1" />}
+                    Approuver
+                  </Button>
+                </>
+              )}
+            </div>
+            {!controlApproved && !canApproveFull && !itemsLoading && (
+              <p className="text-[11px] text-muted-foreground">
+                En attente des pièces requises du chauffeur.
+              </p>
             )}
           </div>
         </DialogFooter>

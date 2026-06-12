@@ -52,25 +52,28 @@ export function useDrivers() {
         .from('drivers')
         .select(`
           *,
+          vehicles:active_vehicle_id (license_plate, model_name, rent_per_day),
           credit_scores(score, tier),
           kyc_submissions(id, status, submitted_at, rejection_reason)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       return data?.map(driver => {
         // Get the latest KYC submission
-        const latestKyc = driver.kyc_submissions?.sort((a: any, b: any) => 
+        const latestKyc = driver.kyc_submissions?.sort((a: any, b: any) =>
           new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime()
         )[0] || null;
-        
+
         return {
           ...driver,
           score: driver.credit_scores?.[0]?.score || null,
           tier: driver.credit_scores?.[0]?.tier || 'E',
           latestKycSubmission: latestKyc,
           hasKycSubmission: !!latestKyc,
+          // CH-L2 — active vehicle (plate) via drivers.active_vehicle_id
+          activeVehicle: (driver as { vehicles?: { license_plate: string; model_name: string; rent_per_day: number | null } | null }).vehicles ?? null,
         };
       }) || [];
     },

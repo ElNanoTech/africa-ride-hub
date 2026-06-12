@@ -21,6 +21,7 @@ import { fr } from 'date-fns/locale';
 import { usePayments, useCreatePayment } from '@/hooks/useAdminData';
 import { usePaymentReceipts, useRecordPaymentReceipt } from '@/hooks/useBilling';
 import { StatusBadge } from '@/lib/statusBadges';
+import { isPaymentOverdue, todayDateString } from '@/lib/payments';
 import { toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useQuery } from '@tanstack/react-query';
@@ -145,9 +146,13 @@ export default function AdminPayments() {
     (sum, p) => sum + Math.min(p.amount, p.amount_paid ?? (p.status === 'paid' ? p.amount : 0)),
     0,
   );
-  const overdueAmount = (payments || []).filter(p => p.status === 'overdue').reduce((sum, p) => sum + outstandingOf(p), 0);
+  // "En retard" — shared rule (src/lib/payments.ts): explicit overdue status
+  // OR an unpaid (pending/partial) payment whose due_date is in the past.
+  const todayStr = todayDateString();
+  const isOverdue = (p: AdminPayment) => isPaymentOverdue(p, todayStr);
+  const overdueAmount = (payments || []).filter(isOverdue).reduce((sum, p) => sum + outstandingOf(p), 0);
   const pendingCount = (payments || []).filter(p => p.status === 'pending' || p.status === 'partial').length;
-  const overdueCount = (payments || []).filter(p => p.status === 'overdue').length;
+  const overdueCount = (payments || []).filter(isOverdue).length;
   const collectionRate = totalDue + totalCollected > 0 ? ((totalCollected / (totalDue + totalCollected)) * 100).toFixed(1) : '0';
 
   const openReceiptDialog = (payment: AdminPayment) => {

@@ -1,6 +1,7 @@
 // Fleet Control — End-to-End Verification Harness
 // Service-role only. Seeds an isolated tenant + driver + vehicle + rental and
-// runs all 16 acceptance tests from the SPEC. Returns a structured JSON report.
+// runs the acceptance tests from the SPEC (item counts derived from
+// fleet_control_required_zones()). Returns a structured JSON report.
 //
 // SAFETY: Always scoped to a dedicated "FC E2E Test" customer; never mutates
 // production tenants. Idempotent — can be re-run; tears down its own data first.
@@ -47,6 +48,14 @@ Deno.serve(async (req) => {
     const adminClient  = await signedInClient(ADMIN_EMAIL,  ADMIN_PASS);
     const driverClient = await signedInClient(DRIVER_EMAIL, DRIVER_PASS);
 
+    // FC-A3: derive the required item set from the server's single source of
+    // truth instead of hardcoding 11 — the matrix changes with the
+    // require_all_photos / require_documents settings.
+    const { data: requiredZonesData } = await admin.rpc("fleet_control_required_zones");
+    const REQUIRED: string[] = Array.isArray(requiredZonesData) && requiredZonesData.length > 0
+      ? requiredZonesData as string[]
+      : ZONES;
+
     /* ───────────────────── 1. CONTROL CREATION ───────────────── */
     {
       // Trigger: activate rental → fc_autocreate_from_rental creates the control
@@ -63,19 +72,11 @@ Deno.serve(async (req) => {
       const expectedDue = Date.now() + cycleSetting * 86_400_000;
       const dueOk = ctrl && Math.abs(new Date(ctrl.due_at).getTime() - expectedDue) < 5 * 60_000;
 
-      // Seed the 11 required photo rows (storage_path is just a marker — we don't upload bytes in this harness)
+      // Seed the derived required item rows, with a real (tiny) storage
+      // object per path — fleet_control_submit verifies the object exists.
       if (ctrl) {
-        for (const zone of ZONES) {
-          await admin.from("vehicle_inspection_photos").upsert({
-            inspection_id: ctrl.id,
-            zone,
-            item_type: zone.startsWith("doc_") ? "document" : "photo",
-            storage_path: `e2e/${ctrl.id}/${zone}.jpg`,
-            customer_id: seeded.customerId,
-            vehicle_id: seeded.vehicleId,
-            driver_id: seeded.driverId,
-            validation_status: "pending",
-          }, { onConflict: "inspection_id,zone" });
+        for (const zone of REQUIRED) {
+          await seedItem(admin, seeded, ctrl.id, zone, "pending");
         }
       }
 
@@ -116,9 +117,10 @@ Deno.serve(async (req) => {
         p_metadata: { count }, p_actor_type: "driver",
       });
 
-      push("2", "Driver submits all 11 items",
-        row?.status === "submitted" && count === 11 && !upErr && !subErr,
-        { status: row?.status, submitted_count: count, update_err: upErr?.message, submit_err: subErr?.message });
+      push("2", `Driver submits all ${REQUIRED.length} required items`,
+        row?.status === "submitted" && count === REQUIRED.length && !upErr && !subErr,
+        { status: row?.status, submitted_count: count, required_count: REQUIRED.length,
+          update_err: upErr?.message, submit_err: subErr?.message });
     }
 
     /* ───────────────────── 3. ITEM-LEVEL REVIEW ──────────────── */
@@ -208,6 +210,17 @@ Deno.serve(async (req) => {
         row?.status === "approved" && row?.last_validated_at != null &&
         dueResetOk && row?.reminder_count === 0 && !!notif && !appErr,
         { row, due_reset_ok: dueResetOk, notification_id: notif?.id, error: appErr?.message });
+    }
+
+    /* ───────────────────── 5b. SUBMIT STATUS GUARD ───────────── */
+    {
+      // The control is approved from test 5 — re-submitting a closed cycle
+      // must be refused with invalid_status_for_submit (only pending /
+      // rejected / overdue controls are submittable).
+      const { error } = await driverClient.rpc("fleet_control_submit", { p_control: controlId });
+      push("5b", "Submit refused on approved control (invalid_status_for_submit)",
+        !!error && (error.message ?? "").includes("invalid_status_for_submit"),
+        { error: error?.message ?? null });
     }
 
     /* ───────────────────── 6. REMINDER / RELANCE  ────────────── */
@@ -382,15 +395,8 @@ Deno.serve(async (req) => {
       await setSetting(admin, "fleet_control.cycle_days", 7);
       const fresh = await freshControl(admin, seeded); // honors new default at INSERT
       // Submit + approve to verify due_at uses 7d
-      for (const z of ZONES) {
-        await admin.from("vehicle_inspection_photos").upsert({
-          inspection_id: fresh.id, zone: z,
-          item_type: z.startsWith("doc_") ? "document" : "photo",
-          storage_path: `e2e/${fresh.id}/${z}.jpg`,
-          customer_id: seeded.customerId, vehicle_id: seeded.vehicleId,
-          driver_id: seeded.driverId, validation_status: "submitted",
-          submitted_at: new Date().toISOString(),
-        }, { onConflict: "inspection_id,zone" });
+      for (const z of REQUIRED) {
+        await seedItem(admin, seeded, fresh.id, z, "submitted");
       }
       await admin.from("vehicle_inspections")
         .update({ status: "submitted", cycle_days: 7 }).eq("id", fresh.id);
@@ -500,6 +506,34 @@ Deno.serve(async (req) => {
       { setting_key: key, setting_value: value, updated_at: new Date().toISOString() },
       { onConflict: "setting_key" },
     );
+  }
+
+  // Seed one inspection item: a tiny real storage object (the submit/approve
+  // RPCs verify the object exists) + the matching photos row.
+  async function seedItem(
+    c: SupabaseClient,
+    s: any,
+    inspectionId: string,
+    zone: string,
+    validationStatus: "pending" | "submitted",
+  ) {
+    const path = `e2e/${inspectionId}/${zone}.jpg`;
+    await c.storage.from("vehicle-inspections").upload(
+      path,
+      new Uint8Array([0xff, 0xd8, 0xff, 0xd9]), // minimal JPEG marker bytes
+      { contentType: "image/jpeg", upsert: true },
+    );
+    await c.from("vehicle_inspection_photos").upsert({
+      inspection_id: inspectionId,
+      zone,
+      item_type: zone.startsWith("doc_") ? "document" : "photo",
+      storage_path: path,
+      customer_id: s.customerId,
+      vehicle_id: s.vehicleId,
+      driver_id: s.driverId,
+      validation_status: validationStatus,
+      ...(validationStatus === "submitted" ? { submitted_at: new Date().toISOString() } : {}),
+    }, { onConflict: "inspection_id,zone" });
   }
 
   async function freshControl(c: SupabaseClient, s: any) {

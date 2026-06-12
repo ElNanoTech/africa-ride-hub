@@ -66,6 +66,7 @@ const RENTAL: Record<string, StatusMeta> = {
   vehicle_disabled: { label: "Véhicule désactivé", variant: "rejected", meaning: "Bloqué pour non-paiement." },
   completed: { label: "Terminée", variant: "default", meaning: "Restituée et clôturée." },
   rejected: { label: "Rejetée", variant: "rejected", meaning: "Demande refusée." },
+  cancelled: { label: "Annulée", variant: "outline", meaning: "Location annulée." },
 };
 
 /** Invoice status as displayed inline next to a rental row. */

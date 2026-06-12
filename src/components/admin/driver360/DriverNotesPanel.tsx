@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,15 +16,25 @@ import { useAdminUser } from '@/hooks/useAdminUser';
 interface DriverNotesPanelProps {
   driverId: string;
   customerId: string | null;
+  /** CH-P5 "Ajouter note": bump this counter to focus the note input. */
+  focusToken?: number;
 }
 
-export function DriverNotesPanel({ driverId, customerId }: DriverNotesPanelProps) {
+export function DriverNotesPanel({ driverId, customerId, focusToken }: DriverNotesPanelProps) {
   const qc = useQueryClient();
   const { customerId: scopedCustomer } = useAdminUser();
   const effectiveCustomer = customerId || scopedCustomer;
 
   const [note, setNote] = useState('');
   const [visibility, setVisibility] = useState<'admin' | 'driver' | 'both'>('admin');
+  const noteInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (focusToken && focusToken > 0) {
+      // Wait one frame so the Notes tab content is mounted/visible first.
+      requestAnimationFrame(() => noteInputRef.current?.focus());
+    }
+  }, [focusToken]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['driver-notes', driverId],
@@ -90,6 +100,7 @@ export function DriverNotesPanel({ driverId, customerId }: DriverNotesPanelProps
       <CardContent className="space-y-4">
         <div className="space-y-2 border rounded-lg p-3">
           <Textarea
+            ref={noteInputRef}
             placeholder="Ajouter une note..."
             value={note}
             onChange={(e) => setNote(e.target.value)}

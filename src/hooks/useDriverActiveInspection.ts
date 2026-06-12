@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useDriverId } from './useDriverData';
-import { effectiveStatus, type FleetControlStatus } from '@/lib/fleetControl';
+import { useRealtimePostgresChanges } from './useRealtimePostgresChanges';
+import { OPEN_FLEET_CONTROL_STATUSES, effectiveStatus, type FleetControlStatus } from '@/lib/fleetControl';
 
 export interface DriverActiveInspection {
   id: string;
@@ -14,7 +15,8 @@ export interface DriverActiveInspection {
   vehicle_id: string;
 }
 
-const RELEVANT_STATUSES = ['pending', 'submitted', 'rejected', 'overdue', 'blocked', 'approved'];
+// Open cycles + the recently approved one (for the "à jour" home card state).
+const RELEVANT_STATUSES: FleetControlStatus[] = [...OPEN_FLEET_CONTROL_STATUSES, 'approved'];
 
 /**
  * Returns the driver's most-relevant open Fleet Control inspection, or null.
@@ -22,6 +24,25 @@ const RELEVANT_STATUSES = ['pending', 'submitted', 'rejected', 'overdue', 'block
  */
 export function useDriverActiveInspection() {
   const { data: driverId } = useDriverId();
+  const queryClient = useQueryClient();
+
+  // FC-D5: realtime is the primary refresh path — an admin approval/rejection
+  // updates the nav badge and home card immediately. RLS limits events to the
+  // driver's own rows; the filter is belt-and-braces. This is the SINGLE
+  // vehicle_inspections channel for the driver app: it also invalidates the
+  // main screen's ['driver-inspection'] key so VehicleInspection doesn't need
+  // a duplicate control-row subscription.
+  useRealtimePostgresChanges<{ driver_id?: string }>(
+    'vehicle_inspections',
+    '*',
+    (p) => (p.new?.driver_id ?? p.old?.driver_id) === driverId,
+    () => {
+      queryClient.invalidateQueries({ queryKey: ['driver-active-inspection', driverId] });
+      queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
+    },
+    !!driverId,
+  );
+
   return useQuery({
     queryKey: ['driver-active-inspection', driverId],
     queryFn: async (): Promise<DriverActiveInspection | null> => {
@@ -58,7 +79,8 @@ export function useDriverActiveInspection() {
       };
     },
     enabled: !!driverId,
-    refetchInterval: 60_000,
+    // Slow fallback poll for dropped websockets — realtime does the live work.
+    refetchInterval: 5 * 60_000,
     staleTime: 30_000,
   });
 }
