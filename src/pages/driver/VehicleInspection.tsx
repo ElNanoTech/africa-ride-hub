@@ -100,7 +100,7 @@ export default function VehicleInspection() {
           })
           .select(`
             id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
-            vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model )
+            vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
           `)
           .single();
         if (cErr) throw cErr;
