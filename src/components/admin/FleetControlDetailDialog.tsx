@@ -200,10 +200,10 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
     mutationFn: async (id: string) => {
       const { data, error } = await supabase.rpc('fleet_control_remind', { p_control: id });
       if (error) throw error;
-      return data as { sent: boolean; cooldown_until?: string };
+      return data as { sent: boolean; cooldown_until?: string; created_or_reused_cycle?: boolean };
     },
     onSuccess: (r) => {
-      if (r?.sent) toast.success('Relance envoyée');
+      if (r?.sent) toast.success(r?.created_or_reused_cycle ? 'Nouvelle demande envoyée' : 'Relance envoyée');
       else toast.info('Déjà relancé récemment', {
         description: r?.cooldown_until ? `Réessayez après ${format(new Date(r.cooldown_until), 'PPp', { locale: fr })}` : undefined,
       });
@@ -258,7 +258,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
   const driverName = row.drivers?.full_name ?? '⚠️ Non assigné';
   const eff = effectiveStatus(row.status, row.due_at);
 
-  const cooldownActive = !!row.last_reminder_at &&
+  const cooldownActive = row.status !== 'approved' && !!row.last_reminder_at &&
     new Date(row.last_reminder_at).getTime() + cooldownHours * 3_600_000 > Date.now();
 
   const canApproveFull = filledCount === ALL_ZONES.length &&
