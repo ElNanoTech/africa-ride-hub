@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate } from 'react-router-dom';
 import { AdminLayout, AdminPageHeader } from '@/components/AdminLayout';
@@ -16,20 +16,26 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { TierBadge } from '@/components/ScoreGauge';
 import { ADMIN, KYC, UI } from '@/lib/i18n';
-import { Search, Eye, CheckCircle, XCircle, MoreHorizontal, Download, FileSpreadsheet, FileText, Upload, AlertCircle, Loader2, FileCheck, X, UserPlus } from 'lucide-react';
+import { Search, Eye, CheckCircle, XCircle, MoreHorizontal, Download, FileSpreadsheet, FileText, Upload, AlertCircle, Loader2, FileCheck, X, UserPlus, UserCheck, UserX, ShieldCheck, CarFront, ShieldAlert, AlertTriangle, Wallet, Clock } from 'lucide-react';
 import { AdminCreateDriverDialog } from '@/components/AdminCreateDriverDialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { formatDateShort } from '@/lib/format';
+import { formatCurrency, formatDateShort } from '@/lib/format';
 import { useDrivers, useUpdateDriverStatus, useBulkUpdateKycStatus } from '@/hooks/useAdminData';
+import { useDriversRiskSummary, type DriverRiskSummaryRow } from '@/hooks/useDriverRisk';
+import { RISK_LEVEL_LABEL, type DriverRiskLevel } from '@/lib/driverRisk';
+import { RiskBadge } from '@/components/admin/RiskBadge';
+import { KpiTile, type KpiVariant } from '@/components/admin/KpiTile';
+import { OPEN_RENTAL_STATUSES } from '@/components/admin/AssignVehicleDialog';
 import { logAction } from '@/hooks/useAuditLog';
 import { exportToCSV, exportDriversListToPDF } from '@/lib/export';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useAdminUser } from '@/hooks/useAdminUser';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { LucideIcon } from 'lucide-react';
 import { KycReviewModal } from '@/components/KycReviewModal';
 import { KycAnalytics } from '@/components/KycAnalytics';
 import { GPSDriversList } from '@/components/GPSDriversList';
@@ -99,6 +105,31 @@ const getStatusLabel = (status: string) => {
   }
 };
 
+interface KpiClickTileProps {
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
+  variant: KpiVariant;
+  hint?: string;
+  active: boolean;
+  onClick: () => void;
+}
+
+/** CH-L1 — KpiTile wrapped as a filter toggle (ring shows the active state). */
+function KpiClickTile({ label, value, icon, variant, hint, active, onClick }: KpiClickTileProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`text-left rounded-2xl transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'ring-2 ring-primary' : ''}`}
+      title={active ? 'Cliquer pour retirer le filtre' : 'Cliquer pour filtrer'}
+    >
+      <KpiTile label={label} value={value} icon={icon} variant={variant} hint={hint} className="h-full" />
+    </button>
+  );
+}
+
 export default function AdminDrivers() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -108,6 +139,10 @@ export default function AdminDrivers() {
   const [search, setSearch] = useState('');
   const [kycFilter, setKycFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
+  // CH-L3 — vehicle / risk / overdue filters
+  const [vehicleFilter, setVehicleFilter] = useState<'all' | 'with' | 'without'>('all');
+  const [riskFilter, setRiskFilter] = useState<'all' | 'atrisk' | DriverRiskLevel>('all');
+  const [overdueOnly, setOverdueOnly] = useState(false);
   const [selectedDrivers, setSelectedDrivers] = useState<string[]>([]);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
@@ -127,6 +162,82 @@ export default function AdminDrivers() {
   const { data: drivers, isLoading } = useDrivers();
   const updateStatus = useUpdateDriverStatus();
   const bulkUpdateKyc = useBulkUpdateKycStatus();
+
+  // CH-L1/L2 — batched companion queries (one each, no per-row RPCs):
+  // computed risk summary, wallet balances, active-rental rates, overdue
+  // payments. Each is keyed by driver_id maps for O(1) row lookups.
+  const { data: riskRows, isLoading: riskLoading } = useDriversRiskSummary();
+  const riskByDriver = useMemo(() => {
+    const map = new Map<string, DriverRiskSummaryRow>();
+    (riskRows ?? []).forEach((r) => map.set(r.driver_id, r));
+    return map;
+  }, [riskRows]);
+
+  const { data: walletRows, isLoading: walletsLoading } = useQuery({
+    queryKey: ['admin-driver-wallet-balances'],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('driver_wallets')
+        .select('driver_id, balance');
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const walletByDriver = useMemo(() => {
+    const map = new Map<string, number>();
+    (walletRows ?? []).forEach((w) => map.set(w.driver_id, w.balance));
+    return map;
+  }, [walletRows]);
+
+  const { data: rentalRows, isLoading: rentalsLoading } = useQuery({
+    queryKey: ['admin-driver-active-rentals'],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('rentals')
+        .select('driver_id, final_rate, approved_rate, requested_rate, created_at')
+        .in('status', OPEN_RENTAL_STATUSES)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const rentalRateByDriver = useMemo(() => {
+    const map = new Map<string, number | null>();
+    // Rows are sorted newest first — keep the most recent open rental only.
+    (rentalRows ?? []).forEach((r) => {
+      if (!map.has(r.driver_id)) {
+        map.set(r.driver_id, r.final_rate ?? r.approved_rate ?? r.requested_rate ?? null);
+      }
+    });
+    return map;
+  }, [rentalRows]);
+
+  // Same "en retard" semantics as /admin/payments: explicit overdue status
+  // OR unpaid pending/partial past its due date.
+  const { data: unpaidPayments, isLoading: overdueLoading } = useQuery({
+    queryKey: ['admin-driver-overdue-payments'],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('payments')
+        .select('driver_id, status, due_date')
+        .in('status', ['pending', 'partial', 'overdue']);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+  const overdueDriverIds = useMemo(() => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const set = new Set<string>();
+    (unpaidPayments ?? []).forEach((p) => {
+      if (p.status === 'overdue' || (['pending', 'partial'].includes(p.status) && p.due_date.slice(0, 10) < todayStr)) {
+        set.add(p.driver_id);
+      }
+    });
+    return set;
+  }, [unpaidPayments]);
 
   // Real-time subscription for KYC submissions
   useEffect(() => {
@@ -173,8 +284,14 @@ export default function AdminDrivers() {
   };
 
   const filteredDrivers = (drivers || []).filter((driver) => {
-    const matchesSearch = driver.full_name.toLowerCase().includes(search.toLowerCase()) ||
-                         driver.phone_number.includes(search);
+    // CH-L3 — search also matches plate, permit number and Yango ID.
+    const q = search.toLowerCase().trim();
+    const matchesSearch = !q ||
+      driver.full_name.toLowerCase().includes(q) ||
+      driver.phone_number.includes(search.trim()) ||
+      (driver.activeVehicle?.license_plate ?? '').toLowerCase().includes(q) ||
+      ((driver as { permit_number?: string | null }).permit_number ?? '').toLowerCase().includes(q) ||
+      (driver.yango_driver_id ?? '').toLowerCase().includes(q);
     let matchesKyc = true;
     if (kycFilter === 'all') {
       matchesKyc = true;
@@ -185,7 +302,17 @@ export default function AdminDrivers() {
       matchesKyc = driver.kyc_status === kycFilter;
     }
     const matchesStatus = statusFilter === 'all' || driver.driver_status === statusFilter;
-    return matchesSearch && matchesKyc && matchesStatus;
+    const matchesVehicle =
+      vehicleFilter === 'all' ||
+      (vehicleFilter === 'with' ? !!driver.active_vehicle_id : !driver.active_vehicle_id);
+    const riskLevel = riskByDriver.get(driver.id)?.level;
+    const matchesRisk =
+      riskFilter === 'all' ||
+      (riskFilter === 'atrisk'
+        ? riskLevel === 'eleve' || riskLevel === 'critique'
+        : riskLevel === riskFilter);
+    const matchesOverdue = !overdueOnly || overdueDriverIds.has(driver.id);
+    return matchesSearch && matchesKyc && matchesStatus && matchesVehicle && matchesRisk && matchesOverdue;
   });
 
   // Get drivers with pending KYC submissions (actually submitted) from filtered list
@@ -212,6 +339,37 @@ export default function AdminDrivers() {
       inactive: drivers?.filter(d => d.driver_status === 'inactive').length || 0,
     }
   };
+
+  // CH-L1 — KPI header counts (all clickable: each maps to a real filter).
+  const kpiCounts = useMemo(() => {
+    const all = drivers ?? [];
+    let aRisque = 0;
+    all.forEach((d) => {
+      const lvl = riskByDriver.get(d.id)?.level;
+      if (lvl === 'eleve' || lvl === 'critique') aRisque++;
+    });
+    return {
+      actifs: all.filter((d) => d.driver_status === 'active').length,
+      suspendus: all.filter((d) => d.driver_status === 'suspended').length,
+      inactifs: all.filter((d) => d.driver_status === 'inactive').length,
+      kycVerifie: all.filter((d) => d.kyc_status === 'verified').length,
+      sansVehicule: all.filter((d) => !d.active_vehicle_id).length,
+      aRisque,
+      paiementsEnRetard: all.filter((d) => overdueDriverIds.has(d.id)).length,
+    };
+  }, [drivers, riskByDriver, overdueDriverIds]);
+
+  const clearAllFilters = () => {
+    setSearch('');
+    setKycFilter('all');
+    setStatusFilter('all');
+    setVehicleFilter('all');
+    setRiskFilter('all');
+    setOverdueOnly(false);
+  };
+  const hasActiveFilters =
+    !!search || kycFilter !== 'all' || statusFilter !== 'all' ||
+    vehicleFilter !== 'all' || riskFilter !== 'all' || overdueOnly;
 
   const handleStatusUpdate = (driverId: string, status: string) => {
     updateStatus.mutate({ driverId, status });
@@ -290,6 +448,11 @@ export default function AdminDrivers() {
     const filters: string[] = [];
     if (kycFilter !== 'all') filters.push(`KYC: ${getKycLabel(kycFilter)}`);
     if (statusFilter !== 'all') filters.push(`Statut: ${statusFilter}`);
+    if (vehicleFilter !== 'all') filters.push(vehicleFilter === 'with' ? 'Avec véhicule' : 'Sans véhicule');
+    if (riskFilter !== 'all') {
+      filters.push(`Risque: ${riskFilter === 'atrisk' ? 'Élevé + Critique' : RISK_LEVEL_LABEL[riskFilter]}`);
+    }
+    if (overdueOnly) filters.push('Paiements en retard');
     if (search) filters.push(`Recherche: "${search}"`);
     return filters.length > 0 ? filters.join(', ') : 'Aucun filtre';
   };
@@ -306,6 +469,10 @@ export default function AdminDrivers() {
       kyc: getKycLabel(driver.kyc_status),
       score: driver.score || '-',
       niveau: driver.tier || 'E',
+      vehicule: driver.activeVehicle?.license_plate ?? '',
+      loyer: rentalRateByDriver.get(driver.id) ?? '',
+      risque: riskByDriver.get(driver.id) ? RISK_LEVEL_LABEL[riskByDriver.get(driver.id)!.level] : '',
+      solde_kirapay: walletByDriver.get(driver.id) ?? '',
       statut: driver.driver_status === 'active' ? 'Actif' : driver.driver_status === 'suspended' ? 'Suspendu' : 'Inactif',
       inscrit_le: formatDateShort(new Date(driver.created_at)),
     }));
@@ -316,6 +483,10 @@ export default function AdminDrivers() {
       kyc: 'Statut KYC',
       score: 'Score',
       niveau: 'Niveau',
+      vehicule: 'Véhicule',
+      loyer: 'Loyer/j (FCFA)',
+      risque: 'Risque',
+      solde_kirapay: 'Solde KiraPay (FCFA)',
       statut: 'Statut',
       inscrit_le: 'Inscrit le',
     };
@@ -520,7 +691,7 @@ export default function AdminDrivers() {
     return (
       <AdminLayout>
         <AdminBreadcrumb items={[{ label: 'Conducteurs' }]} />
-        <ListPageSkeleton columns={7} rows={8} />
+        <ListPageSkeleton columns={10} rows={8} />
       </AdminLayout>
     );
   }
@@ -595,6 +766,46 @@ export default function AdminDrivers() {
         </TabsList>
 
         <TabsContent value="drivers" className="mt-6">
+      {/* CH-L1 — KPI header: every tile toggles a real filter (no dead cards) */}
+      <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
+        <KpiClickTile
+          label="Actifs" value={kpiCounts.actifs} icon={UserCheck} variant="green"
+          active={statusFilter === 'active'}
+          onClick={() => setStatusFilter((v) => (v === 'active' ? 'all' : 'active'))}
+        />
+        <KpiClickTile
+          label="Suspendus" value={kpiCounts.suspendus} icon={UserX} variant="orange"
+          active={statusFilter === 'suspended'}
+          onClick={() => setStatusFilter((v) => (v === 'suspended' ? 'all' : 'suspended'))}
+        />
+        <KpiClickTile
+          label="Inactifs" value={kpiCounts.inactifs} icon={Clock} variant="slate"
+          active={statusFilter === 'inactive'}
+          onClick={() => setStatusFilter((v) => (v === 'inactive' ? 'all' : 'inactive'))}
+        />
+        <KpiClickTile
+          label="KYC vérifié" value={kpiCounts.kycVerifie} icon={ShieldCheck} variant="blue"
+          active={kycFilter === 'verified'}
+          onClick={() => setKycFilter((v) => (v === 'verified' ? 'all' : 'verified'))}
+        />
+        <KpiClickTile
+          label="Sans véhicule" value={kpiCounts.sansVehicule} icon={CarFront} variant="yellow"
+          active={vehicleFilter === 'without'}
+          onClick={() => setVehicleFilter((v) => (v === 'without' ? 'all' : 'without'))}
+        />
+        <KpiClickTile
+          label="À risque" value={riskLoading ? '…' : kpiCounts.aRisque} icon={ShieldAlert} variant="orange"
+          hint="Élevé + Critique"
+          active={riskFilter === 'atrisk'}
+          onClick={() => setRiskFilter((v) => (v === 'atrisk' ? 'all' : 'atrisk'))}
+        />
+        <KpiClickTile
+          label="Paiements en retard" value={overdueLoading ? '…' : kpiCounts.paiementsEnRetard} icon={AlertTriangle} variant="orange"
+          active={overdueOnly}
+          onClick={() => setOverdueOnly((v) => !v)}
+        />
+      </div>
+
       {/* KYC Analytics */}
       <KycAnalytics onFilterPending={() => setKycFilter('pending')} />
 
@@ -639,12 +850,12 @@ export default function AdminDrivers() {
 
       {/* Filters */}
       <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder={ADMIN.DRIVERS.SEARCH_PLACEHOLDER}
+                placeholder="Nom, téléphone, plaque, permis, ID Yango…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="pl-10"
@@ -675,16 +886,47 @@ export default function AdminDrivers() {
                 <SelectItem value="blocked">Bloqué</SelectItem>
               </SelectContent>
             </Select>
-            {(search || kycFilter !== 'all' || statusFilter !== 'all') && (
+          </div>
+          {/* CH-L3 — vehicle / risk / overdue filters */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Select value={vehicleFilter} onValueChange={(v) => setVehicleFilter(v as typeof vehicleFilter)}>
+              <SelectTrigger className={`w-full sm:w-44 ${vehicleFilter !== 'all' ? 'border-primary ring-1 ring-primary/20' : ''}`}>
+                <SelectValue placeholder="Véhicule" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous véhicules</SelectItem>
+                <SelectItem value="with">Avec véhicule</SelectItem>
+                <SelectItem value="without">Sans véhicule</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={riskFilter} onValueChange={(v) => setRiskFilter(v as typeof riskFilter)}>
+              <SelectTrigger className={`w-full sm:w-52 ${riskFilter !== 'all' ? 'border-primary ring-1 ring-primary/20' : ''}`}>
+                <SelectValue placeholder="Risque" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous risques</SelectItem>
+                <SelectItem value="atrisk">À risque (Élevé + Critique)</SelectItem>
+                <SelectItem value="bon">{RISK_LEVEL_LABEL.bon}</SelectItem>
+                <SelectItem value="moyen">{RISK_LEVEL_LABEL.moyen}</SelectItem>
+                <SelectItem value="eleve">{RISK_LEVEL_LABEL.eleve}</SelectItem>
+                <SelectItem value="critique">{RISK_LEVEL_LABEL.critique}</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant={overdueOnly ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setOverdueOnly((v) => !v)}
+              className="gap-1 h-10"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              Paiements en retard
+            </Button>
+            {hasActiveFilters && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => {
-                  setSearch('');
-                  setKycFilter('all');
-                  setStatusFilter('all');
-                }}
-                className="gap-1 text-muted-foreground hover:text-foreground"
+                onClick={clearAllFilters}
+                className="gap-1 text-muted-foreground hover:text-foreground h-10"
               >
                 <X className="h-4 w-4" />
                 Effacer filtres
@@ -714,6 +956,10 @@ export default function AdminDrivers() {
                 <TableHead>KYC</TableHead>
                 <TableHead>Score</TableHead>
                 <TableHead>Niveau</TableHead>
+                <TableHead>Véhicule</TableHead>
+                <TableHead>Loyer</TableHead>
+                <TableHead>Risque</TableHead>
+                <TableHead>Solde KiraPay</TableHead>
                 <TableHead>Statut</TableHead>
                 <TableHead>Inscrit le</TableHead>
                 <TableHead className="w-12">{UI.ACTIONS}</TableHead>
@@ -729,6 +975,10 @@ export default function AdminDrivers() {
                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-12" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-6 w-8" /></TableCell>
@@ -736,7 +986,7 @@ export default function AdminDrivers() {
                 ))
               ) : filteredDrivers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
                     Aucun conducteur trouvé
                   </TableCell>
                 </TableRow>
@@ -786,6 +1036,51 @@ export default function AdminDrivers() {
                     <TableCell>
                       <TierBadge tier={driver.tier || 'E'} size="sm" showLabel={false} />
                     </TableCell>
+                    {/* CH-L2 — Véhicule / Loyer / Risque / Solde KiraPay */}
+                    <TableCell>
+                      {driver.activeVehicle ? (
+                        <div>
+                          <div className="font-medium text-sm">{driver.activeVehicle.license_plate}</div>
+                          <div className="text-xs text-muted-foreground">{driver.activeVehicle.model_name}</div>
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {rentalsLoading ? (
+                        <Skeleton className="h-5 w-16" />
+                      ) : (() => {
+                        // Rate of the active rental; vehicle list price as
+                        // honest fallback when the rental has no rate yet.
+                        const rate = driver.activeVehicle
+                          ? rentalRateByDriver.get(driver.id) ?? driver.activeVehicle.rent_per_day
+                          : rentalRateByDriver.get(driver.id);
+                        return rate != null ? (
+                          <span className="text-sm">{formatCurrency(rate)}/j</span>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        );
+                      })()}
+                    </TableCell>
+                    <TableCell>
+                      <RiskBadge
+                        level={riskByDriver.get(driver.id)?.level}
+                        reasons={riskByDriver.get(driver.id)?.reasons}
+                        loading={riskLoading}
+                      />
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {walletsLoading ? (
+                        <Skeleton className="h-5 w-16" />
+                      ) : walletByDriver.has(driver.id) ? (
+                        <span className={`text-sm font-medium ${walletByDriver.get(driver.id)! < 0 ? 'text-destructive' : ''}`}>
+                          {formatCurrency(walletByDriver.get(driver.id)!)}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(driver.driver_status) as never}>
                         {getStatusLabel(driver.driver_status)}
@@ -805,6 +1100,15 @@ export default function AdminDrivers() {
                           <DropdownMenuItem onClick={() => handleViewDriver(driver.id)}>
                             <Eye className="h-4 w-4 mr-2" />
                             {UI.VIEW}
+                          </DropdownMenuItem>
+                          {/* CH-L4 — deep links into the profile */}
+                          <DropdownMenuItem onClick={() => navigate(`/admin/drivers/${driver.id}?tab=invoices`)}>
+                            <FileText className="h-4 w-4 mr-2" />
+                            Voir factures
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/admin/drivers/${driver.id}?tab=wallet`)}>
+                            <Wallet className="h-4 w-4 mr-2" />
+                            Voir KiraPay
                           </DropdownMenuItem>
                           {driver.latestKycSubmission?.status === 'pending' && (
                             <>

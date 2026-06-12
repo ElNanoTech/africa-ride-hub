@@ -13,7 +13,9 @@ import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 
-const OPEN_RENTAL_STATUSES = [
+// Exported single source of truth for "this driver currently holds a
+// vehicle" (also used by the drivers list for the Loyer column).
+export const OPEN_RENTAL_STATUSES = [
   'pending',
   'approved',
   'active',
