@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { resolveVehicleImage } from '@/lib/vehicleImages';
-import { Car, CreditCard, Wallet, Bell, ChevronRight, TrendingUp, Award, Flame, Target, Shield, Calendar, ArrowRight, AlertCircle, Download, X, Sparkles, Zap, Heart, Star, CheckCircle, Clock, XCircle, Trophy, Crown, Medal, TrendingDown, Minus, Banknote, MapPin, ShieldAlert } from 'lucide-react';
+import { Car, CreditCard, Wallet, Bell, ChevronRight, TrendingUp, Award, Flame, Target, Shield, Calendar, ArrowRight, AlertCircle, Download, X, Sparkles, Zap, Heart, Star, CheckCircle, Clock, XCircle, Trophy, Crown, Medal, TrendingDown, Minus, Banknote, MapPin, ShieldAlert, ClipboardCheck, Camera, Ban } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { usePWA } from '@/hooks/usePWA';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
@@ -18,6 +18,9 @@ import { UI, NAV, SCORE, RENTAL, KYC } from '@/lib/i18n';
 import { getScoreLevel } from '@/lib/scoreLevel';
 import { cn } from '@/lib/utils';
 import { useDriverCurrentScore, useDriverId, useDriverCreditScores, useDriverRentals, useDriverNotifications, useDriverLoans, useDriverPayments, useIsAuthResolving } from '@/hooks/useDriverData';
+import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
+import { format, differenceInCalendarDays } from 'date-fns';
+import { fr as frLocale } from 'date-fns/locale';
 import { formatCurrency as fmtCurrency, formatNumber } from '@/lib/format';
 import { useDriverDashboardRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
