@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
@@ -71,6 +71,7 @@ export default function VehicleInspection() {
   const [notes, setNotes] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingZone, setPendingZone] = useState<ZoneKey | null>(null);
+  const [pendingKind, setPendingKind] = useState<'camera' | 'gallery' | 'document' | null>(null);
 
   const driverId = driverProfile?.id;
 
@@ -157,10 +158,12 @@ export default function VehicleInspection() {
     inspection?.status !== 'submitted' &&
     inspection?.status !== 'approved';
 
-  const handlePickPhoto = (zone: ZoneKey) => {
+  const handlePickPhoto = (zone: ZoneKey, kind: 'camera' | 'gallery' | 'document') => {
     if (!inspection) return;
     setPendingZone(zone);
-    fileRef.current?.click();
+    setPendingKind(kind);
+    // Wait for the input to reflect the new `accept`/`capture` before opening.
+    requestAnimationFrame(() => fileRef.current?.click());
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,10 +172,20 @@ export default function VehicleInspection() {
     if (!file || !pendingZone || !inspection) return;
     const zone = pendingZone;
     setPendingZone(null);
+    const kind = pendingKind;
+    setPendingKind(null);
     setUploadingZone(zone);
     try {
-      const compressed = await compressImage(file);
-      const ext = compressed.name.split('.').pop() || 'jpg';
+      // Compress images; pass PDFs/other docs through as-is.
+      const isImage = file.type.startsWith('image/');
+      const compressed = isImage ? await compressImage(file) : file;
+      const ext = (compressed.name.split('.').pop() || (isImage ? 'jpg' : 'bin')).toLowerCase();
+      // Size guard for non-image documents (Storage default ~50MB; we cap at 10MB).
+      if (!isImage && compressed.size > 10 * 1024 * 1024) {
+        toast.error('Fichier trop volumineux (max 10 Mo)');
+        setUploadingZone(null);
+        return;
+      }
       const path = `${inspection.id}/${zone}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from('vehicle-inspections')
@@ -285,10 +298,8 @@ export default function VehicleInspection() {
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
     return (
-      <button
+      <div
         key={z.key}
-        onClick={() => handlePickPhoto(z.key)}
-        disabled={busy || locked}
         className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
           rejected
             ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30'
@@ -297,7 +308,7 @@ export default function VehicleInspection() {
               : photo
                 ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/20'
                 : 'border-dashed border-muted-foreground/40 bg-card'
-        } disabled:opacity-60`}
+        } ${busy || locked ? 'opacity-60 pointer-events-none' : ''}`}
       >
         <div className="flex items-center justify-between">
           <div className="font-medium">{z.label}</div>
@@ -314,14 +325,65 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
-        <div className="text-xs mt-3 font-medium">
+        <div className="text-xs mt-2 font-medium">
           {rejected && photo?.rejection_reason
             ? `Refusé : ${photo.rejection_reason}`
             : photo
               ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
-              : (kind === 'doc' ? 'Toucher pour scanner' : 'Toucher pour photographier')}
+              : (kind === 'doc' ? 'Ajoutez un document ou une photo' : 'Prenez une photo de cette zone')}
         </div>
-      </button>
+        <div className="flex gap-2 mt-3">
+          {kind === 'camera' ? (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="flex-1 h-9"
+                onClick={() => handlePickPhoto(z.key, 'camera')}
+                disabled={busy || locked}
+              >
+                <Camera className="h-4 w-4 mr-1" /> Photo
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9 px-3"
+                onClick={() => handlePickPhoto(z.key, 'gallery')}
+                disabled={busy || locked}
+                aria-label="Choisir depuis la galerie"
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="flex-1 h-9"
+                onClick={() => handlePickPhoto(z.key, 'document')}
+                disabled={busy || locked}
+              >
+                <Upload className="h-4 w-4 mr-1" /> Fichier
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9 px-3"
+                onClick={() => handlePickPhoto(z.key, 'camera')}
+                disabled={busy || locked}
+                aria-label="Photographier le document"
+              >
+                <Camera className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
     );
   };
 
@@ -421,8 +483,8 @@ export default function VehicleInspection() {
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
-          capture="environment"
+          accept={pendingKind === 'document' ? 'image/*,application/pdf' : 'image/*'}
+          {...(pendingKind === 'camera' ? { capture: 'environment' as any } : {})}
           className="hidden"
           onChange={handleFile}
         />
