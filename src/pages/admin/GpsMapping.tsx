@@ -816,18 +816,29 @@ export default function AdminGpsMapping() {
                         </Button>
                       )}
                       {r.kind === 'unmatched-device' && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="h-7 text-xs"
-                          onClick={() => {
-                            setLinkingDevice(r);
-                            setLinkSearch('');
-                          }}
-                        >
-                          <Link2 className="h-3 w-3 mr-1" />
-                          Associer
-                        </Button>
+                        <div className="flex flex-col gap-1">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="h-7 text-xs"
+                            onClick={() => {
+                              setLinkingDevice(r);
+                              setLinkSearch('');
+                            }}
+                          >
+                            <Link2 className="h-3 w-3 mr-1" />
+                            Associer
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs"
+                            onClick={() => openCreateFromDevice(r)}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Créer véhicule
+                          </Button>
+                        </div>
                       )}
                       {r.kind === 'matched' && r.vehicleId && (
                         <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
