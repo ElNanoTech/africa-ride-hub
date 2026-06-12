@@ -430,3 +430,119 @@ export default function VehicleInspection() {
     </DriverLayout>
   );
 }
+
+/**
+ * Status panel showing the live immobilization state for the driver:
+ * state badge, command reference (incl. DRY_RUN tag), and a compact audit
+ * timeline of every transition from `requested` → `pending_stop` →
+ * `cut_sent` / `failed` with timestamps.
+ */
+function ImmobilizationPanel({
+  state,
+  commandRef,
+  requestedAt,
+  cancelledAt,
+  audit,
+}: {
+  state: ImmobilizationState;
+  commandRef: string | null;
+  requestedAt: string | null;
+  cancelledAt: string | null;
+  audit: AuditRow[];
+}) {
+  const isDryRun = !!commandRef && commandRef.startsWith('DRY_RUN');
+  const failed = state === 'failed';
+  const cut    = state === 'cut_sent';
+  const tone =
+    failed ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 text-amber-900 dark:text-amber-200' :
+    cut    ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 text-rose-900 dark:text-rose-200' :
+             'bg-blue-50 dark:bg-blue-950/30 border-blue-300 text-blue-900 dark:text-blue-200';
+
+  // Keep only the moves relevant to the immobilization lifecycle.
+  const relevant = audit.filter((a) =>
+    ['immobilize_requested', 'immobilize_cancelled', 'status_recomputed', 'unblocked']
+      .includes(a.action) &&
+    (a.action !== 'status_recomputed' || a.metadata?.immobilization),
+  );
+
+  return (
+    <Card className={`border-2 ${tone}`}>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 font-semibold">
+            <Ban className="h-4 w-4" />
+            Immobilisation
+          </div>
+          <Badge variant="outline" className="bg-background/60">
+            {IMMO_LABEL[state] ?? state}
+          </Badge>
+        </div>
+
+        {isDryRun && (
+          <div className="text-xs rounded-md bg-background/60 px-2 py-1 inline-block">
+            Mode test Uffizio — aucune coupure réelle transmise
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {requestedAt && (
+            <div>
+              <div className="opacity-70">Demandée</div>
+              <div className="font-medium">
+                {format(new Date(requestedAt), 'PPpp', { locale: fr })}
+              </div>
+            </div>
+          )}
+          {cancelledAt && (
+            <div>
+              <div className="opacity-70">Annulée</div>
+              <div className="font-medium">
+                {format(new Date(cancelledAt), 'PPpp', { locale: fr })}
+              </div>
+            </div>
+          )}
+          {commandRef && (
+            <div className="col-span-2">
+              <div className="opacity-70">Référence commande</div>
+              <div className="font-mono text-[11px] break-all">{commandRef}</div>
+            </div>
+          )}
+        </div>
+
+        {relevant.length > 0 && (
+          <div className="pt-2 border-t border-current/20">
+            <div className="text-xs font-semibold uppercase tracking-wide mb-2 opacity-80">
+              Historique
+            </div>
+            <ol className="space-y-1.5">
+              {relevant.map((a) => {
+                const m = a.metadata || {};
+                const label =
+                  a.action === 'immobilize_requested' ? 'Coupure demandée' :
+                  a.action === 'immobilize_cancelled' ? 'Coupure annulée' :
+                  a.action === 'unblocked'            ? 'Déblocage' :
+                  m.immobilization === 'pending_stop' ? "En attente d'arrêt"
+                    : m.immobilization === 'cut_sent' ? (m.dry_run ? 'Commande simulée (test)' : 'Commande envoyée')
+                    : m.immobilization === 'failed'   ? `Échec${m.error ? ' — ' + m.error : ''}`
+                    : a.action;
+                return (
+                  <li key={a.id} className="flex items-start justify-between gap-3 text-xs">
+                    <div className="flex-1">
+                      <div className="font-medium">{label}</div>
+                      {m.uffizio_status && (
+                        <div className="opacity-70">Uffizio : {m.uffizio_status}</div>
+                      )}
+                    </div>
+                    <div className="shrink-0 opacity-70 tabular-nums">
+                      {format(new Date(a.created_at), 'dd/MM HH:mm', { locale: fr })}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
