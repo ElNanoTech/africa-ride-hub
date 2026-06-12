@@ -18,6 +18,7 @@ import { TierBadge } from '@/components/ScoreGauge';
 import { ADMIN, KYC, UI } from '@/lib/i18n';
 import { Search, Eye, CheckCircle, XCircle, MoreHorizontal, Download, FileSpreadsheet, FileText, Upload, AlertCircle, Loader2, FileCheck, X, UserPlus } from 'lucide-react';
 import { AdminCreateDriverDialog } from '@/components/AdminCreateDriverDialog';
+import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuLabel } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -81,8 +82,21 @@ const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case 'active': return 'active';
     case 'suspended': return 'rejected';
+    case 'blocked': return 'rejected';
+    case 'pending_kyc': return 'pending';
     case 'inactive': return 'pending';
     default: return 'default';
+  }
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'active': return 'Actif';
+    case 'suspended': return 'Suspendu';
+    case 'blocked': return 'Bloqué';
+    case 'pending_kyc': return 'KYC en attente';
+    case 'inactive': return 'Inactif';
+    default: return status;
   }
 };
 
@@ -658,6 +672,8 @@ export default function AdminDrivers() {
                 <SelectItem value="active">Actif ({filterCounts.status.active})</SelectItem>
                 <SelectItem value="suspended">Suspendu ({filterCounts.status.suspended})</SelectItem>
                 <SelectItem value="inactive">Inactif ({filterCounts.status.inactive})</SelectItem>
+                <SelectItem value="pending_kyc">KYC en attente</SelectItem>
+                <SelectItem value="blocked">Bloqué</SelectItem>
               </SelectContent>
             </Select>
             {(search || kycFilter !== 'all' || statusFilter !== 'all') && (
@@ -773,7 +789,7 @@ export default function AdminDrivers() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(driver.driver_status) as never}>
-                        {driver.driver_status === 'active' ? 'Actif' : driver.driver_status === 'suspended' ? 'Suspendu' : 'Inactif'}
+                        {getStatusLabel(driver.driver_status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
