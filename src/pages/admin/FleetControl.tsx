@@ -54,6 +54,7 @@ function useFleetControlSettings(): FleetControlSettings {
         relance_cooldown_hours:      Number(data.relance_cooldown_hours ?? 24),
         require_all_photos:          Boolean(data.require_all_photos ?? true),
         require_documents:           Boolean(data.require_documents ?? true),
+        uffizio_immobilization_dry_run: data.uffizio_immobilization_dry_run === false ? false : true,
       });
     });
   }, []);
