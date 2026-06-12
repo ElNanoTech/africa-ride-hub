@@ -549,6 +549,26 @@ export default function VehicleInspection() {
                 </div>
               </div>
             )}
+            {reviewInProgress && (
+              <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-sm text-blue-800 dark:text-blue-200 flex items-start gap-2">
+                <Clock className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Contrôle envoyé</div>
+                  <div className="opacity-90">
+                    Votre gestionnaire va vérifier vos photos. Vous serez notifié dès validation.
+                  </div>
+                </div>
+              </div>
+            )}
+            {inspection.status === 'approved' && (
+              <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/30 p-3 text-sm text-emerald-800 dark:text-emerald-200 flex items-start gap-2">
+                <CheckCheck className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Contrôle validé</div>
+                  <div className="opacity-90">Aucune action requise jusqu'au prochain cycle.</div>
+                </div>
+              </div>
+            )}
             {inspection.status === 'blocked' && (
               <div className="rounded-md bg-rose-100 dark:bg-rose-950/40 p-3 text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
                 <Ban className="h-4 w-4 mt-0.5 shrink-0" />
