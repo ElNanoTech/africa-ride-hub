@@ -380,6 +380,7 @@ export default function VehicleInspection() {
     return (
       <div
         key={z.key}
+        data-rejected={rejected ? 'true' : undefined}
         className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
           rejected
             ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30'
