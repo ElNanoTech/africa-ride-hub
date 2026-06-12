@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AdminLayout } from '@/components/AdminLayout';
@@ -24,43 +24,23 @@ import {
 } from '@/components/admin/FleetControlDetailDialog';
 import { FleetControlCreateDialog } from '@/components/admin/FleetControlCreateDialog';
 import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
+import { useFleetControlSettings } from '@/hooks/useFleetControlSettings';
 import {
+  ALL_ZONES,
   STATUS_LABEL, STATUS_CLASS,
   effectiveStatus, daysOverdue,
   requiredZones,
   DEFAULT_FLEET_CONTROL_SETTINGS,
   type FleetControlStatus,
-  type FleetControlSettings,
+  type ItemValidation,
+  type ZoneKey,
 } from '@/lib/fleetControl';
 
 const supabase = _supabase as any;
 
 interface ItemAggregate {
-  approved: number;
-  rejected: number;
-  submitted: number;
-  total: number;
-}
-
-function useFleetControlSettings(): FleetControlSettings {
-  const [s, setS] = useState<FleetControlSettings>(DEFAULT_FLEET_CONTROL_SETTINGS);
-  useEffect(() => {
-    supabase.rpc('fleet_control_settings').then(({ data }: any) => {
-      if (!data) return;
-      setS({
-        cycle_days:                  Number(data.cycle_days ?? 14),
-        late_threshold_days:         Number(data.late_threshold_days ?? 3),
-        relance_threshold:           Number(data.relance_threshold ?? 2),
-        auto_immobilisation_enabled: Boolean(data.auto_immobilisation_enabled ?? false),
-        parking_check_interval_min:  Number(data.parking_check_interval_min ?? 15),
-        relance_cooldown_hours:      Number(data.relance_cooldown_hours ?? 24),
-        require_all_photos:          Boolean(data.require_all_photos ?? true),
-        require_documents:           Boolean(data.require_documents ?? true),
-        uffizio_immobilization_dry_run: data.uffizio_immobilization_dry_run === false ? false : true,
-      });
-    });
-  }, []);
-  return s;
+  /** zone → validation status of the uploaded item in that zone. */
+  zones: Partial<Record<ZoneKey, ItemValidation>>;
 }
 
 type TabKey = 'all' | 'submitted' | 'overdue' | 'approved' | 'blocked' | 'rejected';
@@ -68,7 +48,7 @@ type TabKey = 'all' | 'submitted' | 'overdue' | 'approved' | 'blocked' | 'reject
 export default function FleetControl() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const settings = useFleetControlSettings();
+  const { data: settings = DEFAULT_FLEET_CONTROL_SETTINGS } = useFleetControlSettings();
   const [tab, setTab] = useState<TabKey>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -76,15 +56,30 @@ export default function FleetControl() {
   const [activeRow, setActiveRow] = useState<FleetControlRow | null>(null);
   const [showCreate, setShowCreate] = useState(false);
 
-  // FC-A3/D3: required item count derived from settings (not always 11).
-  const requiredCount = useMemo(() => requiredZones(settings).length, [settings]);
+  // FC-A3/D3: required zone keys derived from settings (not always 11).
+  const requiredKeys = useMemo(
+    () => requiredZones(settings).map((z) => z.key),
+    [settings],
+  );
 
-  // FC-A2: live refresh — a driver submission/photo upload appears without
-  // manual reload. RLS scopes the events to the admin's tenant.
-  const invalidateFleetControl = () =>
-    queryClient.invalidateQueries({ queryKey: ['fleet-control'] });
+  // FC-A2: live refresh — a driver submission appears without manual reload.
+  // Single channel on the control rows (every submit/review touches them; the
+  // open detail dialog has its own narrow photos channel). Invalidation is
+  // exact-key and trailing-debounced (~3s) so an active fleet doesn't trigger
+  // a refetch storm of the 500-row list + aggregate.
+  const invalidateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (invalidateTimer.current) clearTimeout(invalidateTimer.current);
+  }, []);
+  const invalidateFleetControl = () => {
+    if (invalidateTimer.current) clearTimeout(invalidateTimer.current);
+    invalidateTimer.current = setTimeout(() => {
+      invalidateTimer.current = null;
+      queryClient.invalidateQueries({ queryKey: ['fleet-control', 'list'], exact: true });
+      queryClient.invalidateQueries({ queryKey: ['fleet-control', 'item-aggregate'], exact: true });
+    }, 3_000);
+  };
   useRealtimePostgresChanges('vehicle_inspections', '*', () => true, invalidateFleetControl);
-  useRealtimePostgresChanges('vehicle_inspection_photos', '*', () => true, invalidateFleetControl);
 
   const { data: rows = [], isLoading } = useQuery<FleetControlRow[]>({
     queryKey: ['fleet-control', 'list'],
@@ -105,21 +100,18 @@ export default function FleetControl() {
     },
   });
 
-  // Item aggregates per control (for the 11-tile progress strip on cards).
+  // Per-zone item status per control (for the tile progress strip on cards).
   const { data: itemAgg = {} } = useQuery<Record<string, ItemAggregate>>({
     queryKey: ['fleet-control', 'item-aggregate'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicle_inspection_photos')
-        .select('inspection_id, validation_status');
+        .select('inspection_id, zone, validation_status');
       if (error) throw error;
       const agg: Record<string, ItemAggregate> = {};
       for (const r of (data as any[] ?? [])) {
-        const cur = agg[r.inspection_id] ||= { approved: 0, rejected: 0, submitted: 0, total: 0 };
-        cur.total += 1;
-        if (r.validation_status === 'approved')  cur.approved  += 1;
-        if (r.validation_status === 'rejected')  cur.rejected  += 1;
-        if (r.validation_status === 'submitted') cur.submitted += 1;
+        const cur = agg[r.inspection_id] ||= { zones: {} };
+        cur.zones[r.zone as ZoneKey] = r.validation_status as ItemValidation;
       }
       return agg;
     },
@@ -243,7 +235,7 @@ export default function FleetControl() {
               row={row}
               effective={row._effective}
               agg={itemAgg[row.id]}
-              requiredCount={requiredCount}
+              requiredKeys={requiredKeys}
               onOpen={() => setActiveRow(row)}
             />
           ))}
@@ -263,19 +255,28 @@ export default function FleetControl() {
 }
 
 function ControlCard({
-  row, effective, agg, requiredCount, onOpen,
+  row, effective, agg, requiredKeys, onOpen,
 }: {
   row: FleetControlRow;
   effective: FleetControlStatus;
   agg?: ItemAggregate;
-  requiredCount: number;
+  requiredKeys: ZoneKey[];
   onOpen: () => void;
 }) {
   const plate = row.vehicles?.license_plate ?? '—';
   const model = [row.vehicles?.make, row.vehicles?.model_name].filter(Boolean).join(' ') || 'Véhicule';
   const driverName = row.drivers?.full_name ?? null;
   const overdueDays = effective === 'overdue' || effective === 'blocked' ? daysOverdue(row.due_at) : 0;
-  const totalSubmitted = (agg?.approved ?? 0) + (agg?.rejected ?? 0) + (agg?.submitted ?? 0);
+
+  const zones = agg?.zones ?? {};
+  // Nothing invisible: the strip shows required zones ∪ uploaded zones
+  // (≤ 11 by construction — one item per zone).
+  const tileKeys = ALL_ZONES
+    .map((z) => z.key)
+    .filter((k) => requiredKeys.includes(k) || zones[k]);
+  // "X/Y pièces": X counts only required-zone submissions so X ≤ Y.
+  const requiredSubmitted = requiredKeys
+    .filter((k) => zones[k] && zones[k] !== 'pending').length;
 
   return (
     <Card className="cursor-pointer hover:border-primary/50 transition-colors" onClick={onOpen}>
@@ -303,27 +304,23 @@ function ControlCard({
             </span>
           )}
           <span className="inline-flex items-center gap-1">
-            <Camera className="h-3 w-3" /> {totalSubmitted}/{requiredCount} pièces
+            <Camera className="h-3 w-3" /> {requiredSubmitted}/{requiredKeys.length} pièces
           </span>
         </div>
 
-        {/* Item strip — one tile per required zone (FC-A3: derived from settings) */}
+        {/* Item strip — one tile per required ∪ uploaded zone (FC-A3), each
+            coloured by the actual status of that zone's item. */}
         <div
           className="grid gap-1"
-          style={{ gridTemplateColumns: `repeat(${requiredCount}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${Math.max(tileKeys.length, 1)}, minmax(0, 1fr))` }}
         >
-          {Array.from({ length: requiredCount }).map((_, i) => {
-            // Show approved (green), rejected (rose), submitted (blue), empty (grey)
-            // We don't know which zone is which from the aggregate, so order is:
-            // approved → rejected → submitted → empty fill.
-            const a = agg?.approved ?? 0;
-            const r = agg?.rejected ?? 0;
-            const s = agg?.submitted ?? 0;
+          {tileKeys.map((k) => {
+            const st = zones[k];
             let cls = 'bg-muted';
-            if (i < a) cls = 'bg-emerald-500';
-            else if (i < a + r) cls = 'bg-rose-500';
-            else if (i < a + r + s) cls = 'bg-blue-400';
-            return <div key={i} className={`h-3 rounded-sm ${cls}`} />;
+            if (st === 'approved') cls = 'bg-emerald-500';
+            else if (st === 'rejected') cls = 'bg-rose-500';
+            else if (st === 'submitted') cls = 'bg-blue-400';
+            return <div key={k} className={`h-3 rounded-sm ${cls}`} />;
           })}
         </div>
 

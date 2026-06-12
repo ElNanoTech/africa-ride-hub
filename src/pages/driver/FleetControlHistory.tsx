@@ -10,27 +10,18 @@ import { fr } from 'date-fns/locale';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
 import {
+  CLOSED_FLEET_CONTROL_STATUSES,
   STATUS_LABEL,
   STATUS_CLASS,
-  type FleetControlStatus,
+  FLEET_CONTROL_DRIVER_ROW_SELECT,
+  type FleetControlDriverRow,
 } from '@/lib/fleetControl';
 
 // Supabase types lag the migration sync; cast for the new fleet-control columns.
 const supabase = _supabase as any;
 
-interface HistoryRow {
-  id: string;
-  status: FleetControlStatus;
-  due_at: string;
-  submitted_at: string | null;
-  reviewed_at: string | null;
-  rejection_reason: string | null;
-  created_at: string;
-  vehicles?: { license_plate: string | null; make: string | null; model_name: string | null } | null;
-}
-
 // Closed cycles only — the active control lives on /driver/fleet-control.
-const CLOSED_STATUSES = ['approved', 'cancelled'];
+const CLOSED_STATUSES = CLOSED_FLEET_CONTROL_STATUSES;
 
 /**
  * FC-D1 — Driver fleet-control history: past (closed) cycles with date,
@@ -41,22 +32,19 @@ export default function FleetControlHistory() {
   const navigate = useNavigate();
   const driverId = driverProfile?.id;
 
-  const { data: rows = [], isLoading } = useQuery<HistoryRow[]>({
+  const { data: rows = [], isLoading } = useQuery<FleetControlDriverRow[]>({
     queryKey: ['driver-inspection-history', driverId],
     enabled: !!driverId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('vehicle_inspections')
-        .select(`
-          id, status, due_at, submitted_at, reviewed_at, rejection_reason, created_at,
-          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
-        `)
+        .select(FLEET_CONTROL_DRIVER_ROW_SELECT)
         .eq('driver_id', driverId)
-        .in('status', CLOSED_STATUSES)
+        .in('status', [...CLOSED_STATUSES])
         .order('created_at', { ascending: false })
         .limit(50);
       if (error) throw error;
-      return (data ?? []) as HistoryRow[];
+      return (data ?? []) as FleetControlDriverRow[];
     },
   });
 

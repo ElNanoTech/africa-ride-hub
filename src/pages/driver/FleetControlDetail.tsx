@@ -5,7 +5,7 @@ import { DriverLayout, PageHeader } from '@/components/DriverLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, AlertTriangle, History } from 'lucide-react';
+import { Loader2, AlertTriangle, History, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
@@ -14,9 +14,12 @@ import { FleetControlZoneTile, type ZoneTilePhoto } from '@/components/driver/Fl
 import {
   PHOTO_ZONES,
   DOCUMENT_ZONES,
+  OPEN_FLEET_CONTROL_STATUSES,
   STATUS_LABEL,
   STATUS_CLASS,
-  type FleetControlStatus,
+  FLEET_CONTROL_DRIVER_ROW_SELECT,
+  signInspectionPhotoUrls,
+  type FleetControlDriverRow,
   type ZoneKey,
 } from '@/lib/fleetControl';
 
@@ -27,20 +30,8 @@ interface DetailPhoto extends ZoneTilePhoto {
   zone: ZoneKey;
 }
 
-interface DetailControl {
-  id: string;
-  status: FleetControlStatus;
-  due_at: string;
-  submitted_at: string | null;
-  reviewed_at: string | null;
-  rejection_reason: string | null;
-  notes: string | null;
-  created_at: string;
-  vehicles?: { license_plate: string | null; make: string | null; model_name: string | null } | null;
-}
-
 // Statuses still handled by the main /driver/fleet-control screen.
-const ACTIVE_STATUSES: FleetControlStatus[] = ['pending', 'submitted', 'rejected', 'overdue', 'blocked'];
+const ACTIVE_STATUSES = OPEN_FLEET_CONTROL_STATUSES;
 
 /**
  * FC-D1 — Read-only detail of a closed fleet control (history). An active
@@ -53,36 +44,38 @@ export default function FleetControlDetail() {
   const navigate = useNavigate();
   const driverId = driverProfile?.id;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['driver-inspection-detail', id],
     enabled: !!id && !!driverId,
+    // Closed controls are immutable — keep them cached aggressively.
+    staleTime: Infinity,
+    gcTime: 60 * 60_000,
     queryFn: async () => {
-      const { data: control, error } = await supabase
-        .from('vehicle_inspections')
-        .select(`
-          id, status, due_at, submitted_at, reviewed_at, rejection_reason, notes, created_at,
-          vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
-        `)
-        .eq('id', id)
-        .eq('driver_id', driverId)
-        .maybeSingle();
-      if (error) throw error;
-      if (!control) return { control: null as DetailControl | null, photos: [] as DetailPhoto[], urls: {} as Record<string, string> };
+      // Both filters only need the route id, so the two fetches run in parallel.
+      const [controlRes, photosRes] = await Promise.all([
+        supabase
+          .from('vehicle_inspections')
+          .select(FLEET_CONTROL_DRIVER_ROW_SELECT)
+          .eq('id', id)
+          .eq('driver_id', driverId)
+          .maybeSingle(),
+        supabase
+          .from('vehicle_inspection_photos')
+          .select('id, zone, storage_path, validation_status, rejection_reason')
+          .eq('inspection_id', id),
+      ]);
+      if (controlRes.error) throw controlRes.error;
+      // A photos error must surface as an error state — never a false
+      // "Aucune pièce" empty state.
+      if (photosRes.error) throw photosRes.error;
 
-      const { data: photos } = await supabase
-        .from('vehicle_inspection_photos')
-        .select('id, zone, storage_path, validation_status, rejection_reason')
-        .eq('inspection_id', control.id);
+      const control = controlRes.data as FleetControlDriverRow | null;
+      if (!control) return { control: null, photos: [] as DetailPhoto[], urls: {} as Record<string, string> };
 
-      const urls: Record<string, string> = {};
-      await Promise.all(((photos ?? []) as DetailPhoto[]).map(async (p) => {
-        const { data: sig } = await supabase.storage
-          .from('vehicle-inspections')
-          .createSignedUrl(p.storage_path, 3600);
-        if (sig?.signedUrl) urls[p.id] = sig.signedUrl;
-      }));
-
-      return { control: control as DetailControl, photos: (photos ?? []) as DetailPhoto[], urls };
+      const photos = (photosRes.data ?? []) as DetailPhoto[];
+      // One batched createSignedUrls round-trip for all thumbnails.
+      const { urls } = await signInspectionPhotoUrls(supabase, photos);
+      return { control, photos, urls };
     },
   });
 
@@ -109,6 +102,32 @@ export default function FleetControlDetail() {
         <PageHeader title="Détail du contrôle" />
         <div className="flex items-center justify-center py-24">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </DriverLayout>
+    );
+  }
+
+  if (isError) {
+    return (
+      <DriverLayout>
+        <PageHeader title="Détail du contrôle" />
+        <div className="p-4">
+          <Card>
+            <CardContent className="p-6 text-center space-y-3">
+              <AlertTriangle className="h-12 w-12 mx-auto text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                Impossible de charger ce contrôle. Vérifiez votre connexion puis réessayez.
+              </p>
+              <div className="flex flex-col gap-2">
+                <Button variant="default" onClick={() => refetch()}>
+                  <RefreshCw className="h-4 w-4 mr-2" /> Réessayer
+                </Button>
+                <Button variant="ghost" onClick={() => navigate('/driver/fleet-control/history')}>
+                  <History className="h-4 w-4 mr-2" /> Retour à l'historique
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </DriverLayout>
     );

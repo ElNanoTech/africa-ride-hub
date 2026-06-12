@@ -25,18 +25,24 @@ import { fr } from 'date-fns/locale';
 import { FleetControlZoneTile } from '@/components/driver/FleetControlZoneTile';
 import {
   ALL_ZONES,
+  PHOTO_ZONES,
+  DOCUMENT_ZONES,
+  OPEN_FLEET_CONTROL_STATUSES,
   STATUS_LABEL,
   STATUS_CLASS,
   IMMO_LABEL,
   effectiveStatus,
   formatDueDateRelative,
+  immobilizationBanner,
   requiredZones,
+  signInspectionPhotoUrls,
   DEFAULT_FLEET_CONTROL_SETTINGS,
   type ZoneKey,
   type FleetControlStatus,
   type ItemValidation,
   type ImmobilizationState,
 } from '@/lib/fleetControl';
+import { useFleetControlSettings } from '@/hooks/useFleetControlSettings';
 
 // Supabase types lag the migration sync; cast for the new item-review columns.
 const supabase = _supabase as any;
@@ -80,6 +86,12 @@ interface ThumbsResult {
 
 const EMPTY_THUMBS: ThumbsResult = { urls: {}, failed: {} };
 
+type SignedCacheEntry = { url: string; signedAt: number } | { failed: true; signedAt: number };
+// Signed URLs live 1h; re-sign well before expiry.
+const SIGNED_URL_REUSE_MS = 45 * 60_000;
+// Ignore realtime echoes of our own uploads for this long.
+const OWN_UPLOAD_ECHO_MS = 10_000;
+
 export default function VehicleInspection() {
   const { driverProfile } = useDriverAuth();
   const navigate = useNavigate();
@@ -93,6 +105,11 @@ export default function VehicleInspection() {
   const pendingZoneRef = useRef<ZoneKey | null>(null);
   const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
   const [brokenThumbs, setBrokenThumbs] = useState<Record<string, true>>({});
+  // Per-photo signed-URL cache (keyed id+storage_path) so unchanged tiles
+  // reuse their URL instead of re-signing on every photos change.
+  const signedUrlCacheRef = useRef(new Map<string, SignedCacheEntry>());
+  // storage_paths we just uploaded — used to skip realtime echoes of our own writes.
+  const recentUploadsRef = useRef(new Map<string, number>());
   const [viewFail, setViewFail] = useState<{
     zone: ZoneKey;
     kind: 'camera' | 'doc';
@@ -133,7 +150,7 @@ export default function VehicleInspection() {
           vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
         `)
         .eq('driver_id', driverId)
-        .in('status', ['pending', 'submitted', 'rejected', 'overdue', 'blocked', 'approved'])
+        .in('status', [...OPEN_FLEET_CONTROL_STATUSES, 'approved'])
         .order('updated_at', { ascending: false })
         .limit(8);
       if (error) throw error;
@@ -206,43 +223,36 @@ export default function VehicleInspection() {
   const photos = data?.photos ?? [];
   const audit = data?.audit ?? [];
 
-  // FC-D5: live refresh of the driver's own control + items — an admin
-  // approval/rejection appears without manual refresh. RLS already limits
-  // the events to the driver's own rows; the filters are belt-and-braces.
+  // FC-D5: live refresh of the driver's own items. Control-row changes are
+  // handled by useDriverActiveInspection's single shared channel (mounted via
+  // BottomNav on every driver page), which invalidates both the nav/home key
+  // and this page's ['driver-inspection'] key — no duplicate channel here.
   const invalidateInspection = () => {
     queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
     queryClient.invalidateQueries({ queryKey: ['driver-active-inspection', driverId] });
   };
-  useRealtimePostgresChanges<{ driver_id?: string }>(
-    'vehicle_inspections',
-    '*',
-    (p) => (p.new?.driver_id ?? p.old?.driver_id) === driverId,
-    invalidateInspection,
-    !!driverId,
-  );
-  useRealtimePostgresChanges<{ inspection_id?: string }>(
+  useRealtimePostgresChanges<{ inspection_id?: string; storage_path?: string }>(
     'vehicle_inspection_photos',
     '*',
-    (p) => (p.new?.inspection_id ?? p.old?.inspection_id) === inspection?.id,
+    (p) => {
+      if ((p.new?.inspection_id ?? p.old?.inspection_id) !== inspection?.id) return false;
+      // Skip echoes of our own uploads — we already refetched after writing.
+      const now = Date.now();
+      for (const [path, at] of recentUploadsRef.current) {
+        if (now - at > OWN_UPLOAD_ECHO_MS) recentUploadsRef.current.delete(path);
+      }
+      const path = p.new?.storage_path ?? p.old?.storage_path;
+      return !(path && recentUploadsRef.current.has(path));
+    },
     invalidateInspection,
     !!inspection?.id,
   );
 
-  // FC-A3/D3: required zone set derived from the tenant settings — totals
-  // stay correct when require_all_photos / require_documents change.
-  const { data: fcSettings = DEFAULT_FLEET_CONTROL_SETTINGS } = useQuery({
-    queryKey: ['fleet-control-settings'],
-    queryFn: async () => {
-      const { data: s } = await supabase.rpc('fleet_control_settings');
-      return {
-        ...DEFAULT_FLEET_CONTROL_SETTINGS,
-        require_all_photos: Boolean(s?.require_all_photos ?? true),
-        require_documents: Boolean(s?.require_documents ?? true),
-      };
-    },
-    staleTime: 5 * 60_000,
-  });
+  // FC-A3/D3: required zone set derived from the shared tenant settings —
+  // totals stay correct when require_all_photos / require_documents change.
+  const { data: fcSettings = DEFAULT_FLEET_CONTROL_SETTINGS } = useFleetControlSettings();
   const reqZones = useMemo(() => requiredZones(fcSettings), [fcSettings]);
+  const reqZoneKeys = useMemo(() => new Set(reqZones.map((z) => z.key)), [reqZones]);
   const reqPhotoZones = useMemo(() => reqZones.filter((z) => z.kind === 'photo'), [reqZones]);
   const reqDocZones = useMemo(() => reqZones.filter((z) => z.kind === 'document'), [reqZones]);
 
@@ -252,30 +262,48 @@ export default function VehicleInspection() {
     return map;
   }, [photos]);
 
+  // Nothing invisible: render the union of required zones and zones that
+  // already hold an uploaded item (e.g. uploaded before a setting flip, or a
+  // rejected extra piece) — the driver must always see and be able to act on
+  // every item the admin can see.
+  const visiblePhotoZones = useMemo(
+    () => PHOTO_ZONES.filter((z) => reqZoneKeys.has(z.key) || photosByZone[z.key]),
+    [reqZoneKeys, photosByZone],
+  );
+  const visibleDocZones = useMemo(
+    () => DOCUMENT_ZONES.filter((z) => reqZoneKeys.has(z.key) || photosByZone[z.key]),
+    [reqZoneKeys, photosByZone],
+  );
+
   // Resolve signed URLs for every uploaded item so we can show real thumbnails
-  // (PDFs return a URL too; the tile falls back to a doc icon).
+  // (PDFs return a URL too; the tile falls back to a doc icon). One batched
+  // createSignedUrls call; per-photo cache keyed id+storage_path so unchanged
+  // tiles reuse their URL.
   const { data: thumbs = EMPTY_THUMBS, isFetching: thumbsLoading } = useQuery<ThumbsResult>({
     queryKey: ['driver-inspection-thumbs', inspection?.id, photos.map(p => p.id + p.storage_path).join('|')],
     enabled: !!inspection && photos.length > 0,
     queryFn: async () => {
+      const cache = signedUrlCacheRef.current;
+      const now = Date.now();
+      const missing = photos.filter((p) => {
+        const entry = cache.get(p.id + p.storage_path);
+        return !entry || now - entry.signedAt > SIGNED_URL_REUSE_MS;
+      });
+      if (missing.length > 0) {
+        const signed = await signInspectionPhotoUrls(supabase, missing);
+        for (const p of missing) {
+          const key = p.id + p.storage_path;
+          if (signed.urls[p.id]) cache.set(key, { url: signed.urls[p.id], signedAt: now });
+          else cache.set(key, { failed: true, signedAt: now });
+        }
+      }
       const urls: Record<string, string> = {};
       const failed: Record<string, true> = {};
-      await Promise.all(photos.map(async (p) => {
-        const { data: sig, error } = await supabase.storage
-          .from('vehicle-inspections')
-          .createSignedUrl(p.storage_path, 3600);
-        if (error || !sig?.signedUrl) {
-          failed[p.id] = true;
-          return;
-        }
-        try {
-          const head = await fetch(sig.signedUrl, { method: 'HEAD' });
-          if (!head.ok) failed[p.id] = true;
-          else urls[p.id] = sig.signedUrl;
-        } catch {
-          urls[p.id] = sig.signedUrl;
-        }
-      }));
+      for (const p of photos) {
+        const entry = cache.get(p.id + p.storage_path);
+        if (entry && 'url' in entry) urls[p.id] = entry.url;
+        else if (entry) failed[p.id] = true;
+      }
       return { urls, failed };
     },
   });
@@ -288,7 +316,15 @@ export default function VehicleInspection() {
   const completedCount = reqZones.filter((z) => isZoneDone(z.key)).length;
   const photosDone = reqPhotoZones.filter((z) => isZoneDone(z.key)).length;
   const docsDone = reqDocZones.filter((z) => isZoneDone(z.key)).length;
-  const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
+  // Rejected count / scroll-to-rejected operate on RENDERED tiles (required
+  // ∪ uploaded) so a rejected extra piece is always reachable.
+  const renderedZoneKeys = useMemo(
+    () => new Set([...visiblePhotoZones, ...visibleDocZones].map((z) => z.key)),
+    [visiblePhotoZones, visibleDocZones],
+  );
+  const rejectedCount = photos.filter(
+    (p) => renderedZoneKeys.has(p.zone) && p.validation_status === 'rejected',
+  ).length;
   const canSubmit =
     completedCount === reqZones.length &&
     inspection?.status !== 'submitted' &&
@@ -406,6 +442,9 @@ export default function VehicleInspection() {
           });
       }
 
+      // Remember our own write so the realtime photos channel skips its echo.
+      recentUploadsRef.current.set(path, Date.now());
+
       // Reset previous rejection so the driver can resubmit cleanly.
       if (inspection.status === 'rejected') {
         await supabase
@@ -492,6 +531,7 @@ export default function VehicleInspection() {
 
   const eff = effectiveStatus(inspection.status, inspection.due_at);
   const isLate = eff === 'overdue';
+  const immoBanner = immobilizationBanner(inspection.immobilization_state, inspection.status);
   // The cycle is locked once approved. While `submitted`, only items that the
   // admin has explicitly rejected can be re-uploaded — approved/submitted
   // items stay read-only until the next cycle.
@@ -596,25 +636,14 @@ export default function VehicleInspection() {
                 </div>
               </div>
             )}
-            {/* FC-D6: honest immobilization copy — never claim a cut unless cut_sent. */}
-            {inspection.immobilization_state === 'cut_sent' ? (
+            {/* FC-D6: honest immobilization copy (shared helper) — never claims a
+                cut unless cut_sent, never claims that submitting lifts the restriction. */}
+            {immoBanner && (
               <div className="rounded-md bg-rose-100 dark:bg-rose-950/40 p-3 text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
                 <Ban className="h-4 w-4 mt-0.5 shrink-0" />
                 <div>
-                  <div className="font-medium">Véhicule immobilisé</div>
-                  <div className="opacity-90">Contactez votre gestionnaire.</div>
-                </div>
-              </div>
-            ) : (inspection.status === 'blocked'
-                || inspection.immobilization_state === 'requested'
-                || inspection.immobilization_state === 'pending_stop') && (
-              <div className="rounded-md bg-rose-100 dark:bg-rose-950/40 p-3 text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
-                <Ban className="h-4 w-4 mt-0.5 shrink-0" />
-                <div>
-                  <div className="font-medium">Restriction demandée</div>
-                  <div className="opacity-90">
-                    En attente de vérification du stationnement. Soumettez votre contrôle pour annuler la demande.
-                  </div>
+                  <div className="font-medium">{immoBanner.title}</div>
+                  <div className="opacity-90">{immoBanner.description}</div>
                 </div>
               </div>
             )}
@@ -631,25 +660,26 @@ export default function VehicleInspection() {
           />
         )}
 
-        {/* FC-A3/D3: only the required groups are shown (derived from settings). */}
-        {reqPhotoZones.length > 0 && (
+        {/* FC-A3/D3: required zones ∪ zones with an uploaded item — nothing the
+            admin can review is ever invisible to the driver. */}
+        {visiblePhotoZones.length > 0 && (
           <div>
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
               Photos du véhicule
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {reqPhotoZones.map((z) => renderZoneTile(z, 'camera'))}
+              {visiblePhotoZones.map((z) => renderZoneTile(z, 'camera'))}
             </div>
           </div>
         )}
 
-        {reqDocZones.length > 0 && (
+        {visibleDocZones.length > 0 && (
           <div>
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
               Documents
             </div>
             <div className="grid grid-cols-2 gap-3">
-              {reqDocZones.map((z) => renderZoneTile(z, 'doc'))}
+              {visibleDocZones.map((z) => renderZoneTile(z, 'doc'))}
             </div>
           </div>
         )}
@@ -731,12 +761,17 @@ export default function VehicleInspection() {
                 setViewFail({ ...viewFail, retrying: true });
                 const url = await tryOpenSignedUrl(photo.storage_path);
                 if (url) {
-                  // Recovered — clear the broken flag and open the file.
+                  // Recovered — clear the broken flag, refresh the per-photo
+                  // cache entry, and open the file.
                   setBrokenThumbs((prev) => {
                     const next = { ...prev };
                     delete next[photo.id];
                     return next;
                   });
+                  signedUrlCacheRef.current.set(
+                    photo.id + photo.storage_path,
+                    { url, signedAt: Date.now() },
+                  );
                   queryClient.invalidateQueries({ queryKey: ['driver-inspection-thumbs'] });
                   window.open(url, '_blank');
                   setViewFail(null);

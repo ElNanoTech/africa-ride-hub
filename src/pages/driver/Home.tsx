@@ -19,7 +19,13 @@ import { getScoreLevel } from '@/lib/scoreLevel';
 import { cn } from '@/lib/utils';
 import { useDriverCurrentScore, useDriverId, useDriverCreditScores, useDriverRentals, useDriverNotifications, useDriverLoans, useDriverPayments, useIsAuthResolving } from '@/hooks/useDriverData';
 import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
-import { formatDueDateRelative } from '@/lib/fleetControl';
+import {
+  CLOSED_FLEET_CONTROL_STATUSES,
+  formatDueDateRelative,
+  immobilizationBanner,
+  type FleetControlStatus,
+  type ImmobilizationState,
+} from '@/lib/fleetControl';
 import { formatCurrency as fmtCurrency, formatNumber } from '@/lib/format';
 import { useDriverDashboardRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
@@ -200,7 +206,7 @@ function FleetControlCard() {
         .from('vehicle_inspections')
         .select('id', { count: 'exact', head: true })
         .eq('driver_id', driverId)
-        .in('status', ['approved', 'cancelled']);
+        .in('status', [...CLOSED_FLEET_CONTROL_STATUSES]);
       if (error) throw error;
       return (count ?? 0) > 0;
     },
@@ -242,8 +248,13 @@ function FleetControlCard() {
   }
 
   const status = inspection.effective_status;
-  // FC-D6: never claim an engine cut unless the command was actually sent.
-  const immoCut = inspection.immobilization_state === 'cut_sent';
+  // FC-D6: honest immobilization copy via the shared helper — never claims an
+  // engine cut unless cut_sent, never claims that submitting lifts the restriction.
+  const immoBanner = immobilizationBanner(
+    inspection.immobilization_state as ImmobilizationState,
+    status as FleetControlStatus,
+  );
+  const dueRelative = formatDueDateRelative(inspection.due_at);
 
   const config: Record<string, {
     title: string;
@@ -252,6 +263,7 @@ function FleetControlCard() {
     icon: typeof ClipboardCheck;
     bg: string;
     iconBg: string;
+    to?: string;
   }> = {
     pending: {
       title: 'Contrôle visuel requis',
@@ -285,11 +297,19 @@ function FleetControlCard() {
       bg: 'from-warning/10 to-warning/5 border-warning/30',
       iconBg: 'bg-warning/20 text-warning',
     },
+    approved: {
+      title: 'Contrôle véhicule à jour',
+      description: `Prochain contrôle : ${dueRelative.charAt(0).toLocaleLowerCase('fr-FR')}${dueRelative.slice(1)}`,
+      cta: "Voir l'historique",
+      icon: CheckCircle,
+      bg: 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/30',
+      iconBg: 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300',
+      to: '/driver/fleet-control/history',
+    },
     blocked: {
-      title: immoCut ? 'Véhicule immobilisé' : 'Restriction demandée',
-      description: immoCut
-        ? 'Contactez votre gestionnaire.'
-        : 'En attente de vérification du stationnement.',
+      title: immoBanner?.title ?? 'Restriction demandée',
+      description: immoBanner?.description
+        ?? 'En attente de vérification du stationnement. Contactez votre gestionnaire.',
       cta: 'Voir les détails',
       icon: Ban,
       bg: 'from-destructive/10 to-destructive/5 border-destructive/40',
@@ -297,12 +317,13 @@ function FleetControlCard() {
     },
   };
 
+  // Unknown statuses fall back to pending; `approved` has its own entry above.
   const c = config[status] || config.pending;
   const Icon = c.icon;
 
   return (
     <div className="px-4 mt-6">
-      <Link to="/driver/fleet-control" aria-label="Ouvrir le contrôle visuel">
+      <Link to={c.to ?? '/driver/fleet-control'} aria-label="Ouvrir le contrôle visuel">
         <Card className={cn('border bg-gradient-to-r overflow-hidden', c.bg)}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -7,6 +8,10 @@ import { Button } from '@/components/ui/button';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
+import {
+  useFleetControlSettings,
+  FLEET_CONTROL_SETTINGS_QUERY_KEY,
+} from '@/hooks/useFleetControlSettings';
 import {
   DEFAULT_FLEET_CONTROL_SETTINGS,
   type FleetControlSettings,
@@ -37,34 +42,17 @@ const KEYS: Array<{
 ];
 
 export function FleetControlSettingsCard() {
-  const [values, setValues] = useState<FleetControlSettings>(DEFAULT_FLEET_CONTROL_SETTINGS);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const qc = useQueryClient();
+  // Shared settings query (admin page + driver screens use the same key).
+  const { data: fetched, isLoading: loading } = useFleetControlSettings();
+  // Local draft: starts from the fetched values, diverges on edit.
+  const [draft, setDraft] = useState<FleetControlSettings | null>(null);
+  const values = draft ?? fetched ?? DEFAULT_FLEET_CONTROL_SETTINGS;
+  const setValues = (updater: (v: FleetControlSettings) => FleetControlSettings) =>
+    setDraft(updater(values));
 
-  useEffect(() => {
-    (async () => {
-      const { data } = await supabase.rpc('fleet_control_settings');
-      if (data) {
-        setValues({
-          cycle_days:                  Number(data.cycle_days ?? 14),
-          late_threshold_days:         Number(data.late_threshold_days ?? 3),
-          relance_threshold:           Number(data.relance_threshold ?? 2),
-          auto_immobilisation_enabled: Boolean(data.auto_immobilisation_enabled ?? false),
-          parking_check_interval_min:  Number(data.parking_check_interval_min ?? 15),
-          relance_cooldown_hours:      Number(data.relance_cooldown_hours ?? 24),
-          require_all_photos:          Boolean(data.require_all_photos ?? true),
-          require_documents:           Boolean(data.require_documents ?? true),
-          // Default TRUE so the system never cuts an engine until explicitly opted in.
-          uffizio_immobilization_dry_run: data.uffizio_immobilization_dry_run === false ? false : true,
-        });
-      }
-      setLoading(false);
-    })();
-  }, []);
-
-  const save = async () => {
-    setSaving(true);
-    try {
+  const saveMutation = useMutation({
+    mutationFn: async () => {
       const rows = KEYS.map((k) => ({
         setting_key: k.key,
         setting_value: (values[k.field] as any) ?? null,
@@ -73,15 +61,18 @@ export function FleetControlSettingsCard() {
         .from('platform_settings')
         .upsert(rows, { onConflict: 'setting_key' });
       if (error) throw error;
+    },
+    onSuccess: () => {
+      // Every consumer of the shared settings query sees the new values.
+      qc.invalidateQueries({ queryKey: FLEET_CONTROL_SETTINGS_QUERY_KEY });
       toast.success('Réglages enregistrés', {
         description: 'Les changements s\'appliquent aux prochains contrôles.',
       });
-    } catch (e: any) {
-      toast.error(e?.message ?? 'Erreur');
-    } finally {
-      setSaving(false);
-    }
-  };
+    },
+    onError: (e: any) => toast.error(e?.message ?? 'Erreur'),
+  });
+  const saving = saveMutation.isPending;
+  const save = () => saveMutation.mutate();
 
   return (
     <Card id="fleet-control">
