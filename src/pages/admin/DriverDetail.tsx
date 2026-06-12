@@ -1280,6 +1280,21 @@ export default function AdminDriverDetail() {
           <DriverTicketsPanel driverId={driver.id} />
         </TabsContent>
 
+        {/* Documents Tab */}
+        <TabsContent value="documents">
+          <DriverDocumentsPanel driverId={driver.id} customerId={(driver as { customer_id?: string | null }).customer_id ?? null} />
+        </TabsContent>
+
+        {/* Notes Tab */}
+        <TabsContent value="notes">
+          <DriverNotesPanel driverId={driver.id} customerId={(driver as { customer_id?: string | null }).customer_id ?? null} />
+        </TabsContent>
+
+        {/* Audit Tab */}
+        <TabsContent value="audit">
+          <DriverAuditPanel driverId={driver.id} />
+        </TabsContent>
+
         {/* Activité Tab */}
         <TabsContent value="activity">
           <DriverActivityPanel driverId={driver.id} />
