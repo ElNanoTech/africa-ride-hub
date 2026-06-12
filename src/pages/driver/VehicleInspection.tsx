@@ -73,6 +73,8 @@ export default function VehicleInspection() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingZone, setPendingZone] = useState<ZoneKey | null>(null);
   const [pendingKind, setPendingKind] = useState<'camera' | 'gallery' | 'document' | null>(null);
+  const pendingZoneRef = useRef<ZoneKey | null>(null);
+  const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
 
   const driverId = driverProfile?.id;
 
@@ -172,7 +174,10 @@ export default function VehicleInspection() {
     },
   });
 
-  const completedCount = ALL_ZONES.filter(z => photosByZone[z.key]).length;
+  const completedCount = ALL_ZONES.filter((z) => {
+    const photo = photosByZone[z.key];
+    return !!photo && !thumbs.failed[photo.id];
+  }).length;
   const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
   const canSubmit =
     completedCount === REQUIRED_ITEM_COUNT &&
@@ -183,17 +188,27 @@ export default function VehicleInspection() {
     if (!inspection) return;
     setPendingZone(zone);
     setPendingKind(kind);
-    // Wait for the input to reflect the new `accept`/`capture` before opening.
-    requestAnimationFrame(() => fileRef.current?.click());
+    pendingZoneRef.current = zone;
+    pendingKindRef.current = kind;
+    const input = fileRef.current;
+    if (!input) return;
+    input.accept = kind === 'document' ? 'image/*,application/pdf' : 'image/*';
+    if (kind === 'camera') input.setAttribute('capture', 'environment');
+    else input.removeAttribute('capture');
+    input.click();
   };
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !pendingZone || !inspection) return;
-    const zone = pendingZone;
+    const selectedZone = pendingZoneRef.current ?? pendingZone;
+    const selectedKind = pendingKindRef.current ?? pendingKind;
+    pendingZoneRef.current = null;
+    pendingKindRef.current = null;
+    if (!file || !selectedZone || !inspection) return;
+    const zone = selectedZone;
     setPendingZone(null);
-    const kind = pendingKind;
+    const kind = selectedKind;
     setPendingKind(null);
     setUploadingZone(zone);
     setUploadProgress(0);
