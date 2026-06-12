@@ -1,6 +1,6 @@
-import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Driver360HeaderCard } from '@/components/admin/Driver360HeaderCard';
+import { DriverOverviewPanel } from '@/components/admin/driver360/DriverOverviewPanel';
 import {
   DriverInvoicesPanel,
   DriverAccidentsPanel,
@@ -29,13 +29,10 @@ export function Driver360Report({ driverId }: Driver360ReportProps) {
         </TabsList>
 
         <TabsContent value="overview">
-          <Card>
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              Les indicateurs clés du conducteur (factures, paiements, score, KYC,
-              sinistres et tickets) sont résumés dans les cartes ci-dessus.
-              Utilisez les onglets pour explorer le détail de chaque domaine.
-            </CardContent>
-          </Card>
+          {/* CH-P1: real overview (risk, dimensions, rental, activity,
+              recommendations). Actions without local handlers deep-link to
+              the driver profile. */}
+          <DriverOverviewPanel driverId={driverId} />
         </TabsContent>
 
         <TabsContent value="history">
