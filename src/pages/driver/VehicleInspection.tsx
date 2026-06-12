@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
