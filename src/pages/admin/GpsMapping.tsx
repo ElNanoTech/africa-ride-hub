@@ -55,10 +55,20 @@ import {
   ArrowLeft,
   Link2,
   ChevronDown,
+  Plus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useVehicles } from '@/hooks/useAdminData';
+import { useCreateVehicle } from '@/hooks/useAdminData';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { useUffizioLiveData, type UffizioVehicle } from '@/hooks/useUffizioLiveData';
 import { supabase } from '@/integrations/supabase/routeClient';
 
@@ -181,6 +191,14 @@ export default function AdminGpsMapping() {
     plate: string;
     existingImei: string;
   } | null>(null);
+  const [creatingFromDevice, setCreatingFromDevice] = useState<MappingRow | null>(null);
+  const [newVehicle, setNewVehicle] = useState({
+    model_name: '',
+    license_plate: '',
+    vehicle_type: 'car',
+    rent_per_day: 8000,
+  });
+  const createVehicle = useCreateVehicle();
 
   const queryClient = useQueryClient();
   const { data: vehicles, isLoading } = useVehicles();
@@ -409,6 +427,37 @@ export default function AdminGpsMapping() {
       return;
     }
     performLink(vehicleId);
+  };
+
+  const openCreateFromDevice = (row: MappingRow) => {
+    setCreatingFromDevice(row);
+    setNewVehicle({
+      model_name: row.deviceName || row.uffizioVehicleNo || 'Véhicule GPS',
+      license_plate: row.uffizioVehicleNo || '',
+      vehicle_type: 'car',
+      rent_per_day: 8000,
+    });
+  };
+
+  const submitCreateFromDevice = async () => {
+    if (!creatingFromDevice) return;
+    if (!newVehicle.model_name.trim() || !newVehicle.license_plate.trim()) {
+      toast.error('Modèle et immatriculation requis');
+      return;
+    }
+    try {
+      await createVehicle.mutateAsync({
+        model_name: newVehicle.model_name.trim(),
+        license_plate: newVehicle.license_plate.trim(),
+        vehicle_type: newVehicle.vehicle_type,
+        rent_per_day: Number(newVehicle.rent_per_day) || 0,
+        uffizio_device_id: creatingFromDevice.imei,
+        status: 'available',
+      });
+      setCreatingFromDevice(null);
+    } catch {
+      /* toast handled in hook */
+    }
   };
 
   // ---------- CSV export ----------
