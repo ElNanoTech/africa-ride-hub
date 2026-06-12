@@ -1,6 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { resolveVehicleImage } from '@/lib/vehicleImages';
-import { Car, CreditCard, Wallet, Bell, ChevronRight, TrendingUp, Award, Flame, Target, Shield, Calendar, ArrowRight, AlertCircle, Download, X, Sparkles, Zap, Heart, Star, CheckCircle, Clock, XCircle, Trophy, Crown, Medal, TrendingDown, Minus, Banknote, MapPin, ShieldAlert } from 'lucide-react';
+import { Car, CreditCard, Wallet, Bell, ChevronRight, TrendingUp, Award, Flame, Target, Shield, Calendar, ArrowRight, AlertCircle, AlertTriangle, Download, X, Sparkles, Zap, Heart, Star, CheckCircle, Clock, XCircle, Trophy, Crown, Medal, TrendingDown, Minus, Banknote, MapPin, ShieldAlert, ClipboardCheck, Camera, Ban } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { usePWA } from '@/hooks/usePWA';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
@@ -18,6 +18,9 @@ import { UI, NAV, SCORE, RENTAL, KYC } from '@/lib/i18n';
 import { getScoreLevel } from '@/lib/scoreLevel';
 import { cn } from '@/lib/utils';
 import { useDriverCurrentScore, useDriverId, useDriverCreditScores, useDriverRentals, useDriverNotifications, useDriverLoans, useDriverPayments, useIsAuthResolving } from '@/hooks/useDriverData';
+import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
+import { format, differenceInCalendarDays } from 'date-fns';
+import { fr as frLocale } from 'date-fns/locale';
 import { formatCurrency as fmtCurrency, formatNumber } from '@/lib/format';
 import { useDriverDashboardRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
@@ -180,6 +183,99 @@ function InsightCard({ title, value, icon: Icon, trend, trendValue, className }:
         )}
       </CardContent>
     </Card>
+  );
+}
+
+// Fleet Control summary card (driver-side companion to the admin module).
+function FleetControlCard() {
+  const { data: inspection, isLoading } = useDriverActiveInspection();
+  if (isLoading || !inspection) return null;
+
+  const status = inspection.effective_status;
+  const due = new Date(inspection.due_at);
+  const daysLeft = differenceInCalendarDays(due, new Date());
+
+  const config: Record<string, {
+    title: string;
+    description: string;
+    cta: string;
+    icon: typeof ClipboardCheck;
+    bg: string;
+    iconBg: string;
+  }> = {
+    pending: {
+      title: 'Contrôle visuel requis',
+      description: daysLeft >= 0
+        ? `Soumettez les photos avant le ${format(due, 'd MMM', { locale: frLocale })}.`
+        : 'À soumettre dès que possible.',
+      cta: 'Commencer',
+      icon: Camera,
+      bg: 'from-primary/10 to-primary/5 border-primary/30',
+      iconBg: 'bg-primary/20 text-primary',
+    },
+    submitted: {
+      title: 'Contrôle envoyé',
+      description: 'En attente de validation par votre gestionnaire.',
+      cta: 'Voir le contrôle',
+      icon: Clock,
+      bg: 'from-blue-500/10 to-blue-500/5 border-blue-500/30',
+      iconBg: 'bg-blue-500/20 text-blue-600 dark:text-blue-300',
+    },
+    rejected: {
+      title: 'Contrôle refusé',
+      description: inspection.rejection_reason || 'Corrigez les éléments refusés.',
+      cta: 'Corriger maintenant',
+      icon: XCircle,
+      bg: 'from-destructive/10 to-destructive/5 border-destructive/30',
+      iconBg: 'bg-destructive/20 text-destructive',
+    },
+    overdue: {
+      title: 'Contrôle en retard',
+      description: `En retard de ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) > 1 ? 's' : ''} — soumettez-le rapidement.`,
+      cta: 'Soumettre',
+      icon: AlertTriangle,
+      bg: 'from-warning/10 to-warning/5 border-warning/30',
+      iconBg: 'bg-warning/20 text-warning',
+    },
+    blocked: {
+      title: 'Véhicule immobilisé',
+      description: 'Contactez votre gestionnaire.',
+      cta: 'Voir les détails',
+      icon: Ban,
+      bg: 'from-destructive/10 to-destructive/5 border-destructive/40',
+      iconBg: 'bg-destructive/20 text-destructive',
+    },
+  };
+
+  const c = config[status] || config.pending;
+  const Icon = c.icon;
+
+  return (
+    <div className="px-4 mt-6">
+      <Link to="/driver/fleet-control" aria-label="Ouvrir le contrôle visuel">
+        <Card className={cn('border bg-gradient-to-r overflow-hidden', c.bg)}>
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', c.iconBg)}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="font-semibold text-sm">{c.title}</h3>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{c.description}</p>
+                <div className="mt-2">
+                  <Button variant="ghost" size="sm" className="h-7 px-2 -ml-2 text-xs">
+                    {c.cta}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    </div>
   );
 }
 
@@ -1085,6 +1181,9 @@ export default function DriverHome() {
         </div>
       )}
 
+      {/* Fleet Control entry-point */}
+      <FleetControlCard />
+
       {/* Quick Actions */}
       <div className="px-4 mt-6">
         <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
@@ -1120,6 +1219,14 @@ export default function DriverHome() {
               <CardContent className="p-4 flex flex-col items-center justify-center h-full">
                 <ShieldAlert className="h-6 w-6 text-destructive mb-2" />
                 <span className="text-xs text-center font-medium">Sinistre</span>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/driver/fleet-control">
+            <Card interactive className="h-24">
+              <CardContent className="p-4 flex flex-col items-center justify-center h-full">
+                <ClipboardCheck className="h-6 w-6 text-primary mb-2" />
+                <span className="text-xs text-center font-medium">Contrôle</span>
               </CardContent>
             </Card>
           </Link>

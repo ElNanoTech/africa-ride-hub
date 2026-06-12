@@ -221,6 +221,7 @@ const App = () => {
                     <Route path="/driver/sinistres/cases/:id" element={<DriverSinistreCaseDetail />} />
                     <Route path="/driver/sinistres/success/:id" element={<DriverSinistreSuccess />} />
                     <Route path="/driver/inspection" element={<DriverVehicleInspection />} />
+                    <Route path="/driver/fleet-control" element={<DriverVehicleInspection />} />
                     <Route path="/driver/formation" element={<DriverFormation />} />
                     <Route path="/driver/alertes" element={<DriverAlertes />} />
                     <Route path="/driver/contraventions" element={<DriverContraventions />} />
