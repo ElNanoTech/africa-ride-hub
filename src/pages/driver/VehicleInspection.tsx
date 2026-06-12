@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload } from 'lucide-react';
+import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
@@ -153,7 +153,25 @@ export default function VehicleInspection() {
     return map;
   }, [photos]);
 
+  // Resolve signed URLs for every uploaded item so we can show real thumbnails
+  // (PDFs return a URL too; the tile falls back to a doc icon).
+  const { data: thumbs = {} } = useQuery({
+    queryKey: ['driver-inspection-thumbs', inspection?.id, photos.map(p => p.id + p.storage_path).join('|')],
+    enabled: !!inspection && photos.length > 0,
+    queryFn: async () => {
+      const out: Record<string, string> = {};
+      await Promise.all(photos.map(async (p) => {
+        const { data: sig } = await supabase.storage
+          .from('vehicle-inspections')
+          .createSignedUrl(p.storage_path, 3600);
+        if (sig?.signedUrl) out[p.id] = sig.signedUrl;
+      }));
+      return out;
+    },
+  });
+
   const completedCount = ALL_ZONES.filter(z => photosByZone[z.key]).length;
+  const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
   const canSubmit =
     completedCount === REQUIRED_ITEM_COUNT &&
     inspection?.status !== 'submitted' &&
@@ -342,7 +360,11 @@ export default function VehicleInspection() {
 
   const eff = effectiveStatus(inspection.status, inspection.due_at);
   const isLate = eff === 'overdue';
-  const locked = inspection.status === 'submitted' || inspection.status === 'approved';
+  // The cycle is locked once approved. While `submitted`, only items that the
+  // admin has explicitly rejected can be re-uploaded — approved/submitted
+  // items stay read-only until the next cycle.
+  const cycleLocked = inspection.status === 'approved';
+  const reviewInProgress = inspection.status === 'submitted';
 
   const renderZoneTile = (z: { key: ZoneKey; label: string; help: string }, kind: 'camera' | 'doc') => {
     const photo = photosByZone[z.key];
@@ -351,9 +373,14 @@ export default function VehicleInspection() {
     const Icon = kind === 'doc' ? FileText : Camera;
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
+    const thumbUrl = photo ? thumbs[photo.id] : undefined;
+    const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
+    // Tile is editable when: never approved, and (no review pending OR this item was rejected).
+    const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected);
     return (
       <div
         key={z.key}
+        data-rejected={rejected ? 'true' : undefined}
         className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
           rejected
             ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30'
@@ -362,7 +389,7 @@ export default function VehicleInspection() {
               : photo
                 ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/20'
                 : 'border-dashed border-muted-foreground/40 bg-card'
-        } ${busy || locked ? 'opacity-60 pointer-events-none' : ''}`}
+        } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
       >
         <div className="flex items-center justify-between">
           <div className="font-medium">{z.label}</div>
@@ -379,6 +406,20 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        {photo && (
+          <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
+            {isImageThumb ? (
+              <img src={thumbUrl} alt={z.label} className="w-full h-full object-cover" loading="lazy" />
+            ) : thumbUrl ? (
+              <a href={thumbUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center text-xs text-muted-foreground">
+                <FileText className="h-6 w-6 mb-1" />
+                Ouvrir le document
+              </a>
+            ) : (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            )}
+          </div>
+        )}
         {busy && (
           <div className="mt-2">
             <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
@@ -394,13 +435,39 @@ export default function VehicleInspection() {
         )}
         <div className="text-xs mt-2 font-medium">
           {rejected && photo?.rejection_reason
-            ? `Refusé : ${photo.rejection_reason}`
-            : photo
-              ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
-              : (kind === 'doc' ? 'Ajoutez un document ou une photo' : 'Prenez une photo de cette zone')}
+            ? <span className="text-rose-700 dark:text-rose-300">Motif du refus : {photo.rejection_reason}</span>
+            : approved
+              ? <span className="text-emerald-700 dark:text-emerald-300">Validé par le gestionnaire</span>
+              : photo && itemLocked
+                ? 'Envoyé — en attente de validation'
+                : photo
+                  ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
+                  : (kind === 'doc' ? 'Ajoutez un document ou une photo' : 'Prenez une photo de cette zone')}
         </div>
         <div className="flex gap-2 mt-3">
-          {kind === 'camera' ? (
+          {itemLocked && photo ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="flex-1 h-9"
+              onClick={() => thumbUrl && window.open(thumbUrl, '_blank')}
+              disabled={!thumbUrl}
+            >
+              <Eye className="h-4 w-4 mr-1" /> Voir la {kind === 'doc' ? 'pièce' : 'photo'}
+            </Button>
+          ) : rejected ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="destructive"
+              className="flex-1 h-9"
+              onClick={() => handlePickPhoto(z.key, kind === 'doc' ? 'document' : 'camera')}
+              disabled={busy}
+            >
+              <RefreshCw className="h-4 w-4 mr-1" /> Reprendre {kind === 'doc' ? 'le document' : 'la photo'}
+            </Button>
+          ) : kind === 'camera' ? (
             <>
               <Button
                 type="button"
@@ -408,7 +475,7 @@ export default function VehicleInspection() {
                 variant="secondary"
                 className="flex-1 h-9"
                 onClick={() => handlePickPhoto(z.key, 'camera')}
-                disabled={busy || locked}
+                disabled={busy}
               >
                 <Camera className="h-4 w-4 mr-1" /> Photo
               </Button>
@@ -418,7 +485,7 @@ export default function VehicleInspection() {
                 variant="outline"
                 className="h-9 px-3"
                 onClick={() => handlePickPhoto(z.key, 'gallery')}
-                disabled={busy || locked}
+                disabled={busy}
                 aria-label="Choisir depuis la galerie"
               >
                 <ImageIcon className="h-4 w-4" />
@@ -432,7 +499,7 @@ export default function VehicleInspection() {
                 variant="secondary"
                 className="flex-1 h-9"
                 onClick={() => handlePickPhoto(z.key, 'document')}
-                disabled={busy || locked}
+                disabled={busy}
               >
                 <Upload className="h-4 w-4 mr-1" /> Fichier
               </Button>
@@ -442,7 +509,7 @@ export default function VehicleInspection() {
                 variant="outline"
                 className="h-9 px-3"
                 onClick={() => handlePickPhoto(z.key, 'camera')}
-                disabled={busy || locked}
+                disabled={busy}
                 aria-label="Photographier le document"
               >
                 <Camera className="h-4 w-4" />
@@ -480,6 +547,26 @@ export default function VehicleInspection() {
                     <div className="font-medium">Contrôle refusé</div>
                     <div className="opacity-90">{inspection.rejection_reason}</div>
                   </div>
+                </div>
+              </div>
+            )}
+            {reviewInProgress && (
+              <div className="rounded-md bg-blue-50 dark:bg-blue-950/30 p-3 text-sm text-blue-800 dark:text-blue-200 flex items-start gap-2">
+                <Clock className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Contrôle envoyé</div>
+                  <div className="opacity-90">
+                    Votre gestionnaire va vérifier vos photos. Vous serez notifié dès validation.
+                  </div>
+                </div>
+              </div>
+            )}
+            {inspection.status === 'approved' && (
+              <div className="rounded-md bg-emerald-50 dark:bg-emerald-950/30 p-3 text-sm text-emerald-800 dark:text-emerald-200 flex items-start gap-2">
+                <CheckCheck className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Contrôle validé</div>
+                  <div className="opacity-90">Aucune action requise jusqu'au prochain cycle.</div>
                 </div>
               </div>
             )}
@@ -523,7 +610,14 @@ export default function VehicleInspection() {
           </div>
         </div>
 
-        {!locked && (
+        {/* Review timeline */}
+        <ReviewTimeline
+          status={inspection.status}
+          submittedAt={inspection.submitted_at}
+          completedCount={completedCount}
+        />
+
+        {!cycleLocked && !reviewInProgress && (
           <Card>
             <CardContent className="p-4 space-y-2">
               <label className="text-sm font-medium">Remarques (facultatif)</label>
@@ -537,15 +631,24 @@ export default function VehicleInspection() {
           </Card>
         )}
 
-        <div className="space-y-2 pb-8">
-          <Button onClick={handleSubmit} disabled={!canSubmit} className="w-full h-12 text-base" size="lg">
-            <Send className="h-5 w-5 mr-2" />
-            {inspection.status === 'submitted' ? 'Envoyé — en attente de validation' : 'Envoyer pour validation'}
-          </Button>
-          <Button onClick={() => refetch()} variant="ghost" className="w-full">
+        {/* Spacer so content isn't hidden behind the sticky bar */}
+        <div className="h-24" />
+        <div className="text-center">
+          <Button onClick={() => refetch()} variant="ghost" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" /> Rafraîchir
           </Button>
         </div>
+      </div>
+
+      {/* Sticky bottom action bar */}
+      <StickyActionBar
+        status={inspection.status}
+        completed={completedCount}
+        required={REQUIRED_ITEM_COUNT}
+        rejectedCount={rejectedCount}
+        canSubmit={canSubmit}
+        onSubmit={handleSubmit}
+      />
 
         <input
           ref={fileRef}
@@ -555,7 +658,6 @@ export default function VehicleInspection() {
           className="hidden"
           onChange={handleFile}
         />
-      </div>
     </DriverLayout>
   );
 }
@@ -673,5 +775,146 @@ function ImmobilizationPanel({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Compact 3-step timeline that reflects where the cycle currently stands:
+ * 1) Pièces envoyées (uploads in progress)
+ * 2) En attente de validation (status=submitted)
+ * 3) Validé / Refusé (status=approved|rejected)
+ */
+function ReviewTimeline({
+  status,
+  submittedAt,
+  completedCount,
+}: {
+  status: FleetControlStatus;
+  submittedAt: string | null;
+  completedCount: number;
+}) {
+  const piecesDone = completedCount > 0;
+  const sent = status === 'submitted' || status === 'approved' || status === 'rejected';
+  const reviewed = status === 'approved' || status === 'rejected';
+  const rejected = status === 'rejected';
+
+  const steps = [
+    { key: 'pieces',  label: 'Pièces envoyées',        icon: Inbox,       done: piecesDone, current: !sent && piecesDone },
+    { key: 'review',  label: 'En attente de validation', icon: Clock,     done: sent,       current: sent && !reviewed },
+    { key: 'done',    label: rejected ? 'Refusé' : 'Validé', icon: rejected ? AlertTriangle : CheckCheck, done: reviewed, current: reviewed },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+          Suivi du contrôle
+        </div>
+        <ol className="flex items-center justify-between gap-2">
+          {steps.map((s, i) => {
+            const Icon = s.icon;
+            const tone = s.done
+              ? (s.key === 'done' && rejected ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white')
+              : s.current
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground';
+            return (
+              <li key={s.key} className="flex-1 flex flex-col items-center text-center">
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${tone}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className={`text-[11px] mt-1 ${s.done || s.current ? 'font-medium' : 'text-muted-foreground'}`}>
+                  {s.label}
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="hidden" />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+        {submittedAt && (
+          <div className="text-[11px] text-muted-foreground mt-2 text-center">
+            Envoyé le {format(new Date(submittedAt), 'PPpp', { locale: fr })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Sticky bottom action bar with state-aware labels per the spec:
+ * - incomplete  → "Soumettre le contrôle" (disabled until 11/11)
+ * - complete    → enabled submit button
+ * - submitted   → "Envoyé pour validation" (disabled, neutral)
+ * - rejected    → "Corriger les éléments refusés" (scrolls to first rejected tile)
+ * - approved    → "Contrôle validé" (disabled, success)
+ */
+function StickyActionBar({
+  status,
+  completed,
+  required,
+  rejectedCount,
+  canSubmit,
+  onSubmit,
+}: {
+  status: FleetControlStatus;
+  completed: number;
+  required: number;
+  rejectedCount: number;
+  canSubmit: boolean;
+  onSubmit: () => void;
+}) {
+  let label = 'Soumettre le contrôle';
+  let disabled = !canSubmit;
+  let variant: 'default' | 'destructive' | 'secondary' = 'default';
+  let onClick: () => void = onSubmit;
+  let icon = <Send className="h-5 w-5 mr-2" />;
+
+  if (status === 'approved') {
+    label = 'Contrôle validé';
+    disabled = true;
+    variant = 'secondary';
+    icon = <CheckCheck className="h-5 w-5 mr-2" />;
+  } else if (status === 'rejected' && rejectedCount > 0) {
+    label = 'Corriger les éléments refusés';
+    disabled = false;
+    variant = 'destructive';
+    icon = <AlertTriangle className="h-5 w-5 mr-2" />;
+    onClick = () => {
+      const el = document.querySelector('[data-rejected="true"]');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+  } else if (status === 'submitted') {
+    label = 'Envoyé pour validation';
+    disabled = true;
+    variant = 'secondary';
+    icon = <Clock className="h-5 w-5 mr-2" />;
+  }
+
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]">
+      <div className="max-w-2xl mx-auto p-3 space-y-2">
+        {status !== 'approved' && status !== 'submitted' && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{completed}/{required} pièces</span>
+            {rejectedCount > 0 && (
+              <span className="text-rose-600 font-medium">{rejectedCount} à corriger</span>
+            )}
+          </div>
+        )}
+        <Button
+          onClick={onClick}
+          disabled={disabled}
+          variant={variant}
+          className="w-full h-12 text-base"
+          size="lg"
+        >
+          {icon}
+          {label}
+        </Button>
+      </div>
+    </div>
   );
 }
