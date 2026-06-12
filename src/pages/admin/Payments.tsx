@@ -145,9 +145,16 @@ export default function AdminPayments() {
     (sum, p) => sum + Math.min(p.amount, p.amount_paid ?? (p.status === 'paid' ? p.amount : 0)),
     0,
   );
-  const overdueAmount = (payments || []).filter(p => p.status === 'overdue').reduce((sum, p) => sum + outstandingOf(p), 0);
+  // "En retard" = explicit overdue status OR an unpaid (pending/partial)
+  // payment whose due_date is in the past. Nothing in the app ever sets
+  // status='overdue', so without the date fallback this bucket stays empty.
+  const todayStr = new Date().toISOString().split('T')[0];
+  const isOverdue = (p: AdminPayment) =>
+    p.status === 'overdue' ||
+    (['pending', 'partial'].includes(p.status) && p.due_date.slice(0, 10) < todayStr);
+  const overdueAmount = (payments || []).filter(isOverdue).reduce((sum, p) => sum + outstandingOf(p), 0);
   const pendingCount = (payments || []).filter(p => p.status === 'pending' || p.status === 'partial').length;
-  const overdueCount = (payments || []).filter(p => p.status === 'overdue').length;
+  const overdueCount = (payments || []).filter(isOverdue).length;
   const collectionRate = totalDue + totalCollected > 0 ? ((totalCollected / (totalDue + totalCollected)) * 100).toFixed(1) : '0';
 
   const openReceiptDialog = (payment: AdminPayment) => {

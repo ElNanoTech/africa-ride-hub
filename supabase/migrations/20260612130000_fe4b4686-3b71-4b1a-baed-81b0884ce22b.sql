@@ -13,7 +13,9 @@
 -- Scoring rule (documented here, unit-tested in src/lib/driverRisk.test.ts):
 --   start at 'bon' (0 points), each factor adds tier points:
 --     * overdue invoices:      1-2 → +1, 3+ → +2
---     * open accident(s):      1+  → +1   (status not closed/resolved/cancelled)
+--     * open accident(s):      1+  → +1   (open = status NOT IN
+--       ('DRAFT','CLOSED','CANCELLED','RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT')
+--       — a DRAFT sinistre is not yet declared, so it is not a risk factor)
 --     * unpaid contraventions: 1+  → +1   (traffic_violations.status = 'pending_payment')
 --     * KYC not verified:           +1   (drivers.kyc_status <> 'verified')
 --     * fleet control late:         +1   (active vehicle_inspections in overdue/blocked)
@@ -111,11 +113,20 @@ GRANT EXECUTE ON FUNCTION public.driver_risk_from_factors(int,int,int,boolean,bo
 --     status 'overdue'/'late'). An invoice is "en retard" when it is
 --     unpaid (issued/partial, remaining_due > 0) AND its linked payment is
 --     overdue/late or past due_date while still unpaid.
---   * open accidents — accidents.status not in the resolved/closed set.
+--   * open accidents — open = status NOT IN ('DRAFT','CLOSED','CANCELLED',
+--     'RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT'): DRAFT sinistres are not
+--     yet declared, so they don't count (same rule in drivers_risk_summary()).
 --   * unpaid contraventions — traffic_violations.status = 'pending_payment'.
 --   * KYC — drivers.kyc_status <> 'verified'.
 --   * fleet control — an active vehicle_inspections row in overdue/blocked.
---   * score — driver_scores.current_score (NULL-safe).
+--   * score — driver_scores.current_score (NULL-safe), deterministic pick:
+--     prefer the row with customer_id = the driver's tenant, else the row
+--     with customer_id IS NULL, else no score factor (same rule in
+--     drivers_risk_summary()).
+--
+-- Every factor query is scoped to the driver's tenant (customer_id) —
+-- identical semantics to drivers_risk_summary(), so the profile page and
+-- the list never disagree.
 -- ---------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.driver_risk(p_driver uuid)
 RETURNS jsonb
@@ -134,13 +145,18 @@ DECLARE
   v_result jsonb;
 BEGIN
   SELECT * INTO v_driver FROM public.drivers WHERE id = p_driver;
-  IF v_driver IS NULL THEN RAISE EXCEPTION 'driver not found'; END IF;
 
   -- Tenant-scoped: admin of the driver's customer, platform owner, or the
   -- driver themself (the driver PWA reuses this RPC later). COALESCE guards
   -- the NULL trap: current_driver_id() / current_customer_id() return NULL
   -- for non-driver/tenant-less callers, and `IF NOT (... OR NULL)` would
   -- silently grant access instead of raising.
+  --
+  -- Authorization is checked BEFORE existence: an unauthorized caller gets
+  -- the same 'not authorized' error whether or not the driver exists, so the
+  -- RPC is not an existence oracle for other tenants' driver ids. (When the
+  -- driver is missing, v_driver.customer_id is NULL, every branch below is
+  -- false/NULL and COALESCE raises 'not authorized'.)
   IF NOT COALESCE(
     public.is_platform_owner()
     OR (public.is_admin() AND v_driver.customer_id = public.current_customer_id())
@@ -150,35 +166,51 @@ BEGIN
     RAISE EXCEPTION 'not authorized';
   END IF;
 
+  IF v_driver.id IS NULL THEN RAISE EXCEPTION 'driver not found'; END IF;
+
+  -- Every factor query below is scoped to the driver's tenant
+  -- (v_driver.customer_id) — same semantics as drivers_risk_summary().
   SELECT COUNT(DISTINCT i.id) INTO v_overdue_invoices
     FROM public.invoice i
     JOIN public.invoice_payment_link ipl ON ipl.invoice_id = i.id
     JOIN public.payments p ON p.id = ipl.payment_id
    WHERE i.driver_id = p_driver
+     AND i.customer_id = v_driver.customer_id
      AND i.status IN ('issued','partial')
      AND COALESCE(i.remaining_due, 0) > 0
      AND (p.status IN ('overdue','late')
           OR (p.status IN ('pending','partial','overpaid') AND p.due_date < CURRENT_DATE));
 
+  -- Open = not DRAFT (not yet declared) and not closed/resolved/cancelled.
   SELECT COUNT(*) INTO v_open_accidents
     FROM public.accidents a
    WHERE a.driver_id = p_driver
-     AND a.status NOT IN ('CLOSED','CANCELLED','RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT');
+     AND a.customer_id = v_driver.customer_id
+     AND a.status NOT IN ('DRAFT','CLOSED','CANCELLED','RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT');
 
   SELECT COUNT(*) INTO v_unpaid_violations
     FROM public.traffic_violations tv
    WHERE tv.driver_id = p_driver
+     AND tv.customer_id = v_driver.customer_id
      AND tv.status = 'pending_payment';
 
   SELECT EXISTS (
     SELECT 1 FROM public.vehicle_inspections vi
      WHERE vi.driver_id = p_driver
+       AND vi.customer_id = v_driver.customer_id
        AND vi.status IN ('overdue','blocked')
   ) INTO v_control_late;
 
+  -- Deterministic score pick: prefer the row scoped to the driver's tenant,
+  -- else the tenant-less (customer_id IS NULL) row, else no score factor.
+  -- `(customer_id = tenant)` is NULL for the NULL-customer row, so
+  -- DESC NULLS LAST ranks tenant row > NULL row; updated_at breaks ties.
   SELECT ds.current_score INTO v_score
     FROM public.driver_scores ds
    WHERE ds.driver_id = p_driver
+     AND (ds.customer_id = v_driver.customer_id OR ds.customer_id IS NULL)
+   ORDER BY (ds.customer_id = v_driver.customer_id) DESC NULLS LAST,
+            ds.updated_at DESC
    LIMIT 1;
 
   v_result := public.driver_risk_from_factors(
@@ -243,10 +275,12 @@ BEGIN
      GROUP BY i.driver_id
   ),
   open_acc AS (
+    -- Open = not DRAFT (not yet declared) and not closed/resolved/cancelled
+    -- (same rule as driver_risk()).
     SELECT a.driver_id AS d_id, COUNT(*)::int AS n
       FROM public.accidents a
      WHERE a.customer_id = v_customer
-       AND a.status NOT IN ('CLOSED','CANCELLED','RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT')
+       AND a.status NOT IN ('DRAFT','CLOSED','CANCELLED','RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT')
      GROUP BY a.driver_id
   ),
   unpaid_tv AS (
@@ -263,12 +297,6 @@ BEGIN
      WHERE vi.customer_id = v_customer
        AND vi.driver_id IS NOT NULL
        AND vi.status IN ('overdue','blocked')
-  ),
-  scores AS (
-    SELECT ds.driver_id AS d_id, MIN(ds.current_score)::int AS score
-      FROM public.driver_scores ds
-     WHERE ds.customer_id = v_customer
-     GROUP BY ds.driver_id
   )
   SELECT
     td.id AS driver_id,
@@ -279,7 +307,19 @@ BEGIN
   LEFT JOIN open_acc oa ON oa.d_id = td.id
   LEFT JOIN unpaid_tv ut ON ut.d_id = td.id
   LEFT JOIN late_fc lf ON lf.d_id = td.id
-  LEFT JOIN scores sc ON sc.d_id = td.id
+  -- Deterministic score pick (same rule as driver_risk()): prefer the row
+  -- with customer_id = the tenant, else the customer_id IS NULL row, else no
+  -- score factor. DESC NULLS LAST ranks tenant row > NULL row; updated_at
+  -- breaks ties.
+  LEFT JOIN LATERAL (
+    SELECT ds.current_score::int AS score
+      FROM public.driver_scores ds
+     WHERE ds.driver_id = td.id
+       AND (ds.customer_id = v_customer OR ds.customer_id IS NULL)
+     ORDER BY (ds.customer_id = v_customer) DESC NULLS LAST,
+              ds.updated_at DESC
+     LIMIT 1
+  ) sc ON TRUE
   CROSS JOIN LATERAL (
     SELECT public.driver_risk_from_factors(
       COALESCE(oi.n, 0),
@@ -335,11 +375,14 @@ ON CONFLICT (driver_id) DO NOTHING;
 -- driver_score_events, kyc_submissions) are already in the publication
 -- (migrations 20260101075639 / 20260420062345 / 20260422151812 /
 -- 20260523012725). Same idempotent pattern as 20260612121500.
+-- kyc_submissions is included here for REPLICA IDENTITY FULL: without it,
+-- DELETE events carry only the primary key and the DriverDetail.tsx
+-- subscription (matchesDriver on old.driver_id) would silently miss them.
 -- ---------------------------------------------------------------------
 DO $$
 DECLARE t text;
 BEGIN
-  FOREACH t IN ARRAY ARRAY['driver_documents'] LOOP
+  FOREACH t IN ARRAY ARRAY['driver_documents','kyc_submissions'] LOOP
     EXECUTE format('ALTER TABLE public.%I REPLICA IDENTITY FULL', t);
     IF NOT EXISTS (
       SELECT 1 FROM pg_publication_tables

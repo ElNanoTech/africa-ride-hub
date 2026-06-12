@@ -11,7 +11,12 @@ export type DriverRiskLevel = 'bon' | 'moyen' | 'eleve' | 'critique';
 export interface DriverRiskFactors {
   /** Unpaid invoices (issued/partial, remaining_due > 0) whose linked payment is past due. */
   overdueInvoices: number;
-  /** Accidents whose status is not closed/resolved/cancelled. */
+  /**
+   * Open accidents: status NOT IN ('DRAFT','CLOSED','CANCELLED',
+   * 'RESOLVED_AT_FAULT','RESOLVED_NOT_AT_FAULT') — a DRAFT sinistre is not
+   * yet declared, so it is not a risk factor (same rule in driver_risk()
+   * and drivers_risk_summary()).
+   */
   openAccidents: number;
   /** traffic_violations with status 'pending_payment'. */
   unpaidViolations: number;
@@ -19,7 +24,11 @@ export interface DriverRiskFactors {
   kycVerified: boolean;
   /** An active vehicle_inspections row in overdue/blocked. */
   fleetControlLate: boolean;
-  /** driver_scores.current_score; null when the driver has no score row. */
+  /**
+   * driver_scores.current_score, resolved deterministically by the SQL side:
+   * prefer the row with customer_id = the driver's tenant, else the
+   * customer_id IS NULL row; null when neither exists.
+   */
   currentScore: number | null;
 }
 

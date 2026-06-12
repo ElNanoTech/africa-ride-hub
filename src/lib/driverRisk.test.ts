@@ -3,6 +3,8 @@ import { riskLevelFromFactors, type DriverRiskFactors } from './driverRisk';
 
 const clean: DriverRiskFactors = {
   overdueInvoices: 0,
+  // Open = status NOT IN ('DRAFT','CLOSED','CANCELLED','RESOLVED_AT_FAULT',
+  // 'RESOLVED_NOT_AT_FAULT'): DRAFT sinistres never count (SQL mirrors this).
   openAccidents: 0,
   unpaidViolations: 0,
   kycVerified: true,

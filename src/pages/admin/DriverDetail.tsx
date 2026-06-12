@@ -829,7 +829,15 @@ export default function AdminDriverDetail() {
             <div className="grid gap-6 md:grid-cols-2">
               {/* Mobile Money Info */}
               <div className="space-y-3">
-                <h4 className="font-medium text-sm text-muted-foreground">Compte mobile</h4>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-medium text-sm text-muted-foreground">Compte mobile</h4>
+                  {!kycSubmission.bank_account_number?.trim() && (
+                    <Badge className="gap-1 border-amber-500/40 bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/15">
+                      <AlertTriangle className="h-3 w-3" aria-hidden="true" />
+                      Mobile Money non renseigné
+                    </Badge>
+                  )}
+                </div>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Opérateur:</span>
@@ -837,7 +845,11 @@ export default function AdminDriverDetail() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Numéro mobile:</span>
-                    <span className="font-medium font-mono">{kycSubmission.bank_account_number}</span>
+                    {kycSubmission.bank_account_number?.trim() ? (
+                      <span className="font-medium font-mono">{kycSubmission.bank_account_number}</span>
+                    ) : (
+                      <span className="font-medium text-muted-foreground">Non renseigné</span>
+                    )}
                   </div>
                 </div>
               </div>
