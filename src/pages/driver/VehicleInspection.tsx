@@ -451,8 +451,20 @@ export default function VehicleInspection() {
               size="sm"
               variant="outline"
               className="flex-1 h-9"
-              onClick={() => thumbUrl && window.open(thumbUrl, '_blank')}
-              disabled={!thumbUrl}
+              onClick={async () => {
+                let url = thumbUrl;
+                if (!url) {
+                  const { data: sig, error } = await supabase.storage
+                    .from('vehicle-inspections')
+                    .createSignedUrl(photo.storage_path, 3600);
+                  if (error || !sig?.signedUrl) {
+                    toast.error("Impossible d'ouvrir la pièce", { description: 'Réessayez dans un instant.' });
+                    return;
+                  }
+                  url = sig.signedUrl;
+                }
+                window.open(url, '_blank');
+              }}
             >
               <Eye className="h-4 w-4 mr-1" /> Voir la {kind === 'doc' ? 'pièce' : 'photo'}
             </Button>
