@@ -1619,6 +1619,60 @@ export type Database = {
           },
         ]
       }
+      driver_access_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          created_by: string | null
+          customer_id: string
+          driver_id: string
+          expires_at: string | null
+          id: string
+          revoked_at: string | null
+          status: string
+          used_at: string | null
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          created_by?: string | null
+          customer_id: string
+          driver_id: string
+          expires_at?: string | null
+          id?: string
+          revoked_at?: string | null
+          status?: string
+          used_at?: string | null
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string
+          driver_id?: string
+          expires_at?: string | null
+          id?: string
+          revoked_at?: string | null
+          status?: string
+          used_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_access_codes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_access_codes_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_ads: {
         Row: {
           body: string | null
@@ -1694,6 +1748,54 @@ export type Database = {
           },
         ]
       }
+      driver_audit: {
+        Row: {
+          action: string
+          actor_id: string | null
+          actor_type: string
+          created_at: string
+          customer_id: string
+          driver_id: string
+          id: string
+          metadata: Json
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          customer_id: string
+          driver_id: string
+          id?: string
+          metadata?: Json
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          actor_type?: string
+          created_at?: string
+          customer_id?: string
+          driver_id?: string
+          id?: string
+          metadata?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_audit_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_badges: {
         Row: {
           badge_id: string
@@ -1733,6 +1835,63 @@ export type Database = {
           },
         ]
       }
+      driver_documents: {
+        Row: {
+          customer_id: string
+          document_type: string
+          driver_id: string
+          expiry_date: string | null
+          file_path: string
+          id: string
+          rejection_reason: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          uploaded_at: string
+        }
+        Insert: {
+          customer_id: string
+          document_type: string
+          driver_id: string
+          expiry_date?: string | null
+          file_path: string
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          uploaded_at?: string
+        }
+        Update: {
+          customer_id?: string
+          document_type?: string
+          driver_id?: string
+          expiry_date?: string | null
+          file_path?: string
+          id?: string
+          rejection_reason?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          uploaded_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_documents_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_favorites: {
         Row: {
           created_at: string
@@ -1753,6 +1912,51 @@ export type Database = {
           vehicle_id?: string
         }
         Relationships: []
+      }
+      driver_notes: {
+        Row: {
+          author_id: string | null
+          created_at: string
+          customer_id: string
+          driver_id: string
+          id: string
+          note: string
+          visibility: string
+        }
+        Insert: {
+          author_id?: string | null
+          created_at?: string
+          customer_id: string
+          driver_id: string
+          id?: string
+          note: string
+          visibility?: string
+        }
+        Update: {
+          author_id?: string | null
+          created_at?: string
+          customer_id?: string
+          driver_id?: string
+          id?: string
+          note?: string
+          visibility?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_notes_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       driver_score_events: {
         Row: {
@@ -1994,52 +2198,112 @@ export type Database = {
       }
       drivers: {
         Row: {
+          access_enabled: boolean
           active_vehicle_id: string | null
+          address: string | null
           auth_user_id: string | null
+          city: string | null
           created_at: string
           customer_id: string | null
+          date_of_birth: string | null
+          display_name: string | null
           driver_status: string
           email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          first_name: string | null
           full_name: string
+          gender: string | null
           id: string
           is_test: boolean
           kyc_status: string
+          last_name: string | null
+          nationality: string | null
+          permit_category: string | null
+          permit_expiry_date: string | null
+          permit_issue_date: string | null
+          permit_number: string | null
           phone_number: string
+          phone_secondary: string | null
           profile_image_url: string | null
+          reactivation_date: string | null
+          suspended_at: string | null
+          suspended_by: string | null
+          suspension_reason: string | null
           updated_at: string
           user_id: string | null
           yango_driver_id: string
         }
         Insert: {
+          access_enabled?: boolean
           active_vehicle_id?: string | null
+          address?: string | null
           auth_user_id?: string | null
+          city?: string | null
           created_at?: string
           customer_id?: string | null
+          date_of_birth?: string | null
+          display_name?: string | null
           driver_status?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
           full_name: string
+          gender?: string | null
           id?: string
           is_test?: boolean
           kyc_status?: string
+          last_name?: string | null
+          nationality?: string | null
+          permit_category?: string | null
+          permit_expiry_date?: string | null
+          permit_issue_date?: string | null
+          permit_number?: string | null
           phone_number: string
+          phone_secondary?: string | null
           profile_image_url?: string | null
+          reactivation_date?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
           updated_at?: string
           user_id?: string | null
           yango_driver_id: string
         }
         Update: {
+          access_enabled?: boolean
           active_vehicle_id?: string | null
+          address?: string | null
           auth_user_id?: string | null
+          city?: string | null
           created_at?: string
           customer_id?: string | null
+          date_of_birth?: string | null
+          display_name?: string | null
           driver_status?: string
           email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          first_name?: string | null
           full_name?: string
+          gender?: string | null
           id?: string
           is_test?: boolean
           kyc_status?: string
+          last_name?: string | null
+          nationality?: string | null
+          permit_category?: string | null
+          permit_expiry_date?: string | null
+          permit_issue_date?: string | null
+          permit_number?: string | null
           phone_number?: string
+          phone_secondary?: string | null
           profile_image_url?: string | null
+          reactivation_date?: string | null
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_reason?: string | null
           updated_at?: string
           user_id?: string | null
           yango_driver_id?: string
@@ -5393,9 +5657,32 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      driver_360: { Args: { p_driver: string }; Returns: Json }
+      driver_generate_access_code: {
+        Args: { p_driver: string }
+        Returns: {
+          code: string
+          expires_at: string
+        }[]
+      }
       driver_has_active_rental: {
         Args: { p_driver_id: string }
         Returns: boolean
+      }
+      driver_log: {
+        Args: {
+          p_action: string
+          p_actor_type?: string
+          p_driver: string
+          p_metadata?: Json
+        }
+        Returns: string
+      }
+      driver_reactivate: { Args: { p_driver: string }; Returns: undefined }
+      driver_revoke_access: { Args: { p_driver: string }; Returns: undefined }
+      driver_suspend: {
+        Args: { p_driver: string; p_reason: string }
+        Returns: undefined
       }
       fc_require_admin: { Args: { p_customer: string }; Returns: undefined }
       fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
