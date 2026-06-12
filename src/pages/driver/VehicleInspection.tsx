@@ -20,10 +20,12 @@ import {
   REQUIRED_ITEM_COUNT,
   STATUS_LABEL,
   STATUS_CLASS,
+  IMMO_LABEL,
   effectiveStatus,
   type ZoneKey,
   type FleetControlStatus,
   type ItemValidation,
+  type ImmobilizationState,
 } from '@/lib/fleetControl';
 
 // Supabase types lag the migration sync; cast for the new item-review columns.
@@ -46,7 +48,19 @@ interface Inspection {
   submitted_at: string | null;
   rejection_reason: string | null;
   notes: string | null;
+  immobilization_state: ImmobilizationState;
+  immobilization_command_ref: string | null;
+  immobilization_requested_at: string | null;
+  immobilization_cancelled_at: string | null;
   vehicles?: { license_plate: string | null; make: string | null; model_name: string | null } | null;
+}
+
+interface AuditRow {
+  id: string;
+  action: string;
+  actor_type: string;
+  metadata: any;
+  created_at: string;
 }
 
 export default function VehicleInspection() {
@@ -69,6 +83,7 @@ export default function VehicleInspection() {
         .from('vehicle_inspections')
         .select(`
           id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
+          immobilization_state, immobilization_command_ref, immobilization_requested_at, immobilization_cancelled_at,
           vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
         `)
         .eq('driver_id', driverId)
@@ -100,6 +115,7 @@ export default function VehicleInspection() {
           })
           .select(`
             id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
+            immobilization_state, immobilization_command_ref, immobilization_requested_at, immobilization_cancelled_at,
             vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
           `)
           .single();
@@ -112,12 +128,22 @@ export default function VehicleInspection() {
         .select('id, zone, storage_path, validation_status, rejection_reason')
         .eq('inspection_id', inspection!.id);
 
-      return { inspection, photos: (photos || []) as Photo[] };
+      // Pull the recent immobilization audit trail so the driver can see exactly
+      // what happened (requested → pending_stop → cut_sent/failed, with timestamps).
+      const { data: audit } = await supabase
+        .from('fleet_control_audit')
+        .select('id, action, actor_type, metadata, created_at')
+        .eq('fleet_control_id', inspection!.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      return { inspection, photos: (photos || []) as Photo[], audit: (audit || []) as AuditRow[] };
     },
   });
 
   const inspection = data?.inspection ?? null;
   const photos = data?.photos ?? [];
+  const audit = data?.audit ?? [];
 
   const photosByZone = useMemo(() => {
     const map: Record<string, Photo> = {};
