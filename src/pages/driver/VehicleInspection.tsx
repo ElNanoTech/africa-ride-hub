@@ -123,21 +123,37 @@ export default function VehicleInspection() {
     queryKey: ['driver-inspection', driverId],
     enabled: !!driverId,
     queryFn: async () => {
-      const { data: existing, error } = await supabase
+      const { data: candidates, error } = await supabase
         .from('vehicle_inspections')
         .select(`
-          id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
+          id, vehicle_id, driver_id, status, due_at, submitted_at, reviewed_at, rejection_reason, notes,
           immobilization_state, immobilization_command_ref, immobilization_requested_at, immobilization_cancelled_at,
           vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
         `)
         .eq('driver_id', driverId)
         .in('status', ['pending', 'submitted', 'rejected', 'overdue', 'blocked', 'approved'])
         .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .limit(8);
       if (error) throw error;
 
-      let inspection: Inspection | null = existing as any;
+      // Prefer what the driver most likely wants to see right now:
+      //   1. Any active work (submitted/rejected/blocked) — they're in the middle of a cycle.
+      //   2. A control approved within the last 24h — so they see the validated outcome
+      //      instead of being dropped onto a brand-new empty cycle right after approval.
+      //   3. Otherwise, the most recent pending/overdue (current actionable cycle).
+      const list = (candidates ?? []) as any[];
+      const pickActive = list.find((r) =>
+        ['submitted', 'rejected', 'blocked'].includes(r.status),
+      );
+      const recentlyApproved = list.find(
+        (r) =>
+          r.status === 'approved' &&
+          r.reviewed_at &&
+          Date.now() - new Date(r.reviewed_at).getTime() < 24 * 60 * 60 * 1000,
+      );
+      const pickPending = list.find((r) => ['pending', 'overdue'].includes(r.status));
+      let inspection: Inspection | null =
+        (pickActive ?? recentlyApproved ?? pickPending ?? list[0] ?? null) as any;
 
       if (!inspection) {
         const { data: rental } = await supabase
@@ -742,8 +758,8 @@ export default function VehicleInspection() {
           </Card>
         )}
 
-        {/* Spacer so content isn't hidden behind the sticky bar */}
-        <div className="h-24" />
+        {/* Spacer so content isn't hidden behind the sticky bar + bottom nav */}
+        <div className="h-44" />
         <div className="text-center">
           <Button onClick={() => refetch()} variant="ghost" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" /> Rafraîchir
@@ -1071,8 +1087,11 @@ function StickyActionBar({
   }
 
   return (
-    <div className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]">
-      <div className="max-w-2xl mx-auto p-3 space-y-2">
+    <div
+      className="fixed inset-x-0 z-[60] border-t border-border bg-background/98 backdrop-blur supports-[backdrop-filter]:bg-background/90 shadow-[0_-8px_24px_-12px_rgba(0,0,0,0.25)]"
+      style={{ bottom: 'calc(env(safe-area-inset-bottom) + 80px)' }}
+    >
+      <div className="max-w-2xl mx-auto px-3 py-3 space-y-2">
         {status !== 'approved' && status !== 'submitted' && (
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{completed}/{required} pièces</span>
