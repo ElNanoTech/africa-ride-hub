@@ -444,6 +444,7 @@ export default function VehicleInspection() {
     const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
     // Tile is editable when: never approved, and (no review pending OR this item was rejected).
     const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected && !thumbFailed);
+    const isEmpty = !photo;
     return (
       <div
         key={z.key}
@@ -459,7 +460,14 @@ export default function VehicleInspection() {
         } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
       >
         <div className="flex items-center justify-between">
-          <div className="font-medium">{z.label}</div>
+          <div className="flex items-center gap-2">
+            <div className="font-medium">{z.label}</div>
+            {isEmpty && !busy && (
+              <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-400 text-amber-700 dark:text-amber-300">
+                À envoyer
+              </Badge>
+            )}
+          </div>
           {approved ? (
             <CheckCircle2 className="h-5 w-5 text-emerald-600" />
           ) : rejected ? (
@@ -473,6 +481,14 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        {isEmpty && !busy && (
+          <div className="mt-2 aspect-video w-full rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground">
+            {kind === 'doc' ? <FileText className="h-6 w-6" /> : <Camera className="h-6 w-6" />}
+            <span className="text-[11px] font-medium">
+              {kind === 'doc' ? 'Aucun document envoyé' : 'Aucune photo envoyée'}
+            </span>
+          </div>
+        )}
         {photo && !thumbFailed && (
           <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {isImageThumb ? (
@@ -537,14 +553,14 @@ export default function VehicleInspection() {
               onClick={async () => {
                 let url = thumbUrl;
                 if (!url) {
-                  const { data: sig, error } = await supabase.storage
-                    .from('vehicle-inspections')
-                    .createSignedUrl(photo.storage_path, 3600);
-                  if (error || !sig?.signedUrl) {
-                    toast.error("Impossible d'ouvrir la pièce", { description: 'Réessayez dans un instant.' });
-                    return;
-                  }
-                  url = sig.signedUrl;
+                  url = await tryOpenSignedUrl(photo.storage_path) || undefined;
+                }
+                if (!url) {
+                  // Mark thumb as broken so the tile reflects the missing file,
+                  // and open the fallback modal so the driver can retry or re-upload.
+                  setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }));
+                  setViewFail({ zone: z.key, kind, label: z.label, retrying: false });
+                  return;
                 }
                 window.open(url, '_blank');
               }}
