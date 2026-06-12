@@ -25,6 +25,7 @@ import {
   effectiveStatus,
   type FleetControlStatus,
 } from '@/lib/fleetControl';
+import { isPaymentOverdue, todayDateString } from '@/lib/payments';
 
 interface DriverOverviewPanelProps {
   driverId: string;
@@ -103,10 +104,8 @@ export function DriverOverviewPanel({ driverId, onAssignVehicle, onVerifyKyc }: 
       return data ?? [];
     },
   });
-  const todayStr = new Date().toISOString().split('T')[0];
-  const overduePayments = (paymentsQuery.data ?? []).filter(
-    (p) => p.status === 'overdue' || (['pending', 'partial'].includes(p.status) && p.due_date.slice(0, 10) < todayStr),
-  );
+  const todayStr = todayDateString();
+  const overduePayments = (paymentsQuery.data ?? []).filter((p) => isPaymentOverdue(p, todayStr));
   const overdueAmount = overduePayments.reduce(
     (sum, p) => sum + Math.max(0, p.amount - (p.amount_paid ?? 0)), 0,
   );

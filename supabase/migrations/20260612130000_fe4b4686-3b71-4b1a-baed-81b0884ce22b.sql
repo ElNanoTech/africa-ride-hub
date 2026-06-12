@@ -234,9 +234,19 @@ GRANT EXECUTE ON FUNCTION public.driver_risk(uuid) TO authenticated;
 -- list. One pass with grouped CTEs (no per-row loop) — efficient for
 -- ~500 drivers. Scope: the caller's current tenant (current_customer_id());
 -- platform owners get their currently active tenant too.
+--
+-- overdue_payments: count of the driver's overdue payments — same
+-- "en retard" rule as /admin/payments (status 'overdue' OR an unpaid
+-- pending/partial payment past its due_date; TS twin: isPaymentOverdue()
+-- in src/lib/payments.ts). Computed here so Drivers.tsx doesn't need an
+-- unbounded payments companion query (1000-row PostgREST cap).
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.drivers_risk_summary()
-RETURNS TABLE(driver_id uuid, level text, reasons text[])
+-- DROP first: CREATE OR REPLACE cannot change the OUT-parameter list if an
+-- earlier draft of this (unreleased) function exists on a dev database.
+DROP FUNCTION IF EXISTS public.drivers_risk_summary();
+
+CREATE FUNCTION public.drivers_risk_summary()
+RETURNS TABLE(driver_id uuid, level text, reasons text[], overdue_payments integer)
 LANGUAGE plpgsql
 STABLE
 SECURITY DEFINER
@@ -297,16 +307,31 @@ BEGIN
      WHERE vi.customer_id = v_customer
        AND vi.driver_id IS NOT NULL
        AND vi.status IN ('overdue','blocked')
+  ),
+  overdue_pay AS (
+    -- Same "en retard" rule as /admin/payments (TS twin: isPaymentOverdue()
+    -- in src/lib/payments.ts): explicit overdue status OR an unpaid
+    -- pending/partial payment past its due date. Scoped through
+    -- tenant_drivers (like the client query, which relied on RLS) so legacy
+    -- payments rows with a NULL customer_id are still counted.
+    SELECT p.driver_id AS d_id, COUNT(*)::int AS n
+      FROM public.payments p
+      JOIN tenant_drivers tdp ON tdp.id = p.driver_id
+     WHERE p.status = 'overdue'
+        OR (p.status IN ('pending','partial') AND p.due_date < CURRENT_DATE)
+     GROUP BY p.driver_id
   )
   SELECT
     td.id AS driver_id,
     (r.value ->> 'level')::text AS level,
-    ARRAY(SELECT jsonb_array_elements_text(r.value -> 'reasons'))::text[] AS reasons
+    ARRAY(SELECT jsonb_array_elements_text(r.value -> 'reasons'))::text[] AS reasons,
+    COALESCE(op.n, 0) AS overdue_payments
   FROM tenant_drivers td
   LEFT JOIN overdue_inv oi ON oi.d_id = td.id
   LEFT JOIN open_acc oa ON oa.d_id = td.id
   LEFT JOIN unpaid_tv ut ON ut.d_id = td.id
   LEFT JOIN late_fc lf ON lf.d_id = td.id
+  LEFT JOIN overdue_pay op ON op.d_id = td.id
   -- Deterministic score pick (same rule as driver_risk()): prefer the row
   -- with customer_id = the tenant, else the customer_id IS NULL row, else no
   -- score factor. DESC NULLS LAST ranks tenant row > NULL row; updated_at

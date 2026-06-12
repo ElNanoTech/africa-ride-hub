@@ -21,6 +21,7 @@ import { fr } from 'date-fns/locale';
 import { usePayments, useCreatePayment } from '@/hooks/useAdminData';
 import { usePaymentReceipts, useRecordPaymentReceipt } from '@/hooks/useBilling';
 import { StatusBadge } from '@/lib/statusBadges';
+import { isPaymentOverdue, todayDateString } from '@/lib/payments';
 import { toast } from 'sonner';
 import { useRoleGuard } from '@/hooks/useRoleGuard';
 import { useQuery } from '@tanstack/react-query';
@@ -145,13 +146,10 @@ export default function AdminPayments() {
     (sum, p) => sum + Math.min(p.amount, p.amount_paid ?? (p.status === 'paid' ? p.amount : 0)),
     0,
   );
-  // "En retard" = explicit overdue status OR an unpaid (pending/partial)
-  // payment whose due_date is in the past. Nothing in the app ever sets
-  // status='overdue', so without the date fallback this bucket stays empty.
-  const todayStr = new Date().toISOString().split('T')[0];
-  const isOverdue = (p: AdminPayment) =>
-    p.status === 'overdue' ||
-    (['pending', 'partial'].includes(p.status) && p.due_date.slice(0, 10) < todayStr);
+  // "En retard" — shared rule (src/lib/payments.ts): explicit overdue status
+  // OR an unpaid (pending/partial) payment whose due_date is in the past.
+  const todayStr = todayDateString();
+  const isOverdue = (p: AdminPayment) => isPaymentOverdue(p, todayStr);
   const overdueAmount = (payments || []).filter(isOverdue).reduce((sum, p) => sum + outstandingOf(p), 0);
   const pendingCount = (payments || []).filter(p => p.status === 'pending' || p.status === 'partial').length;
   const overdueCount = (payments || []).filter(isOverdue).length;

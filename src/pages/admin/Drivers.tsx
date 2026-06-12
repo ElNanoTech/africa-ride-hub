@@ -31,6 +31,7 @@ import { KpiTile, type KpiVariant } from '@/components/admin/KpiTile';
 import { OPEN_RENTAL_STATUSES } from '@/components/admin/AssignVehicleDialog';
 import { logAction } from '@/hooks/useAuditLog';
 import { exportToCSV, exportDriversListToPDF } from '@/lib/export';
+import { fetchAllRows } from '@/lib/fetchAll';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useAdminUser } from '@/hooks/useAdminUser';
@@ -113,19 +114,25 @@ interface KpiClickTileProps {
   hint?: string;
   active: boolean;
   onClick: () => void;
+  /**
+   * True while the tile's backing data is still loading: the count shows '…',
+   * the tile is non-interactive (clicking would filter on an empty set).
+   */
+  disabled?: boolean;
 }
 
 /** CH-L1 — KpiTile wrapped as a filter toggle (ring shows the active state). */
-function KpiClickTile({ label, value, icon, variant, hint, active, onClick }: KpiClickTileProps) {
+function KpiClickTile({ label, value, icon, variant, hint, active, onClick, disabled }: KpiClickTileProps) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       aria-pressed={active}
-      className={`text-left rounded-2xl transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'ring-2 ring-primary' : ''}`}
-      title={active ? 'Cliquer pour retirer le filtre' : 'Cliquer pour filtrer'}
+      className={`text-left rounded-2xl transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'ring-2 ring-primary' : ''} ${disabled ? 'opacity-60 cursor-default' : ''}`}
+      title={disabled ? 'Chargement…' : active ? 'Cliquer pour retirer le filtre' : 'Cliquer pour filtrer'}
     >
-      <KpiTile label={label} value={value} icon={icon} variant={variant} hint={hint} className="h-full" />
+      <KpiTile label={label} value={disabled ? '…' : value} icon={icon} variant={variant} hint={hint} className="h-full" />
     </button>
   );
 }
@@ -176,13 +183,15 @@ export default function AdminDrivers() {
   const { data: walletRows, isLoading: walletsLoading } = useQuery({
     queryKey: ['admin-driver-wallet-balances'],
     staleTime: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('driver_wallets')
-        .select('driver_id, balance');
-      if (error) throw error;
-      return data ?? [];
-    },
+    // 1 row per driver — paginate past the 1000-row PostgREST cap.
+    queryFn: () =>
+      fetchAllRows<{ driver_id: string; balance: number }>((from, to) =>
+        supabase
+          .from('driver_wallets')
+          .select('driver_id, balance')
+          .order('driver_id')
+          .range(from, to),
+      ),
   });
   const walletByDriver = useMemo(() => {
     const map = new Map<string, number>();
@@ -193,15 +202,19 @@ export default function AdminDrivers() {
   const { data: rentalRows, isLoading: rentalsLoading } = useQuery({
     queryKey: ['admin-driver-active-rentals'],
     staleTime: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rentals')
-        .select('driver_id, final_rate, approved_rate, requested_rate, created_at')
-        .in('status', OPEN_RENTAL_STATUSES)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data ?? [];
-    },
+    // ~1 open rental per driver — paginate past the 1000-row PostgREST cap
+    // (id as tiebreaker keeps the .range() pages stable).
+    queryFn: () =>
+      fetchAllRows<{ driver_id: string; final_rate: number | null; approved_rate: number | null; requested_rate: number | null; created_at: string }>(
+        (from, to) =>
+          supabase
+            .from('rentals')
+            .select('driver_id, final_rate, approved_rate, requested_rate, created_at')
+            .in('status', OPEN_RENTAL_STATUSES)
+            .order('created_at', { ascending: false })
+            .order('id')
+            .range(from, to),
+      ),
   });
   const rentalRateByDriver = useMemo(() => {
     const map = new Map<string, number | null>();
@@ -214,30 +227,26 @@ export default function AdminDrivers() {
     return map;
   }, [rentalRows]);
 
-  // Same "en retard" semantics as /admin/payments: explicit overdue status
-  // OR unpaid pending/partial past its due date.
-  const { data: unpaidPayments, isLoading: overdueLoading } = useQuery({
-    queryKey: ['admin-driver-overdue-payments'],
-    staleTime: 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('payments')
-        .select('driver_id, status, due_date')
-        .in('status', ['pending', 'partial', 'overdue']);
-      if (error) throw error;
-      return data ?? [];
-    },
-  });
+  // Loyer/j fallback chain — single source for the table column AND the CSV
+  // export: rate of the active rental, else the vehicle list price when a
+  // vehicle is assigned.
+  const dailyRateOf = (driver: { id: string; activeVehicle?: { rent_per_day: number | null } | null }): number | null =>
+    (driver.activeVehicle
+      ? rentalRateByDriver.get(driver.id) ?? driver.activeVehicle.rent_per_day
+      : rentalRateByDriver.get(driver.id)) ?? null;
+
+  // Same "en retard" semantics as /admin/payments (isPaymentOverdue in
+  // src/lib/payments.ts) — computed server-side in drivers_risk_summary()
+  // (overdue_payments column, same batched pass), so no unbounded payments
+  // companion query is needed here.
+  const overdueLoading = riskLoading;
   const overdueDriverIds = useMemo(() => {
-    const todayStr = new Date().toISOString().split('T')[0];
     const set = new Set<string>();
-    (unpaidPayments ?? []).forEach((p) => {
-      if (p.status === 'overdue' || (['pending', 'partial'].includes(p.status) && p.due_date.slice(0, 10) < todayStr)) {
-        set.add(p.driver_id);
-      }
+    (riskRows ?? []).forEach((r) => {
+      if ((r.overdue_payments ?? 0) > 0) set.add(r.driver_id);
     });
     return set;
-  }, [unpaidPayments]);
+  }, [riskRows]);
 
   // Real-time subscription for KYC submissions
   useEffect(() => {
@@ -283,37 +292,48 @@ export default function AdminDrivers() {
     navigate(`/admin/drivers/${driverId}`);
   };
 
-  const filteredDrivers = (drivers || []).filter((driver) => {
-    // CH-L3 — search also matches plate, permit number and Yango ID.
+  // One predicate per filter dimension — shared by the table (all of them)
+  // and the KPI tile counts (all EXCEPT the tile's own dimension), so a tile
+  // count always matches what clicking it shows.
+  type DriverItem = NonNullable<typeof drivers>[number];
+  const matchers = useMemo(() => {
     const q = search.toLowerCase().trim();
-    const matchesSearch = !q ||
-      driver.full_name.toLowerCase().includes(q) ||
-      driver.phone_number.includes(search.trim()) ||
-      (driver.activeVehicle?.license_plate ?? '').toLowerCase().includes(q) ||
-      ((driver as { permit_number?: string | null }).permit_number ?? '').toLowerCase().includes(q) ||
-      (driver.yango_driver_id ?? '').toLowerCase().includes(q);
-    let matchesKyc = true;
-    if (kycFilter === 'all') {
-      matchesKyc = true;
-    } else if (kycFilter === 'submitted') {
-      // Show drivers with pending KYC submissions (actually submitted, waiting for review)
-      matchesKyc = driver.latestKycSubmission?.status === 'pending';
-    } else {
-      matchesKyc = driver.kyc_status === kycFilter;
-    }
-    const matchesStatus = statusFilter === 'all' || driver.driver_status === statusFilter;
-    const matchesVehicle =
-      vehicleFilter === 'all' ||
-      (vehicleFilter === 'with' ? !!driver.active_vehicle_id : !driver.active_vehicle_id);
-    const riskLevel = riskByDriver.get(driver.id)?.level;
-    const matchesRisk =
-      riskFilter === 'all' ||
-      (riskFilter === 'atrisk'
-        ? riskLevel === 'eleve' || riskLevel === 'critique'
-        : riskLevel === riskFilter);
-    const matchesOverdue = !overdueOnly || overdueDriverIds.has(driver.id);
-    return matchesSearch && matchesKyc && matchesStatus && matchesVehicle && matchesRisk && matchesOverdue;
-  });
+    const rawSearch = search.trim();
+    return {
+      // CH-L3 — search also matches plate, permit number and Yango ID.
+      search: (driver: DriverItem) => !q ||
+        driver.full_name.toLowerCase().includes(q) ||
+        driver.phone_number.includes(rawSearch) ||
+        (driver.activeVehicle?.license_plate ?? '').toLowerCase().includes(q) ||
+        ((driver as { permit_number?: string | null }).permit_number ?? '').toLowerCase().includes(q) ||
+        (driver.yango_driver_id ?? '').toLowerCase().includes(q),
+      kyc: (driver: DriverItem) =>
+        kycFilter === 'all' ||
+        (kycFilter === 'submitted'
+          // Drivers with pending KYC submissions (actually submitted, waiting for review)
+          ? driver.latestKycSubmission?.status === 'pending'
+          : driver.kyc_status === kycFilter),
+      status: (driver: DriverItem) => statusFilter === 'all' || driver.driver_status === statusFilter,
+      vehicle: (driver: DriverItem) =>
+        vehicleFilter === 'all' ||
+        (vehicleFilter === 'with' ? !!driver.active_vehicle_id : !driver.active_vehicle_id),
+      risk: (driver: DriverItem) => {
+        if (riskFilter === 'all') return true;
+        const riskLevel = riskByDriver.get(driver.id)?.level;
+        return riskFilter === 'atrisk'
+          ? riskLevel === 'eleve' || riskLevel === 'critique'
+          : riskLevel === riskFilter;
+      },
+      overdue: (driver: DriverItem) => !overdueOnly || overdueDriverIds.has(driver.id),
+    };
+  }, [search, kycFilter, statusFilter, vehicleFilter, riskFilter, overdueOnly, riskByDriver, overdueDriverIds]);
+
+  const filteredDrivers = useMemo(
+    () => (drivers || []).filter((driver) =>
+      matchers.search(driver) && matchers.kyc(driver) && matchers.status(driver) &&
+      matchers.vehicle(driver) && matchers.risk(driver) && matchers.overdue(driver)),
+    [drivers, matchers],
+  );
 
   // Get drivers with pending KYC submissions (actually submitted) from filtered list
   const pendingKycDrivers = filteredDrivers.filter(d => 
@@ -341,23 +361,33 @@ export default function AdminDrivers() {
   };
 
   // CH-L1 — KPI header counts (all clickable: each maps to a real filter).
+  // Each count is computed on the list filtered by the OTHER active filters
+  // (excluding the tile's own dimension), so the number always equals what
+  // clicking the tile will display.
   const kpiCounts = useMemo(() => {
     const all = drivers ?? [];
-    let aRisque = 0;
-    all.forEach((d) => {
-      const lvl = riskByDriver.get(d.id)?.level;
-      if (lvl === 'eleve' || lvl === 'critique') aRisque++;
-    });
+    const baseFor = (skip: 'status' | 'kyc' | 'vehicle' | 'risk' | 'overdue') =>
+      all.filter((d) =>
+        matchers.search(d) &&
+        (skip === 'kyc' || matchers.kyc(d)) &&
+        (skip === 'status' || matchers.status(d)) &&
+        (skip === 'vehicle' || matchers.vehicle(d)) &&
+        (skip === 'risk' || matchers.risk(d)) &&
+        (skip === 'overdue' || matchers.overdue(d)));
+    const statusBase = baseFor('status');
     return {
-      actifs: all.filter((d) => d.driver_status === 'active').length,
-      suspendus: all.filter((d) => d.driver_status === 'suspended').length,
-      inactifs: all.filter((d) => d.driver_status === 'inactive').length,
-      kycVerifie: all.filter((d) => d.kyc_status === 'verified').length,
-      sansVehicule: all.filter((d) => !d.active_vehicle_id).length,
-      aRisque,
-      paiementsEnRetard: all.filter((d) => overdueDriverIds.has(d.id)).length,
+      actifs: statusBase.filter((d) => d.driver_status === 'active').length,
+      suspendus: statusBase.filter((d) => d.driver_status === 'suspended').length,
+      inactifs: statusBase.filter((d) => d.driver_status === 'inactive').length,
+      kycVerifie: baseFor('kyc').filter((d) => d.kyc_status === 'verified').length,
+      sansVehicule: baseFor('vehicle').filter((d) => !d.active_vehicle_id).length,
+      aRisque: baseFor('risk').filter((d) => {
+        const lvl = riskByDriver.get(d.id)?.level;
+        return lvl === 'eleve' || lvl === 'critique';
+      }).length,
+      paiementsEnRetard: baseFor('overdue').filter((d) => overdueDriverIds.has(d.id)).length,
     };
-  }, [drivers, riskByDriver, overdueDriverIds]);
+  }, [drivers, matchers, riskByDriver, overdueDriverIds]);
 
   const clearAllFilters = () => {
     setSearch('');
@@ -470,7 +500,8 @@ export default function AdminDrivers() {
       score: driver.score || '-',
       niveau: driver.tier || 'E',
       vehicule: driver.activeVehicle?.license_plate ?? '',
-      loyer: rentalRateByDriver.get(driver.id) ?? '',
+      // Same fallback chain as the table column (dailyRateOf).
+      loyer: dailyRateOf(driver) ?? '',
       risque: riskByDriver.get(driver.id) ? RISK_LEVEL_LABEL[riskByDriver.get(driver.id)!.level] : '',
       solde_kirapay: walletByDriver.get(driver.id) ?? '',
       statut: driver.driver_status === 'active' ? 'Actif' : driver.driver_status === 'suspended' ? 'Suspendu' : 'Inactif',
@@ -794,14 +825,16 @@ export default function AdminDrivers() {
           onClick={() => setVehicleFilter((v) => (v === 'without' ? 'all' : 'without'))}
         />
         <KpiClickTile
-          label="À risque" value={riskLoading ? '…' : kpiCounts.aRisque} icon={ShieldAlert} variant="orange"
+          label="À risque" value={kpiCounts.aRisque} icon={ShieldAlert} variant="orange"
           hint="Élevé + Critique"
           active={riskFilter === 'atrisk'}
+          disabled={riskLoading}
           onClick={() => setRiskFilter((v) => (v === 'atrisk' ? 'all' : 'atrisk'))}
         />
         <KpiClickTile
-          label="Paiements en retard" value={overdueLoading ? '…' : kpiCounts.paiementsEnRetard} icon={AlertTriangle} variant="orange"
+          label="Paiements en retard" value={kpiCounts.paiementsEnRetard} icon={AlertTriangle} variant="orange"
           active={overdueOnly}
+          disabled={overdueLoading}
           onClick={() => setOverdueOnly((v) => !v)}
         />
       </div>
@@ -1052,10 +1085,9 @@ export default function AdminDrivers() {
                         <Skeleton className="h-5 w-16" />
                       ) : (() => {
                         // Rate of the active rental; vehicle list price as
-                        // honest fallback when the rental has no rate yet.
-                        const rate = driver.activeVehicle
-                          ? rentalRateByDriver.get(driver.id) ?? driver.activeVehicle.rent_per_day
-                          : rentalRateByDriver.get(driver.id);
+                        // honest fallback when the rental has no rate yet
+                        // (shared with the CSV export via dailyRateOf).
+                        const rate = dailyRateOf(driver);
                         return rate != null ? (
                           <span className="text-sm">{formatCurrency(rate)}/j</span>
                         ) : (

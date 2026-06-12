@@ -12,6 +12,13 @@ export interface DriverRiskSummaryRow {
   driver_id: string;
   level: DriverRiskLevel;
   reasons: string[];
+  /**
+   * Count of overdue payments — same "en retard" rule as /admin/payments
+   * (see isPaymentOverdue() in src/lib/payments.ts; SQL twin lives in the
+   * RPC). Lets the drivers list derive its overdue filter without an
+   * unbounded payments companion query.
+   */
+  overdue_payments: number;
 }
 
 /**

@@ -11,6 +11,7 @@ import { Wallet, Plus, ArrowDownCircle, ArrowUpCircle, RotateCcw, FileText, Down
 import { useDriverWallet, useRecordDriverDeposit } from '@/hooks/useAdminData';
 import { formatCurrency, formatDateShort } from '@/lib/format';
 import { exportToCSV } from '@/lib/export';
+import { fetchAllRows } from '@/lib/fetchAll';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { toast } from 'sonner';
 
@@ -48,12 +49,20 @@ export function DriverWalletCard({ driverId }: Props) {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const { data: all, error } = await supabase
-        .from('driver_wallet_transactions')
-        .select('created_at, type, amount, balance_after, method, reference, note')
-        .eq('driver_id', driverId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
+      // Full ledger: paginate past the 1000-row PostgREST cap (id tiebreaker
+      // keeps the .range() pages stable).
+      const all = await fetchAllRows<{
+        created_at: string; type: string; amount: number; balance_after: number;
+        method: string | null; reference: string | null; note: string | null;
+      }>((from, to) =>
+        supabase
+          .from('driver_wallet_transactions')
+          .select('created_at, type, amount, balance_after, method, reference, note, id')
+          .eq('driver_id', driverId)
+          .order('created_at', { ascending: false })
+          .order('id')
+          .range(from, to),
+      );
       if (!all || all.length === 0) {
         toast.error('Aucune transaction à exporter');
         return;
