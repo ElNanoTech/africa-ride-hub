@@ -609,7 +609,14 @@ export default function VehicleInspection() {
           </div>
         </div>
 
-        {!locked && (
+        {/* Review timeline */}
+        <ReviewTimeline
+          status={inspection.status}
+          submittedAt={inspection.submitted_at}
+          completedCount={completedCount}
+        />
+
+        {!cycleLocked && !reviewInProgress && (
           <Card>
             <CardContent className="p-4 space-y-2">
               <label className="text-sm font-medium">Remarques (facultatif)</label>
@@ -623,15 +630,24 @@ export default function VehicleInspection() {
           </Card>
         )}
 
-        <div className="space-y-2 pb-8">
-          <Button onClick={handleSubmit} disabled={!canSubmit} className="w-full h-12 text-base" size="lg">
-            <Send className="h-5 w-5 mr-2" />
-            {inspection.status === 'submitted' ? 'Envoyé — en attente de validation' : 'Envoyer pour validation'}
-          </Button>
-          <Button onClick={() => refetch()} variant="ghost" className="w-full">
+        {/* Spacer so content isn't hidden behind the sticky bar */}
+        <div className="h-24" />
+        <div className="text-center">
+          <Button onClick={() => refetch()} variant="ghost" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" /> Rafraîchir
           </Button>
         </div>
+      </div>
+
+      {/* Sticky bottom action bar */}
+      <StickyActionBar
+        status={inspection.status}
+        completed={completedCount}
+        required={REQUIRED_ITEM_COUNT}
+        rejectedCount={rejectedCount}
+        canSubmit={canSubmit}
+        onSubmit={handleSubmit}
+      />
 
         <input
           ref={fileRef}
@@ -641,7 +657,6 @@ export default function VehicleInspection() {
           className="hidden"
           onChange={handleFile}
         />
-      </div>
     </DriverLayout>
   );
 }
