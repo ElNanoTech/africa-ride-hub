@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck, ImageOff } from 'lucide-react';
+import { Loader2, AlertTriangle, ShieldCheck, Send, RefreshCw, Ban, Upload, Clock, Inbox, CheckCheck, History } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -18,18 +18,20 @@ import {
 } from '@/components/ui/dialog';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
+import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
 import { compressImage } from '@/lib/imageCompression';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { FleetControlZoneTile } from '@/components/driver/FleetControlZoneTile';
 import {
-  PHOTO_ZONES,
-  DOCUMENT_ZONES,
   ALL_ZONES,
-  REQUIRED_ITEM_COUNT,
   STATUS_LABEL,
   STATUS_CLASS,
   IMMO_LABEL,
   effectiveStatus,
+  formatDueDateRelative,
+  requiredZones,
+  DEFAULT_FLEET_CONTROL_SETTINGS,
   type ZoneKey,
   type FleetControlStatus,
   type ItemValidation,
@@ -195,11 +197,54 @@ export default function VehicleInspection() {
 
       return { inspection, photos: (photos || []) as Photo[], audit: (audit || []) as AuditRow[] };
     },
+    // FC-D5: realtime is the primary refresh path (below); keep a slow poll
+    // as a fallback for dropped websockets on flaky networks.
+    refetchInterval: 5 * 60_000,
   });
 
   const inspection = data?.inspection ?? null;
   const photos = data?.photos ?? [];
   const audit = data?.audit ?? [];
+
+  // FC-D5: live refresh of the driver's own control + items — an admin
+  // approval/rejection appears without manual refresh. RLS already limits
+  // the events to the driver's own rows; the filters are belt-and-braces.
+  const invalidateInspection = () => {
+    queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
+    queryClient.invalidateQueries({ queryKey: ['driver-active-inspection', driverId] });
+  };
+  useRealtimePostgresChanges<{ driver_id?: string }>(
+    'vehicle_inspections',
+    '*',
+    (p) => (p.new?.driver_id ?? p.old?.driver_id) === driverId,
+    invalidateInspection,
+    !!driverId,
+  );
+  useRealtimePostgresChanges<{ inspection_id?: string }>(
+    'vehicle_inspection_photos',
+    '*',
+    (p) => (p.new?.inspection_id ?? p.old?.inspection_id) === inspection?.id,
+    invalidateInspection,
+    !!inspection?.id,
+  );
+
+  // FC-A3/D3: required zone set derived from the tenant settings — totals
+  // stay correct when require_all_photos / require_documents change.
+  const { data: fcSettings = DEFAULT_FLEET_CONTROL_SETTINGS } = useQuery({
+    queryKey: ['fleet-control-settings'],
+    queryFn: async () => {
+      const { data: s } = await supabase.rpc('fleet_control_settings');
+      return {
+        ...DEFAULT_FLEET_CONTROL_SETTINGS,
+        require_all_photos: Boolean(s?.require_all_photos ?? true),
+        require_documents: Boolean(s?.require_documents ?? true),
+      };
+    },
+    staleTime: 5 * 60_000,
+  });
+  const reqZones = useMemo(() => requiredZones(fcSettings), [fcSettings]);
+  const reqPhotoZones = useMemo(() => reqZones.filter((z) => z.kind === 'photo'), [reqZones]);
+  const reqDocZones = useMemo(() => reqZones.filter((z) => z.kind === 'document'), [reqZones]);
 
   const photosByZone = useMemo(() => {
     const map: Record<string, Photo> = {};
@@ -235,13 +280,17 @@ export default function VehicleInspection() {
     },
   });
 
-  const completedCount = ALL_ZONES.filter((z) => {
-    const photo = photosByZone[z.key];
+  const isZoneDone = (key: ZoneKey) => {
+    const photo = photosByZone[key];
     return !!photo && !thumbs.failed[photo.id] && !brokenThumbs[photo.id];
-  }).length;
+  };
+  // Progress counts only the required zones (FC-A3/D3) — mirrors the server check.
+  const completedCount = reqZones.filter((z) => isZoneDone(z.key)).length;
+  const photosDone = reqPhotoZones.filter((z) => isZoneDone(z.key)).length;
+  const docsDone = reqDocZones.filter((z) => isZoneDone(z.key)).length;
   const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
   const canSubmit =
-    completedCount === REQUIRED_ITEM_COUNT &&
+    completedCount === reqZones.length &&
     inspection?.status !== 'submitted' &&
     inspection?.status !== 'approved';
 
@@ -428,7 +477,12 @@ export default function VehicleInspection() {
               <p className="text-sm text-muted-foreground">
                 Aucun véhicule actif. Le contrôle sera disponible dès qu'un véhicule vous sera assigné.
               </p>
-              <Button variant="outline" onClick={() => navigate('/driver')}>Retour</Button>
+              <div className="flex flex-col gap-2">
+                <Button variant="outline" onClick={() => navigate('/driver/fleet-control/history')}>
+                  <History className="h-4 w-4 mr-2" /> Voir l'historique
+                </Button>
+                <Button variant="ghost" onClick={() => navigate('/driver')}>Retour</Button>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -447,200 +501,42 @@ export default function VehicleInspection() {
   const renderZoneTile = (z: { key: ZoneKey; label: string; help: string }, kind: 'camera' | 'doc') => {
     const photo = photosByZone[z.key];
     const busy = uploadingZone === z.key;
-      const progress = busy ? uploadProgress : 0;
-    const Icon = kind === 'doc' ? FileText : Camera;
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
     const thumbUrl = photo ? thumbs.urls[photo.id] : undefined;
     const thumbFailed = !!photo && (!!thumbs.failed[photo.id] || !!brokenThumbs[photo.id]);
-    const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
     // Tile is editable when: never approved, and (no review pending OR this item was rejected).
     const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected && !thumbFailed);
-    const isEmpty = !photo;
     return (
-      <div
+      <FleetControlZoneTile
         key={z.key}
-        data-rejected={rejected ? 'true' : undefined}
-        className={`relative rounded-xl border-2 p-4 text-left min-h-[140px] transition active:scale-[0.98] ${
-          rejected
-            ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/30'
-            : approved
-              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30'
-              : photo
-                ? 'border-blue-400 bg-blue-50/60 dark:bg-blue-950/20'
-                : 'border-dashed border-muted-foreground/40 bg-card'
-        } ${busy ? 'opacity-60 pointer-events-none' : ''}`}
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="font-medium">{z.label}</div>
-            {isEmpty && !busy && (
-              <Badge variant="outline" className="text-[10px] py-0 px-1.5 border-amber-400 text-amber-700 dark:text-amber-300">
-                À envoyer
-              </Badge>
-            )}
-          </div>
-          {approved ? (
-            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-          ) : rejected ? (
-            <AlertTriangle className="h-5 w-5 text-rose-600" />
-          ) : photo ? (
-            <CheckCircle2 className="h-5 w-5 text-blue-500" />
-          ) : busy ? (
-            <Loader2 className="h-5 w-5 animate-spin text-primary" />
-          ) : (
-            <Icon className="h-5 w-5 text-muted-foreground" />
-          )}
-        </div>
-        <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
-        {isEmpty && !busy && (
-          <div className="mt-2 aspect-video w-full rounded-md border border-dashed border-muted-foreground/40 bg-muted/30 flex flex-col items-center justify-center gap-1 text-muted-foreground">
-            {kind === 'doc' ? <FileText className="h-6 w-6" /> : <Camera className="h-6 w-6" />}
-            <span className="text-[11px] font-medium">
-              {kind === 'doc' ? 'Aucun document envoyé' : 'Aucune photo envoyée'}
-            </span>
-          </div>
-        )}
-        {photo && !thumbFailed && (
-          <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
-            {isImageThumb ? (
-              <img
-                src={thumbUrl}
-                alt={z.label}
-                className="w-full h-full object-cover"
-                loading="lazy"
-                onError={() => photo && setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }))}
-              />
-            ) : thumbUrl ? (
-              <a href={thumbUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center text-xs text-muted-foreground">
-                <FileText className="h-6 w-6 mb-1" />
-                Ouvrir le document
-              </a>
-            ) : thumbsLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-            ) : (
-              <ImageOff className="h-5 w-5 text-muted-foreground" />
-            )}
-          </div>
-        )}
-        {thumbFailed && (
-          <div className="mt-2 aspect-video w-full rounded-md border border-rose-200 bg-rose-50 dark:bg-rose-950/30 flex flex-col items-center justify-center gap-1 text-rose-700 dark:text-rose-300">
-            <ImageOff className="h-5 w-5" />
-            <span className="text-[11px] font-medium">Pièce non disponible</span>
-          </div>
-        )}
-        {busy && (
-          <div className="mt-2">
-            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-              <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${Math.max(5, progress)}%` }}
-              />
-            </div>
-            <div className="text-[11px] text-muted-foreground mt-1 tabular-nums">
-              Envoi… {progress}%
-            </div>
-          </div>
-        )}
-        <div className="text-xs mt-2 font-medium">
-          {rejected && photo?.rejection_reason
-            ? <span className="text-rose-700 dark:text-rose-300">Motif du refus : {photo.rejection_reason}</span>
-            : approved
-              ? <span className="text-emerald-700 dark:text-emerald-300">Validé par le gestionnaire</span>
-            : thumbFailed
-              ? <span className="text-rose-700 dark:text-rose-300">Photo absente — reprenez l'envoi</span>
-              : photo && itemLocked
-                ? 'Envoyé — en attente de validation'
-                : photo
-                  ? (kind === 'doc' ? 'Remplacer le document' : 'Modifier la photo')
-                  : (kind === 'doc' ? 'Ajoutez un document ou une photo' : 'Prenez une photo de cette zone')}
-        </div>
-        <div className="flex gap-2 mt-3">
-          {itemLocked && photo ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              className="flex-1 h-9"
-              onClick={async () => {
-                let url = thumbUrl;
-                if (!url) {
-                  url = await tryOpenSignedUrl(photo.storage_path) || undefined;
-                }
-                if (!url) {
-                  // Mark thumb as broken so the tile reflects the missing file,
-                  // and open the fallback modal so the driver can retry or re-upload.
-                  setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }));
-                  setViewFail({ zone: z.key, kind, label: z.label, retrying: false });
-                  return;
-                }
-                window.open(url, '_blank');
-              }}
-            >
-              <Eye className="h-4 w-4 mr-1" /> Voir la {kind === 'doc' ? 'pièce' : 'photo'}
-            </Button>
-          ) : rejected ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="destructive"
-              className="flex-1 h-9"
-              onClick={() => handlePickPhoto(z.key, kind === 'doc' ? 'document' : 'camera')}
-              disabled={busy}
-            >
-              <RefreshCw className="h-4 w-4 mr-1" /> Reprendre {kind === 'doc' ? 'le document' : 'la photo'}
-            </Button>
-          ) : kind === 'camera' ? (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="flex-1 h-9"
-                onClick={() => handlePickPhoto(z.key, 'camera')}
-                disabled={busy}
-              >
-                <Camera className="h-4 w-4 mr-1" /> Photo
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-9 px-3"
-                onClick={() => handlePickPhoto(z.key, 'gallery')}
-                disabled={busy}
-                aria-label="Choisir depuis la galerie"
-              >
-                <ImageIcon className="h-4 w-4" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                variant="secondary"
-                className="flex-1 h-9"
-                onClick={() => handlePickPhoto(z.key, 'document')}
-                disabled={busy}
-              >
-                <Upload className="h-4 w-4 mr-1" /> Fichier
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                className="h-9 px-3"
-                onClick={() => handlePickPhoto(z.key, 'camera')}
-                disabled={busy}
-                aria-label="Photographier le document"
-              >
-                <Camera className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+        zone={z}
+        kind={kind}
+        photo={photo ?? null}
+        busy={busy}
+        progress={busy ? uploadProgress : 0}
+        thumbUrl={thumbUrl}
+        thumbFailed={thumbFailed}
+        thumbsLoading={thumbsLoading}
+        itemLocked={itemLocked}
+        onPick={(k) => handlePickPhoto(z.key, k)}
+        onThumbError={() => photo && setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }))}
+        onView={async () => {
+          if (!photo) return;
+          let url = thumbUrl;
+          if (!url) {
+            url = await tryOpenSignedUrl(photo.storage_path) || undefined;
+          }
+          if (!url) {
+            // Mark thumb as broken so the tile reflects the missing file,
+            // and open the fallback modal so the driver can retry or re-upload.
+            setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }));
+            setViewFail({ zone: z.key, kind, label: z.label, retrying: false });
+            return;
+          }
+          window.open(url, '_blank');
+        }}
+      />
     );
   };
 
@@ -652,15 +548,22 @@ export default function VehicleInspection() {
           <CardContent className="p-4 space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs text-muted-foreground">Échéance</div>
                 <div className={`text-sm font-medium ${isLate ? 'text-rose-600' : ''}`}>
-                  {format(new Date(inspection.due_at), 'PPP', { locale: fr })}
+                  {formatDueDateRelative(inspection.due_at)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Échéance le {format(new Date(inspection.due_at), 'PPP', { locale: fr })}
                 </div>
               </div>
               <Badge className={STATUS_CLASS[eff]}>{STATUS_LABEL[eff]}</Badge>
             </div>
             <div className="text-sm">
-              {completedCount}/{REQUIRED_ITEM_COUNT} pièces fournies
+              <span className="font-medium">{completedCount}/{reqZones.length} pièces fournies</span>
+              {reqPhotoZones.length > 0 && reqDocZones.length > 0 && (
+                <span className="text-muted-foreground">
+                  {' '}· Véhicule : {photosDone}/{reqPhotoZones.length} · Documents : {docsDone}/{reqDocZones.length}
+                </span>
+              )}
             </div>
             {inspection.status === 'rejected' && inspection.rejection_reason && (
               <div className="rounded-md bg-rose-50 dark:bg-rose-950/30 p-3 text-sm text-rose-700 dark:text-rose-300">
@@ -693,12 +596,25 @@ export default function VehicleInspection() {
                 </div>
               </div>
             )}
-            {inspection.status === 'blocked' && (
+            {/* FC-D6: honest immobilization copy — never claim a cut unless cut_sent. */}
+            {inspection.immobilization_state === 'cut_sent' ? (
               <div className="rounded-md bg-rose-100 dark:bg-rose-950/40 p-3 text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
                 <Ban className="h-4 w-4 mt-0.5 shrink-0" />
                 <div>
-                  <div className="font-medium">Véhicule bloqué</div>
-                  <div className="opacity-90">Contactez le gestionnaire pour débloquer le véhicule.</div>
+                  <div className="font-medium">Véhicule immobilisé</div>
+                  <div className="opacity-90">Contactez votre gestionnaire.</div>
+                </div>
+              </div>
+            ) : (inspection.status === 'blocked'
+                || inspection.immobilization_state === 'requested'
+                || inspection.immobilization_state === 'pending_stop') && (
+              <div className="rounded-md bg-rose-100 dark:bg-rose-950/40 p-3 text-sm text-rose-800 dark:text-rose-200 flex items-start gap-2">
+                <Ban className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-medium">Restriction demandée</div>
+                  <div className="opacity-90">
+                    En attente de vérification du stationnement. Soumettez votre contrôle pour annuler la demande.
+                  </div>
                 </div>
               </div>
             )}
@@ -715,23 +631,28 @@ export default function VehicleInspection() {
           />
         )}
 
-        <div>
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-            Photos du véhicule
+        {/* FC-A3/D3: only the required groups are shown (derived from settings). */}
+        {reqPhotoZones.length > 0 && (
+          <div>
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Photos du véhicule
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {reqPhotoZones.map((z) => renderZoneTile(z, 'camera'))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {PHOTO_ZONES.map((z) => renderZoneTile(z, 'camera'))}
-          </div>
-        </div>
+        )}
 
-        <div>
-          <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-            Documents
+        {reqDocZones.length > 0 && (
+          <div>
+            <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+              Documents
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {reqDocZones.map((z) => renderZoneTile(z, 'doc'))}
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            {DOCUMENT_ZONES.map((z) => renderZoneTile(z, 'doc'))}
-          </div>
-        </div>
+        )}
 
         {/* Review timeline */}
         <ReviewTimeline
@@ -756,9 +677,12 @@ export default function VehicleInspection() {
 
         {/* Spacer so content isn't hidden behind the sticky bar + bottom nav */}
         <div className="h-44" />
-        <div className="text-center">
+        <div className="flex items-center justify-center gap-2">
           <Button onClick={() => refetch()} variant="ghost" size="sm">
             <RefreshCw className="h-4 w-4 mr-2" /> Rafraîchir
+          </Button>
+          <Button onClick={() => navigate('/driver/fleet-control/history')} variant="ghost" size="sm">
+            <History className="h-4 w-4 mr-2" /> Voir l'historique
           </Button>
         </div>
       </div>
@@ -767,7 +691,7 @@ export default function VehicleInspection() {
       <StickyActionBar
         status={inspection.status}
         completed={completedCount}
-        required={REQUIRED_ITEM_COUNT}
+        required={reqZones.length}
         rejectedCount={rejectedCount}
         canSubmit={canSubmit}
         onSubmit={handleSubmit}

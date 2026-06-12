@@ -19,8 +19,7 @@ import { getScoreLevel } from '@/lib/scoreLevel';
 import { cn } from '@/lib/utils';
 import { useDriverCurrentScore, useDriverId, useDriverCreditScores, useDriverRentals, useDriverNotifications, useDriverLoans, useDriverPayments, useIsAuthResolving } from '@/hooks/useDriverData';
 import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
-import { format, differenceInCalendarDays } from 'date-fns';
-import { fr as frLocale } from 'date-fns/locale';
+import { formatDueDateRelative } from '@/lib/fleetControl';
 import { formatCurrency as fmtCurrency, formatNumber } from '@/lib/format';
 import { useDriverDashboardRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
@@ -189,11 +188,62 @@ function InsightCard({ title, value, icon: Icon, trend, trendValue, className }:
 // Fleet Control summary card (driver-side companion to the admin module).
 function FleetControlCard() {
   const { data: inspection, isLoading } = useDriverActiveInspection();
-  if (isLoading || !inspection) return null;
+  const { data: driverId } = useDriverId();
+
+  // FC-D1: when there is no active control, surface the history entry point
+  // (only if the driver actually has closed cycles to look at).
+  const { data: hasHistory = false } = useQuery({
+    queryKey: ['driver-inspection-has-history', driverId],
+    enabled: !!driverId && !isLoading && !inspection,
+    queryFn: async () => {
+      const { count, error } = await (supabase as any)
+        .from('vehicle_inspections')
+        .select('id', { count: 'exact', head: true })
+        .eq('driver_id', driverId)
+        .in('status', ['approved', 'cancelled']);
+      if (error) throw error;
+      return (count ?? 0) > 0;
+    },
+  });
+
+  if (isLoading) return null;
+
+  if (!inspection) {
+    if (!hasHistory) return null;
+    return (
+      <div className="px-4 mt-6">
+        <Link to="/driver/fleet-control/history" aria-label="Voir l'historique des contrôles">
+          <Card className="border bg-gradient-to-r from-muted/60 to-muted/30 overflow-hidden">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-muted text-muted-foreground">
+                  <ClipboardCheck className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm">Contrôles véhicule</h3>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Aucun contrôle en cours. Consultez vos contrôles passés.
+                  </p>
+                  <div className="mt-2">
+                    <Button variant="ghost" size="sm" className="h-7 px-2 -ml-2 text-xs">
+                      Voir l'historique
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
+      </div>
+    );
+  }
 
   const status = inspection.effective_status;
-  const due = new Date(inspection.due_at);
-  const daysLeft = differenceInCalendarDays(due, new Date());
+  // FC-D6: never claim an engine cut unless the command was actually sent.
+  const immoCut = inspection.immobilization_state === 'cut_sent';
 
   const config: Record<string, {
     title: string;
@@ -205,9 +255,7 @@ function FleetControlCard() {
   }> = {
     pending: {
       title: 'Contrôle visuel requis',
-      description: daysLeft >= 0
-        ? `Soumettez les photos avant le ${format(due, 'd MMM', { locale: frLocale })}.`
-        : 'À soumettre dès que possible.',
+      description: `${formatDueDateRelative(inspection.due_at)} — soumettez vos photos.`,
       cta: 'Commencer',
       icon: Camera,
       bg: 'from-primary/10 to-primary/5 border-primary/30',
@@ -231,15 +279,17 @@ function FleetControlCard() {
     },
     overdue: {
       title: 'Contrôle en retard',
-      description: `En retard de ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) > 1 ? 's' : ''} — soumettez-le rapidement.`,
+      description: `${formatDueDateRelative(inspection.due_at)} — soumettez-le rapidement.`,
       cta: 'Soumettre',
       icon: AlertTriangle,
       bg: 'from-warning/10 to-warning/5 border-warning/30',
       iconBg: 'bg-warning/20 text-warning',
     },
     blocked: {
-      title: 'Véhicule immobilisé',
-      description: 'Contactez votre gestionnaire.',
+      title: immoCut ? 'Véhicule immobilisé' : 'Restriction demandée',
+      description: immoCut
+        ? 'Contactez votre gestionnaire.'
+        : 'En attente de vérification du stationnement.',
       cta: 'Voir les détails',
       icon: Ban,
       bg: 'from-destructive/10 to-destructive/5 border-destructive/40',

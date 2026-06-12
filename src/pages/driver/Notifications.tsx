@@ -1,4 +1,4 @@
-import { Bell, TrendingUp, CreditCard, Car, Wallet, Shield, Megaphone, CheckCheck, AlertCircle, FileText } from 'lucide-react';
+import { Bell, TrendingUp, CreditCard, Car, Wallet, Shield, Megaphone, CheckCheck, AlertCircle, FileText, ClipboardCheck } from 'lucide-react';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
 import { DriverBreadcrumb } from '@/components/DriverBreadcrumb';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,6 +16,10 @@ import { useNavigate } from 'react-router-dom';
 
 // Map a notification type to the in-app destination it should open.
 function getNotificationDeeplink(type: string): string | null {
+  // FC-D2: every fleet-control notification (required / overdue / reminder /
+  // approved / rejected / blocked / unblocked — current and future types)
+  // opens the control screen.
+  if (type.startsWith('fleet_control')) return '/driver/fleet-control';
   switch (type) {
     case 'invoice_issued':
     case 'invoice_cancelled':
@@ -46,6 +50,9 @@ interface Notification {
 }
 
 const getNotificationIcon = (type: string) => {
+  if (type.startsWith('fleet_control')) {
+    return <ClipboardCheck className="h-5 w-5 text-primary" />;
+  }
   switch (type) {
     case 'score_update':
       return <TrendingUp className="h-5 w-5 text-primary" />;
@@ -69,6 +76,7 @@ const getNotificationIcon = (type: string) => {
 };
 
 const getNotificationBgColor = (type: string) => {
+  if (type.startsWith('fleet_control')) return 'bg-primary/10';
   switch (type) {
     case 'score_update':
       return 'bg-primary/10';

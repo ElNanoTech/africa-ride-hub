@@ -1,6 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useDriverId } from './useDriverData';
+import { useRealtimePostgresChanges } from './useRealtimePostgresChanges';
 import { effectiveStatus, type FleetControlStatus } from '@/lib/fleetControl';
 
 export interface DriverActiveInspection {
@@ -22,6 +23,19 @@ const RELEVANT_STATUSES = ['pending', 'submitted', 'rejected', 'overdue', 'block
  */
 export function useDriverActiveInspection() {
   const { data: driverId } = useDriverId();
+  const queryClient = useQueryClient();
+
+  // FC-D5: realtime is the primary refresh path — an admin approval/rejection
+  // updates the nav badge and home card immediately. RLS limits events to the
+  // driver's own rows; the filter is belt-and-braces.
+  useRealtimePostgresChanges<{ driver_id?: string }>(
+    'vehicle_inspections',
+    '*',
+    (p) => (p.new?.driver_id ?? p.old?.driver_id) === driverId,
+    () => queryClient.invalidateQueries({ queryKey: ['driver-active-inspection', driverId] }),
+    !!driverId,
+  );
+
   return useQuery({
     queryKey: ['driver-active-inspection', driverId],
     queryFn: async (): Promise<DriverActiveInspection | null> => {
@@ -58,7 +72,8 @@ export function useDriverActiveInspection() {
       };
     },
     enabled: !!driverId,
-    refetchInterval: 60_000,
+    // Slow fallback poll for dropped websockets — realtime does the live work.
+    refetchInterval: 5 * 60_000,
     staleTime: 30_000,
   });
 }
