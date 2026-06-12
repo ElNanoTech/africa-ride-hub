@@ -1023,6 +1023,103 @@ export default function AdminGpsMapping() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create vehicle from orphan device dialog */}
+      <Dialog
+        open={!!creatingFromDevice}
+        onOpenChange={(open) => !open && !createVehicle.isPending && setCreatingFromDevice(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Créer un véhicule depuis le module</DialogTitle>
+            <DialogDescription>
+              {creatingFromDevice && (
+                <span className="block text-xs">
+                  Module GPS : <span className="font-mono">{creatingFromDevice.imei}</span>
+                  {creatingFromDevice.deviceName && <> · {creatingFromDevice.deviceName}</>}
+                </span>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="nv-model">Marque / Modèle</Label>
+              <Input
+                id="nv-model"
+                value={newVehicle.model_name}
+                onChange={(e) => setNewVehicle((s) => ({ ...s, model_name: e.target.value }))}
+                placeholder="Toyota Corolla"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="nv-plate">Immatriculation</Label>
+              <Input
+                id="nv-plate"
+                value={newVehicle.license_plate}
+                onChange={(e) => setNewVehicle((s) => ({ ...s, license_plate: e.target.value }))}
+                placeholder="AB-1234-CD"
+                className="font-mono"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label>Type</Label>
+                <Select
+                  value={newVehicle.vehicle_type}
+                  onValueChange={(v) => setNewVehicle((s) => ({ ...s, vehicle_type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="car">Voiture</SelectItem>
+                    <SelectItem value="sedan">Berline</SelectItem>
+                    <SelectItem value="compact">Compacte</SelectItem>
+                    <SelectItem value="bike">Moto</SelectItem>
+                    <SelectItem value="cargo">Cargo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="nv-rent">Location / jour (FCFA)</Label>
+                <Input
+                  id="nv-rent"
+                  type="number"
+                  min={0}
+                  value={newVehicle.rent_per_day}
+                  onChange={(e) =>
+                    setNewVehicle((s) => ({ ...s, rent_per_day: Number(e.target.value) }))
+                  }
+                />
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCreatingFromDevice(null)}
+              disabled={createVehicle.isPending}
+            >
+              Annuler
+            </Button>
+            <Button onClick={submitCreateFromDevice} disabled={createVehicle.isPending}>
+              {createVehicle.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Création…
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Créer & associer
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
