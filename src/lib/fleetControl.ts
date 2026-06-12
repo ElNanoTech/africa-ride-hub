@@ -54,6 +54,18 @@ export const ALL_ZONES: ZoneDef[] = [...PHOTO_ZONES, ...DOCUMENT_ZONES];
 export const REQUIRED_ITEM_COUNT = ALL_ZONES.length; // 11
 
 /**
+ * Statuses of a cycle the driver/admin still has to act on. The complement
+ * (CLOSED_FLEET_CONTROL_STATUSES) is what the history screens list.
+ * Single source of truth — do not hand-maintain copies of these lists.
+ */
+export const OPEN_FLEET_CONTROL_STATUSES: readonly FleetControlStatus[] =
+  ['pending', 'submitted', 'rejected', 'overdue', 'blocked'];
+
+/** Closed cycles — shown in the driver history, never on the active screen. */
+export const CLOSED_FLEET_CONTROL_STATUSES: readonly FleetControlStatus[] =
+  ['approved', 'cancelled'];
+
+/**
  * Derive the required zone set from the require_all_photos /
  * require_documents settings. Mirrors the SQL source of truth
  * `fleet_control_required_zones()` used by fleet_control_submit/approve:
@@ -69,6 +81,19 @@ export function requiredZones(
   const docs = settings.require_documents ? DOCUMENT_ZONES : [];
   if (photos.length === 0 && docs.length === 0) return [...PHOTO_ZONES];
   return [...photos, ...docs];
+}
+
+/**
+ * Required zone set for ADMIN APPROVAL. Mirrors `fleet_control_approve` in
+ * SQL: when both require flags are off, the completeness check is skipped
+ * entirely (admin judgment) — the photos-fallback of requiredZones()
+ * applies to driver SUBMIT only. Use this where the UI gates approval.
+ */
+export function approvalRequiredZones(
+  settings: Pick<FleetControlSettings, 'require_all_photos' | 'require_documents'>,
+): ZoneDef[] {
+  if (!settings.require_all_photos && !settings.require_documents) return [];
+  return requiredZones(settings);
 }
 
 export const STATUS_LABEL: Record<FleetControlStatus, string> = {
@@ -100,6 +125,31 @@ export const IMMO_LABEL: Record<ImmobilizationState, string> = {
   cancelled:    'Annulée',
   unblocked:    'Débloqué',
 };
+
+/**
+ * FC-D6 — Honest immobilization copy shared by the driver screen banner and
+ * the Home FleetControlCard. Never claims an engine cut unless `cut_sent`,
+ * and never claims that submitting the control cancels the restriction
+ * (only the manager / parking check decides that).
+ */
+export function immobilizationBanner(
+  state: ImmobilizationState,
+  status: FleetControlStatus,
+): { title: string; description: string } | null {
+  if (state === 'cut_sent') {
+    return {
+      title: 'Véhicule immobilisé',
+      description: 'Contactez votre gestionnaire.',
+    };
+  }
+  if (state === 'requested' || state === 'pending_stop' || status === 'blocked') {
+    return {
+      title: 'Restriction demandée',
+      description: 'En attente de vérification du stationnement. Contactez votre gestionnaire.',
+    };
+  }
+  return null;
+}
 
 export function daysOverdue(dueAt: string | Date): number {
   const t = typeof dueAt === 'string' ? new Date(dueAt).getTime() : dueAt.getTime();
@@ -134,6 +184,71 @@ export function formatDueDateRelative(due: Date | string, now: Date = new Date()
   const late = Math.abs(diffDays);
   return `En retard de ${late} jour${late > 1 ? 's' : ''}`;
 }
+
+/** Minimal shape needed to sign a storage URL for an inspection item. */
+export interface SignablePhotoRef {
+  id: string;
+  storage_path: string;
+}
+
+/**
+ * Batch-sign storage URLs for inspection items in ONE round-trip via
+ * `createSignedUrls` (instead of N `createSignedUrl` calls). Missing or
+ * broken objects land in `failed` keyed by photo id so tiles can show an
+ * honest "Pièce non disponible" state instead of a broken image.
+ */
+export async function signInspectionPhotoUrls(
+  client: { storage: { from: (bucket: string) => any } },
+  photos: SignablePhotoRef[],
+  ttl = 3600,
+): Promise<{ urls: Record<string, string>; failed: Record<string, true> }> {
+  const urls: Record<string, string> = {};
+  const failed: Record<string, true> = {};
+  const signable = photos.filter((p) => !!p.storage_path);
+  for (const p of photos) {
+    if (!p.storage_path) failed[p.id] = true;
+  }
+  if (signable.length === 0) return { urls, failed };
+
+  const { data, error } = await client.storage
+    .from('vehicle-inspections')
+    .createSignedUrls(signable.map((p) => p.storage_path), ttl);
+  if (error || !data) {
+    for (const p of signable) failed[p.id] = true;
+    return { urls, failed };
+  }
+  const byPath = new Map<string, string>();
+  for (const row of data as Array<{ path: string | null; signedUrl: string | null; error: string | null }>) {
+    if (row?.path && row.signedUrl && !row.error) byPath.set(row.path, row.signedUrl);
+  }
+  for (const p of signable) {
+    const url = byPath.get(p.storage_path);
+    if (url) urls[p.id] = url;
+    else failed[p.id] = true;
+  }
+  return { urls, failed };
+}
+
+/**
+ * Row shape + select columns shared by the driver history list and the
+ * read-only detail view (FleetControlHistory / FleetControlDetail).
+ */
+export interface FleetControlDriverRow {
+  id: string;
+  status: FleetControlStatus;
+  due_at: string;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  rejection_reason: string | null;
+  notes: string | null;
+  created_at: string;
+  vehicles?: { license_plate: string | null; make: string | null; model_name: string | null } | null;
+}
+
+export const FLEET_CONTROL_DRIVER_ROW_SELECT = `
+  id, status, due_at, submitted_at, reviewed_at, rejection_reason, notes, created_at,
+  vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
+`;
 
 export interface FleetControlSettings {
   cycle_days: number;

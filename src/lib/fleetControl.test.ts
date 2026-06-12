@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   formatDueDateRelative,
   requiredZones,
+  approvalRequiredZones,
+  immobilizationBanner,
   PHOTO_ZONES,
   DOCUMENT_ZONES,
 } from './fleetControl';
@@ -54,5 +56,58 @@ describe('requiredZones', () => {
   it('never allows an empty submission: both flags off falls back to the 7 photos', () => {
     const zones = requiredZones({ require_all_photos: false, require_documents: false });
     expect(zones.map((z) => z.key)).toEqual(PHOTO_ZONES.map((z) => z.key));
+  });
+});
+
+describe('approvalRequiredZones (admin approve-gate parity with fleet_control_approve)', () => {
+  it('matches requiredZones when at least one flag is on', () => {
+    for (const settings of [
+      { require_all_photos: true, require_documents: true },
+      { require_all_photos: true, require_documents: false },
+      { require_all_photos: false, require_documents: true },
+    ]) {
+      expect(approvalRequiredZones(settings).map((z) => z.key))
+        .toEqual(requiredZones(settings).map((z) => z.key));
+    }
+  });
+
+  it('skips the completeness check entirely when both flags are off (admin judgment)', () => {
+    // Unlike the driver-submit fallback to the 7 photos, approval enforces
+    // NOTHING when both flags are off — mirrors the SQL escape hatch.
+    expect(approvalRequiredZones({ require_all_photos: false, require_documents: false }))
+      .toEqual([]);
+  });
+});
+
+describe('immobilizationBanner', () => {
+  it('claims an actual cut only for cut_sent', () => {
+    expect(immobilizationBanner('cut_sent', 'blocked')).toEqual({
+      title: 'Véhicule immobilisé',
+      description: 'Contactez votre gestionnaire.',
+    });
+  });
+
+  it('shows the pending-restriction copy for requested/pending_stop and blocked status', () => {
+    const expected = {
+      title: 'Restriction demandée',
+      description: 'En attente de vérification du stationnement. Contactez votre gestionnaire.',
+    };
+    expect(immobilizationBanner('requested', 'overdue')).toEqual(expected);
+    expect(immobilizationBanner('pending_stop', 'overdue')).toEqual(expected);
+    expect(immobilizationBanner('none', 'blocked')).toEqual(expected);
+  });
+
+  it('never claims that submitting the control cancels the restriction', () => {
+    for (const state of ['requested', 'pending_stop', 'cut_sent'] as const) {
+      const banner = immobilizationBanner(state, 'blocked');
+      expect(banner?.description.toLowerCase()).not.toContain('soumettez');
+      expect(banner?.description.toLowerCase()).not.toContain('annuler');
+    }
+  });
+
+  it('returns null when there is nothing to warn about', () => {
+    expect(immobilizationBanner('none', 'pending')).toBeNull();
+    expect(immobilizationBanner('cancelled', 'overdue')).toBeNull();
+    expect(immobilizationBanner('unblocked', 'approved')).toBeNull();
   });
 });
