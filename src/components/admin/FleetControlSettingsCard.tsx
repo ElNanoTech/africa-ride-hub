@@ -28,6 +28,7 @@ const KEYS: Array<{
   { field: 'parking_check_interval_min',  key: 'fleet_control.parking_check_interval_min',  label: 'Vérification stationnement (min)',    help: 'Fréquence de la vérification GPS', kind: 'int', min: 5 },
   { field: 'relance_cooldown_hours',      key: 'fleet_control.relance_cooldown_hours',      label: 'Délai minimum entre deux relances',   help: 'Heures avant qu\'une nouvelle relance soit autorisée', kind: 'int', min: 1 },
   { field: 'auto_immobilisation_enabled', key: 'fleet_control.auto_immobilisation_enabled', label: 'Immobilisation automatique',          help: 'Coupure du véhicule activée automatiquement quand les seuils sont dépassés', kind: 'bool' },
+  { field: 'uffizio_immobilization_dry_run', key: 'fleet_control.uffizio_immobilization_dry_run', label: 'Mode test Uffizio (aucune coupure réelle)', help: 'Quand activé, le système contacte Uffizio et vérifie le véhicule mais NE coupe PAS le moteur. Désactiver pour transmettre la commande SET_OUT réelle.', kind: 'bool' },
   { field: 'require_all_photos',          key: 'fleet_control.require_all_photos',          label: 'Toutes les photos obligatoires',      help: 'Le chauffeur doit fournir les 7 photos', kind: 'bool' },
   { field: 'require_documents',           key: 'fleet_control.require_documents',           label: 'Documents obligatoires',              help: 'Le chauffeur doit fournir les 4 documents', kind: 'bool' },
 ];
@@ -50,6 +51,8 @@ export function FleetControlSettingsCard() {
           relance_cooldown_hours:      Number(data.relance_cooldown_hours ?? 24),
           require_all_photos:          Boolean(data.require_all_photos ?? true),
           require_documents:           Boolean(data.require_documents ?? true),
+          // Default TRUE so the system never cuts an engine until explicitly opted in.
+          uffizio_immobilization_dry_run: data.uffizio_immobilization_dry_run === false ? false : true,
         });
       }
       setLoading(false);
