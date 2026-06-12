@@ -264,13 +264,24 @@ Deno.serve(async (req) => {
       }, isUnique ? 409 : 500);
     }
 
-    // ---- Save KYC submission as pending so admin can review it ----
-    // Mobile Money is required at creation; ID/license are optional uploads.
-    if (bankName && bankAccountNumber) {
+    // ---- Save KYC submission as pending so admin can review it (CH-B2) ----
+    // A row is created when the wizard provides Mobile Money (required by the
+    // wizard) and/or uploaded documents — otherwise the uploaded files in the
+    // kyc-documents bucket would be orphaned with no reviewable submission.
+    // The row is tenant-scoped (customer_id) like the driver-side KYC flow
+    // (src/pages/driver/KYC.tsx). With no docs and no Mobile Money, no
+    // submission is created and the driver simply stays pending KYC.
+    let kycSubmissionCreated = false;
+    const hasDocs = Boolean(idProofUrl || licenseUrl);
+    const hasMobileMoney = Boolean(bankName && bankAccountNumber);
+    if (hasDocs || hasMobileMoney) {
       const { error: kycErr } = await admin.from('kyc_submissions').insert({
         driver_id: newDriver.id,
-        bank_name: bankName,
-        bank_account_number: bankAccountNumber,
+        customer_id: driverCustomerId,
+        // Mobile Money lives on kyc_submissions.bank_name/bank_account_number
+        // (NOT NULL columns) — defensive fallbacks for docs-only API calls.
+        bank_name: bankName?.trim() || 'Non renseigné',
+        bank_account_number: bankAccountNumber?.trim() || '',
         // id_proof_url is NOT NULL in DB — fall back to a placeholder when admin
         // hasn't uploaded it yet so the submission record can still be created
         // and reviewed by another admin.
@@ -279,6 +290,7 @@ Deno.serve(async (req) => {
         status: 'pending',
       });
       if (kycErr) console.warn('[create-managed-driver] kyc insert warning:', kycErr.message);
+      kycSubmissionCreated = !kycErr;
     }
 
     return json({
@@ -289,6 +301,7 @@ Deno.serve(async (req) => {
         pin,
       },
       kycStatus: 'pending',
+      kycSubmissionCreated,
       driverStatus: 'inactive',
       nextStep: 'review_kyc_then_activate',
       recoveredOrphan,
