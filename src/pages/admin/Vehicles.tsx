@@ -45,6 +45,7 @@ import { UffizioDevicePicker } from '@/components/admin/UffizioDevicePicker';
 import { AssignVehicleDialog } from '@/components/admin/AssignVehicleDialog';
 import { FLEET_CATEGORIES, fleetCategoryLabel, isValidFleetCategory } from '@/lib/fleetCategories';
 import { resolveVehicleImage } from '@/lib/vehicleImages';
+import { useAdminUser } from '@/hooks/useAdminUser';
 
 interface ImportRow {
   model_name: string;
@@ -148,6 +149,7 @@ const formatLastUpdate = (dateStr: string) => {
 
 export default function AdminVehicles() {
   const queryClient = useQueryClient();
+  const { customerId } = useAdminUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const persistedFilters = useRef<PersistedFilters>(loadPersistedFilters());
@@ -191,6 +193,10 @@ export default function AdminVehicles() {
   const [uploadingEditImage, setUploadingEditImage] = useState(false);
 
   const uploadVehicleImage = async (file: File): Promise<string | null> => {
+    if (!customerId) {
+      toast.error('Aucun client sélectionné');
+      return null;
+    }
     if (!file.type.startsWith('image/')) {
       toast.error('Veuillez sélectionner une image');
       return null;
@@ -200,7 +206,7 @@ export default function AdminVehicles() {
       return null;
     }
     const ext = file.name.split('.').pop() || 'jpg';
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `${customerId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
     const { error } = await supabase.storage.from('vehicle-photos').upload(path, file, { upsert: false, contentType: file.type });
     if (error) {
       toast.error(`Erreur d'upload: ${error.message}`);
