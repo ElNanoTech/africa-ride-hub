@@ -8,6 +8,14 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, Camera, CheckCircle2, AlertTriangle, ShieldCheck, Send, RefreshCw, FileText, Ban, Image as ImageIcon, Upload, Eye, Clock, Inbox, CheckCheck, ImageOff } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
 import { compressImage } from '@/lib/imageCompression';
@@ -83,6 +91,30 @@ export default function VehicleInspection() {
   const pendingZoneRef = useRef<ZoneKey | null>(null);
   const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
   const [brokenThumbs, setBrokenThumbs] = useState<Record<string, true>>({});
+  const [viewFail, setViewFail] = useState<{
+    zone: ZoneKey;
+    kind: 'camera' | 'doc';
+    label: string;
+    retrying: boolean;
+  } | null>(null);
+
+  const tryOpenSignedUrl = async (storagePath: string): Promise<string | null> => {
+    try {
+      const { data: sig, error } = await supabase.storage
+        .from('vehicle-inspections')
+        .createSignedUrl(storagePath, 3600);
+      if (error || !sig?.signedUrl) return null;
+      try {
+        const head = await fetch(sig.signedUrl, { method: 'HEAD' });
+        if (!head.ok) return null;
+      } catch {
+        // HEAD blocked by CORS in some setups — fall through and trust the URL.
+      }
+      return sig.signedUrl;
+    } catch {
+      return null;
+    }
+  };
 
   const driverId = driverProfile?.id;
 
