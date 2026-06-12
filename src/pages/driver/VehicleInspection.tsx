@@ -82,6 +82,7 @@ export default function VehicleInspection() {
   const [pendingKind, setPendingKind] = useState<'camera' | 'gallery' | 'document' | null>(null);
   const pendingZoneRef = useRef<ZoneKey | null>(null);
   const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
+  const [brokenThumbs, setBrokenThumbs] = useState<Record<string, true>>({});
 
   const driverId = driverProfile?.id;
 
@@ -174,8 +175,17 @@ export default function VehicleInspection() {
         const { data: sig, error } = await supabase.storage
           .from('vehicle-inspections')
           .createSignedUrl(p.storage_path, 3600);
-        if (sig?.signedUrl) urls[p.id] = sig.signedUrl;
-        if (error || !sig?.signedUrl) failed[p.id] = true;
+        if (error || !sig?.signedUrl) {
+          failed[p.id] = true;
+          return;
+        }
+        try {
+          const head = await fetch(sig.signedUrl, { method: 'HEAD' });
+          if (!head.ok) failed[p.id] = true;
+          else urls[p.id] = sig.signedUrl;
+        } catch {
+          urls[p.id] = sig.signedUrl;
+        }
       }));
       return { urls, failed };
     },
@@ -183,7 +193,7 @@ export default function VehicleInspection() {
 
   const completedCount = ALL_ZONES.filter((z) => {
     const photo = photosByZone[z.key];
-    return !!photo && !thumbs.failed[photo.id];
+    return !!photo && !thumbs.failed[photo.id] && !brokenThumbs[photo.id];
   }).length;
   const rejectedCount = photos.filter(p => p.validation_status === 'rejected').length;
   const canSubmit =
@@ -398,7 +408,7 @@ export default function VehicleInspection() {
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
     const thumbUrl = photo ? thumbs.urls[photo.id] : undefined;
-    const thumbFailed = !!photo && !!thumbs.failed[photo.id];
+    const thumbFailed = !!photo && (!!thumbs.failed[photo.id] || !!brokenThumbs[photo.id]);
     const isImageThumb = thumbUrl && !/\.pdf($|\?)/i.test(photo!.storage_path);
     // Tile is editable when: never approved, and (no review pending OR this item was rejected).
     const itemLocked = cycleLocked || approved || (reviewInProgress && !rejected && !thumbFailed);
@@ -434,7 +444,13 @@ export default function VehicleInspection() {
         {photo && !thumbFailed && (
           <div className="mt-2 aspect-video w-full rounded-md overflow-hidden bg-muted flex items-center justify-center">
             {isImageThumb ? (
-              <img src={thumbUrl} alt={z.label} className="w-full h-full object-cover" loading="lazy" />
+              <img
+                src={thumbUrl}
+                alt={z.label}
+                className="w-full h-full object-cover"
+                loading="lazy"
+                onError={() => photo && setBrokenThumbs((prev) => ({ ...prev, [photo.id]: true }))}
+              />
             ) : thumbUrl ? (
               <a href={thumbUrl} target="_blank" rel="noreferrer" className="flex flex-col items-center text-xs text-muted-foreground">
                 <FileText className="h-6 w-6 mb-1" />
