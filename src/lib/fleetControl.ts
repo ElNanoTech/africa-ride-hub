@@ -53,6 +53,24 @@ export const DOCUMENT_ZONES: ZoneDef[] = [
 export const ALL_ZONES: ZoneDef[] = [...PHOTO_ZONES, ...DOCUMENT_ZONES];
 export const REQUIRED_ITEM_COUNT = ALL_ZONES.length; // 11
 
+/**
+ * Derive the required zone set from the require_all_photos /
+ * require_documents settings. Mirrors the SQL source of truth
+ * `fleet_control_required_zones()` used by fleet_control_submit/approve:
+ *   (require_all_photos ? 7 photo zones : none)
+ * ∪ (require_documents  ? 4 doc zones   : none)
+ * If both flags are off we still require the 7 photos — a control can
+ * never be submitted empty.
+ */
+export function requiredZones(
+  settings: Pick<FleetControlSettings, 'require_all_photos' | 'require_documents'>,
+): ZoneDef[] {
+  const photos = settings.require_all_photos ? PHOTO_ZONES : [];
+  const docs = settings.require_documents ? DOCUMENT_ZONES : [];
+  if (photos.length === 0 && docs.length === 0) return [...PHOTO_ZONES];
+  return [...photos, ...docs];
+}
+
 export const STATUS_LABEL: Record<FleetControlStatus, string> = {
   pending:   'En attente',
   submitted: 'À valider',
@@ -100,6 +118,21 @@ export function isOverdue(status: FleetControlStatus, dueAt: string): boolean {
 export function effectiveStatus(status: FleetControlStatus, dueAt: string): FleetControlStatus {
   if (status === 'pending' && isOverdue(status, dueAt)) return 'overdue';
   return status;
+}
+
+/**
+ * Relative due-date copy for the driver screens (simple French):
+ *   "Échéance dans X jours" / "À soumettre aujourd'hui" / "En retard de X jours".
+ * Day differences are computed on calendar days (local time).
+ */
+export function formatDueDateRelative(due: Date | string, now: Date = new Date()): string {
+  const d = typeof due === 'string' ? new Date(due) : due;
+  const startOfDay = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(d) - startOfDay(now)) / 86_400_000);
+  if (diffDays > 0) return `Échéance dans ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+  if (diffDays === 0) return "À soumettre aujourd'hui";
+  const late = Math.abs(diffDays);
+  return `En retard de ${late} jour${late > 1 ? 's' : ''}`;
 }
 
 export interface FleetControlSettings {
