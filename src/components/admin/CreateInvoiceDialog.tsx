@@ -8,7 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { InvoiceTagPicker } from '@/components/admin/InvoiceTagPicker';
 import { Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useGenerateInvoice, useActiveRentalsForDriver } from '@/hooks/useBilling';
+import { useGenerateInvoice, useActiveRentalsForDriver, resolveRentalAttachment, validateInvoiceLines } from '@/hooks/useBilling';
 import type { Invoice } from '@/types/billing';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatCurrency, formatDateShort } from '@/lib/format';
@@ -72,16 +72,19 @@ export function CreateInvoiceDialog({
 
   const rentalsQuery = useActiveRentalsForDriver(open ? driverId : null);
   const activeRentals = rentalsQuery.data ?? [];
-  const needsRentalChoice = activeRentals.length > 1;
-  const autoRentalId = activeRentals.length === 1 ? activeRentals[0].id : null;
-  const effectiveRentalId = needsRentalChoice ? rentalId : autoRentalId;
+  // Shared attachment rule (useBilling) — same logic as /admin/billing.
+  const { needsRentalChoice, effectiveRentalId } = resolveRentalAttachment(activeRentals, rentalId);
+  // While the rentals are loading (or failed), the needsRentalChoice guard
+  // would be evaluated against an empty list — issuing must stay blocked.
+  const rentalsNotReady = rentalsQuery.isLoading || rentalsQuery.isError;
 
   const total = lines.reduce((sum, l) => sum + (Number(l.unit_price) || 0) * (Number(l.quantity) || 0), 0);
 
   const handleIssue = async () => {
-    const cleanLines = lines.filter((l) => l.designation.trim() && Number(l.unit_price) > 0);
-    if (cleanLines.length === 0) { toast.error('Au moins une ligne avec désignation et prix > 0'); return; }
+    const validated = validateInvoiceLines(lines);
+    if (validated.error || !validated.lines) { toast.error(validated.error ?? 'Lignes invalides'); return; }
     if (!customerId) { toast.error('Aucun client actif'); return; }
+    if (rentalsNotReady) { toast.error('Locations en cours de chargement — réessayez'); return; }
     if (needsRentalChoice && !rentalId) { toast.error('Sélectionnez la location à rattacher'); return; }
     try {
       const res = await generate.mutateAsync({
@@ -90,7 +93,7 @@ export function CreateInvoiceDialog({
         rental_id: effectiveRentalId,
         notes: notes || undefined,
         tags: tags.length > 0 ? tags : undefined,
-        lines: cleanLines.map((l) => ({ designation: l.designation.trim(), quantity: l.quantity, unit_price: l.unit_price })),
+        lines: validated.lines,
       });
       // The hook invalidates admin-invoices; refresh the profile panels too.
       qc.invalidateQueries({ queryKey: ['driver-invoices', driverId] });
@@ -114,7 +117,17 @@ export function CreateInvoiceDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          {!rentalsQuery.isLoading && (
+          {rentalsQuery.isLoading && (
+            <div className="rounded-md border p-3 text-sm bg-muted/30 text-muted-foreground">
+              Chargement des locations…
+            </div>
+          )}
+          {rentalsQuery.isError && (
+            <div className="rounded-md border p-3 text-sm bg-destructive/10 text-destructive">
+              Impossible de charger les locations actives — émission bloquée. Fermez puis rouvrez le dialogue pour réessayer.
+            </div>
+          )}
+          {!rentalsNotReady && (
             <div className="rounded-md border p-3 text-sm bg-muted/30">
               {activeRentals.length === 0 && (
                 <span className="text-muted-foreground">
@@ -186,8 +199,12 @@ export function CreateInvoiceDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Annuler</Button>
-          <Button onClick={handleIssue} disabled={generate.isPending || !customerId} title={!customerId ? 'Aucun client actif' : undefined}>
-            {generate.isPending ? 'Émission…' : 'Émettre la facture'}
+          <Button
+            onClick={handleIssue}
+            disabled={generate.isPending || !customerId || rentalsNotReady}
+            title={!customerId ? 'Aucun client actif' : rentalsNotReady ? 'Chargement des locations…' : undefined}
+          >
+            {generate.isPending ? 'Émission…' : rentalsQuery.isLoading ? 'Chargement des locations…' : 'Émettre la facture'}
           </Button>
         </DialogFooter>
       </DialogContent>

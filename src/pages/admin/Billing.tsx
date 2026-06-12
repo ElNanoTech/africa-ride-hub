@@ -31,6 +31,8 @@ import {
   usePaymentReceipts,
   useVoidPaymentReceipt,
   fetchInvoiceLinesCached,
+  resolveRentalAttachment,
+  validateInvoiceLines,
   type InvoiceAuditEntry,
   type BillingCronRun,
 } from "@/hooks/useBilling";
@@ -303,9 +305,11 @@ export default function AdminBilling() {
 
   const activeRentalsQuery = useActiveRentalsForDriver(issueDriverId || null);
   const activeRentals = activeRentalsQuery.data ?? [];
-  const needsRentalChoice = activeRentals.length > 1;
-  const autoRentalId = activeRentals.length === 1 ? activeRentals[0].id : null;
-  const effectiveRentalId = needsRentalChoice ? issueRentalId : autoRentalId;
+  // Shared attachment rule (useBilling) — same logic as CreateInvoiceDialog.
+  const { needsRentalChoice, effectiveRentalId } = resolveRentalAttachment(activeRentals, issueRentalId);
+  // While the rentals are loading (or failed) the needsRentalChoice guard
+  // would run against an empty list — issuing must stay blocked.
+  const rentalsNotReady = !!issueDriverId && (activeRentalsQuery.isLoading || activeRentalsQuery.isError);
 
   const draftTotal = draftLines.reduce((sum, l) => sum + (Number(l.unit_price) || 0) * (Number(l.quantity) || 0), 0);
 
@@ -338,8 +342,10 @@ export default function AdminBilling() {
   };
 
   const handleIssue = async () => {
-    const cleanLines = draftLines.filter((l) => l.designation.trim() && Number(l.unit_price) > 0);
-    if (cleanLines.length === 0) { toast.error("Au moins une ligne avec désignation et prix > 0"); return; }
+    // Shared line validation (useBilling) — same rules as CreateInvoiceDialog.
+    const validated = validateInvoiceLines(draftLines);
+    if (validated.error || !validated.lines) { toast.error(validated.error ?? "Lignes invalides"); return; }
+    const cleanLines = validated.lines;
 
     if (isEditMode && editingInvoice) {
       try {
@@ -360,6 +366,7 @@ export default function AdminBilling() {
 
     if (!customerId) { toast.error("Aucun customer_id assigné"); return; }
     if (!issueDriverId) { toast.error("Sélectionnez un conducteur"); return; }
+    if (rentalsNotReady) { toast.error("Locations en cours de chargement — réessayez"); return; }
     if (needsRentalChoice && !issueRentalId) { toast.error("Sélectionnez la location à rattacher"); return; }
     try {
       await generate.mutateAsync({
@@ -368,7 +375,7 @@ export default function AdminBilling() {
         rental_id: effectiveRentalId,
         notes: issueNotes || undefined,
         tags: issueTags.length > 0 ? issueTags : undefined,
-        lines: cleanLines.map((l) => ({ designation: l.designation, quantity: l.quantity, unit_price: l.unit_price })),
+        lines: cleanLines,
       });
       setIssueOpen(false);
       resetDraft();
@@ -1181,7 +1188,17 @@ export default function AdminBilling() {
               )}
             </div>
 
-            {!isEditMode && issueDriverId && !activeRentalsQuery.isLoading && (
+            {!isEditMode && issueDriverId && activeRentalsQuery.isLoading && (
+              <div className="rounded-md border p-3 text-sm bg-muted/30 text-muted-foreground">
+                Chargement des locations…
+              </div>
+            )}
+            {!isEditMode && issueDriverId && activeRentalsQuery.isError && (
+              <div className="rounded-md border p-3 text-sm bg-destructive/10 text-destructive">
+                Impossible de charger les locations actives — émission bloquée.
+              </div>
+            )}
+            {!isEditMode && issueDriverId && !rentalsNotReady && (
               <div className="rounded-md border p-3 text-sm bg-muted/30">
                 {activeRentals.length === 0 && (
                   <span className="text-muted-foreground">
@@ -1254,11 +1271,12 @@ export default function AdminBilling() {
             <Button variant="outline" onClick={() => setIssueOpen(false)}>Annuler</Button>
             <Button
               onClick={handleIssue}
-              disabled={generate.isPending || updateContent.isPending || updateTags.isPending}
+              disabled={generate.isPending || updateContent.isPending || updateTags.isPending || (!isEditMode && rentalsNotReady)}
+              title={!isEditMode && rentalsNotReady ? "Chargement des locations…" : undefined}
             >
               {isEditMode
                 ? (updateContent.isPending || updateTags.isPending ? "Enregistrement…" : "Enregistrer les modifications")
-                : (generate.isPending ? "Émission…" : "Émettre la facture")}
+                : (generate.isPending ? "Émission…" : rentalsNotReady ? "Chargement des locations…" : "Émettre la facture")}
             </Button>
           </DialogFooter>
         </DialogContent>
