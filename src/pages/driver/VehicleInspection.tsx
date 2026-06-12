@@ -776,3 +776,144 @@ function ImmobilizationPanel({
     </Card>
   );
 }
+
+/**
+ * Compact 3-step timeline that reflects where the cycle currently stands:
+ * 1) Pièces envoyées (uploads in progress)
+ * 2) En attente de validation (status=submitted)
+ * 3) Validé / Refusé (status=approved|rejected)
+ */
+function ReviewTimeline({
+  status,
+  submittedAt,
+  completedCount,
+}: {
+  status: FleetControlStatus;
+  submittedAt: string | null;
+  completedCount: number;
+}) {
+  const piecesDone = completedCount > 0;
+  const sent = status === 'submitted' || status === 'approved' || status === 'rejected';
+  const reviewed = status === 'approved' || status === 'rejected';
+  const rejected = status === 'rejected';
+
+  const steps = [
+    { key: 'pieces',  label: 'Pièces envoyées',        icon: Inbox,       done: piecesDone, current: !sent && piecesDone },
+    { key: 'review',  label: 'En attente de validation', icon: Clock,     done: sent,       current: sent && !reviewed },
+    { key: 'done',    label: rejected ? 'Refusé' : 'Validé', icon: rejected ? AlertTriangle : CheckCheck, done: reviewed, current: reviewed },
+  ];
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+          Suivi du contrôle
+        </div>
+        <ol className="flex items-center justify-between gap-2">
+          {steps.map((s, i) => {
+            const Icon = s.icon;
+            const tone = s.done
+              ? (s.key === 'done' && rejected ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white')
+              : s.current
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground';
+            return (
+              <li key={s.key} className="flex-1 flex flex-col items-center text-center">
+                <div className={`h-8 w-8 rounded-full flex items-center justify-center ${tone}`}>
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className={`text-[11px] mt-1 ${s.done || s.current ? 'font-medium' : 'text-muted-foreground'}`}>
+                  {s.label}
+                </div>
+                {i < steps.length - 1 && (
+                  <div className="hidden" />
+                )}
+              </li>
+            );
+          })}
+        </ol>
+        {submittedAt && (
+          <div className="text-[11px] text-muted-foreground mt-2 text-center">
+            Envoyé le {format(new Date(submittedAt), 'PPpp', { locale: fr })}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/**
+ * Sticky bottom action bar with state-aware labels per the spec:
+ * - incomplete  → "Soumettre le contrôle" (disabled until 11/11)
+ * - complete    → enabled submit button
+ * - submitted   → "Envoyé pour validation" (disabled, neutral)
+ * - rejected    → "Corriger les éléments refusés" (scrolls to first rejected tile)
+ * - approved    → "Contrôle validé" (disabled, success)
+ */
+function StickyActionBar({
+  status,
+  completed,
+  required,
+  rejectedCount,
+  canSubmit,
+  onSubmit,
+}: {
+  status: FleetControlStatus;
+  completed: number;
+  required: number;
+  rejectedCount: number;
+  canSubmit: boolean;
+  onSubmit: () => void;
+}) {
+  let label = 'Soumettre le contrôle';
+  let disabled = !canSubmit;
+  let variant: 'default' | 'destructive' | 'secondary' = 'default';
+  let onClick: () => void = onSubmit;
+  let icon = <Send className="h-5 w-5 mr-2" />;
+
+  if (status === 'approved') {
+    label = 'Contrôle validé';
+    disabled = true;
+    variant = 'secondary';
+    icon = <CheckCheck className="h-5 w-5 mr-2" />;
+  } else if (status === 'rejected' && rejectedCount > 0) {
+    label = 'Corriger les éléments refusés';
+    disabled = false;
+    variant = 'destructive';
+    icon = <AlertTriangle className="h-5 w-5 mr-2" />;
+    onClick = () => {
+      const el = document.querySelector('[data-rejected="true"]');
+      el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+  } else if (status === 'submitted') {
+    label = 'Envoyé pour validation';
+    disabled = true;
+    variant = 'secondary';
+    icon = <Clock className="h-5 w-5 mr-2" />;
+  }
+
+  return (
+    <div className="fixed bottom-0 inset-x-0 z-40 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pb-[env(safe-area-inset-bottom)]">
+      <div className="max-w-2xl mx-auto p-3 space-y-2">
+        {status !== 'approved' && status !== 'submitted' && (
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{completed}/{required} pièces</span>
+            {rejectedCount > 0 && (
+              <span className="text-rose-600 font-medium">{rejectedCount} à corriger</span>
+            )}
+          </div>
+        )}
+        <Button
+          onClick={onClick}
+          disabled={disabled}
+          variant={variant}
+          className="w-full h-12 text-base"
+          size="lg"
+        >
+          {icon}
+          {label}
+        </Button>
+      </div>
+    </div>
+  );
+}
