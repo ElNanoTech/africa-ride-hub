@@ -887,6 +887,9 @@ export default function AdminDriverDetail() {
           <TabsTrigger value="invoices">Factures</TabsTrigger>
           <TabsTrigger value="accidents">Sinistres</TabsTrigger>
           <TabsTrigger value="tickets">Tickets</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
+          <TabsTrigger value="notes">Notes</TabsTrigger>
+          <TabsTrigger value="audit">Audit</TabsTrigger>
           <TabsTrigger value="activity">Activité</TabsTrigger>
         </TabsList>
 
