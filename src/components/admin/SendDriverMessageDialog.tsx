@@ -64,9 +64,11 @@ export function SendDriverMessageDialog({
       });
       if (error) throw error;
       // Push is best-effort: the in-app notification is already persisted.
+      // skipInApp: the function's backup in-app insert would duplicate the
+      // properly-typed row inserted above.
       try {
         await supabase.functions.invoke('send-push-notification', {
-          body: { driverId, title: t, body: m },
+          body: { driverId, title: t, body: m, skipInApp: true },
         });
       } catch {
         /* push optional — in-app delivery already done */
