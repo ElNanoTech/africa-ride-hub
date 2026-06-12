@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { AdminLayout } from '@/components/AdminLayout';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
 import { HeroCard } from '@/components/admin/HeroCard';
@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  ShieldCheck, ListChecks, Clock, AlertTriangle, Ban, CheckCircle2, XCircle, Camera, Settings as SettingsIcon,
+  ShieldCheck, ListChecks, Clock, AlertTriangle, Ban, CheckCircle2, XCircle, Camera, Settings as SettingsIcon, Plus,
 } from 'lucide-react';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { format } from 'date-fns';
@@ -22,10 +22,12 @@ import {
   FleetControlDetailDialog,
   type FleetControlRow,
 } from '@/components/admin/FleetControlDetailDialog';
+import { FleetControlCreateDialog } from '@/components/admin/FleetControlCreateDialog';
+import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
 import {
   STATUS_LABEL, STATUS_CLASS,
   effectiveStatus, daysOverdue,
-  REQUIRED_ITEM_COUNT,
+  requiredZones,
   DEFAULT_FLEET_CONTROL_SETTINGS,
   type FleetControlStatus,
   type FleetControlSettings,
@@ -65,12 +67,24 @@ type TabKey = 'all' | 'submitted' | 'overdue' | 'approved' | 'blocked' | 'reject
 
 export default function FleetControl() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const settings = useFleetControlSettings();
   const [tab, setTab] = useState<TabKey>('all');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [overdueOnly, setOverdueOnly] = useState(false);
   const [activeRow, setActiveRow] = useState<FleetControlRow | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+
+  // FC-A3/D3: required item count derived from settings (not always 11).
+  const requiredCount = useMemo(() => requiredZones(settings).length, [settings]);
+
+  // FC-A2: live refresh — a driver submission/photo upload appears without
+  // manual reload. RLS scopes the events to the admin's tenant.
+  const invalidateFleetControl = () =>
+    queryClient.invalidateQueries({ queryKey: ['fleet-control'] });
+  useRealtimePostgresChanges('vehicle_inspections', '*', () => true, invalidateFleetControl);
+  useRealtimePostgresChanges('vehicle_inspection_photos', '*', () => true, invalidateFleetControl);
 
   const { data: rows = [], isLoading } = useQuery<FleetControlRow[]>({
     queryKey: ['fleet-control', 'list'],
@@ -150,9 +164,14 @@ export default function FleetControl() {
         title="Fleet Control"
         subtitle="Photos chauffeur · validation fleet manager · auto-immobilisation"
         actions={
-          <Button variant="secondary" onClick={() => navigate('/admin/settings#fleet-control')}>
-            <SettingsIcon className="mr-2 h-4 w-4" /> Réglages
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowCreate(true)}>
+              <Plus className="mr-2 h-4 w-4" /> Nouveau contrôle
+            </Button>
+            <Button variant="secondary" onClick={() => navigate('/admin/settings#fleet-control')}>
+              <SettingsIcon className="mr-2 h-4 w-4" /> Réglages
+            </Button>
+          </div>
         }
       />
 
@@ -224,6 +243,7 @@ export default function FleetControl() {
               row={row}
               effective={row._effective}
               agg={itemAgg[row.id]}
+              requiredCount={requiredCount}
               onOpen={() => setActiveRow(row)}
             />
           ))}
@@ -234,17 +254,21 @@ export default function FleetControl() {
         row={activeRow}
         onClose={() => setActiveRow(null)}
         cooldownHours={settings.relance_cooldown_hours}
+        settings={settings}
       />
+
+      <FleetControlCreateDialog open={showCreate} onClose={() => setShowCreate(false)} />
     </AdminLayout>
   );
 }
 
 function ControlCard({
-  row, effective, agg, onOpen,
+  row, effective, agg, requiredCount, onOpen,
 }: {
   row: FleetControlRow;
   effective: FleetControlStatus;
   agg?: ItemAggregate;
+  requiredCount: number;
   onOpen: () => void;
 }) {
   const plate = row.vehicles?.license_plate ?? '—';
@@ -279,13 +303,16 @@ function ControlCard({
             </span>
           )}
           <span className="inline-flex items-center gap-1">
-            <Camera className="h-3 w-3" /> {totalSubmitted}/{REQUIRED_ITEM_COUNT} pièces
+            <Camera className="h-3 w-3" /> {totalSubmitted}/{requiredCount} pièces
           </span>
         </div>
 
-        {/* 11-tile strip */}
-        <div className="grid grid-cols-11 gap-1">
-          {Array.from({ length: REQUIRED_ITEM_COUNT }).map((_, i) => {
+        {/* Item strip — one tile per required zone (FC-A3: derived from settings) */}
+        <div
+          className="grid gap-1"
+          style={{ gridTemplateColumns: `repeat(${requiredCount}, minmax(0, 1fr))` }}
+        >
+          {Array.from({ length: requiredCount }).map((_, i) => {
             // Show approved (green), rejected (rose), submitted (blue), empty (grey)
             // We don't know which zone is which from the aggregate, so order is:
             // approved → rejected → submitted → empty fill.

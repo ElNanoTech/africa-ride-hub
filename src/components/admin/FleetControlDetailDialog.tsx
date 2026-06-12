@@ -15,12 +15,13 @@ import { fleetCategoryLabel } from '@/lib/fleetCategories';
 import {
   PHOTO_ZONES,
   DOCUMENT_ZONES,
-  ALL_ZONES,
   STATUS_LABEL,
   STATUS_CLASS,
   IMMO_LABEL,
   effectiveStatus,
+  requiredZones,
   type FleetControlStatus,
+  type FleetControlSettings,
   type ImmobilizationState,
   type ZoneKey,
   type ItemValidation,
@@ -69,6 +70,7 @@ interface Props {
   row: FleetControlRow | null;
   onClose: () => void;
   cooldownHours: number;
+  settings: FleetControlSettings;
 }
 
 const ACTION_LABEL: Record<string, string> = {
@@ -84,7 +86,7 @@ const ACTION_LABEL: Record<string, string> = {
   status_recomputed: 'Statut recalculé',
 };
 
-export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props) {
+export function FleetControlDetailDialog({ row, onClose, cooldownHours, settings }: Props) {
   const open = !!row;
   const qc = useQueryClient();
   const [rejectingId, setRejectingId] = useState<string | null>(null);
@@ -246,9 +248,11 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
     onError: (e: any) => toast.error(e?.message ?? 'Erreur'),
   });
 
+  // FC-A3: required zone set derived from settings (mirrors the server check).
+  const reqZones = useMemo(() => requiredZones(settings), [settings]);
   const filledCount = useMemo(
-    () => ALL_ZONES.filter((z) => items?.[z.key]).length,
-    [items],
+    () => reqZones.filter((z) => items?.[z.key]).length,
+    [items, reqZones],
   );
 
   if (!row) return null;
@@ -261,7 +265,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
   const cooldownActive = row.status !== 'approved' && !!row.last_reminder_at &&
     new Date(row.last_reminder_at).getTime() + cooldownHours * 3_600_000 > Date.now();
 
-  const canApproveFull = filledCount === ALL_ZONES.length &&
+  const canApproveFull = filledCount === reqZones.length &&
     Object.values(items ?? {}).every((it) => it.validation_status !== 'rejected');
   const controlApproved = row.status === 'approved' || eff === 'approved';
 
@@ -282,7 +286,7 @@ export function FleetControlDetailDialog({ row, onClose, cooldownHours }: Props)
               <Badge variant="outline" className="text-[10px]">{fleetCategoryLabel(row.vehicles.fleet_group)}</Badge>
             )}
             <Badge className={STATUS_CLASS[eff] + ' text-[10px]'}>{STATUS_LABEL[eff]}</Badge>
-            <Badge variant="secondary" className="text-[10px]">{filledCount}/{ALL_ZONES.length} pièces</Badge>
+            <Badge variant="secondary" className="text-[10px]">{filledCount}/{reqZones.length} pièces</Badge>
             {immoState !== 'none' && (
               <Badge className="bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 text-[10px]">
                 <Ban className="h-3 w-3 mr-1" /> {IMMO_LABEL[immoState]}
