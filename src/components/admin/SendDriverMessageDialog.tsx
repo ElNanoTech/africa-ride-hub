@@ -90,7 +90,14 @@ export function SendDriverMessageDialog({
       qc.invalidateQueries({ queryKey: ['driver-audit', driverId] });
       onOpenChange(false);
     },
-    onError: (e: Error) => toast.error('Envoi impossible', { description: e.message }),
+    onError: (e: Error) =>
+      toast.error('Envoi impossible', {
+        // Pre-deploy: the live DB may not accept the admin_message
+        // notification type yet — explain in French, never raw SQL.
+        description: /notifications_notification_type_check/.test(e.message)
+          ? 'Le type de message n’est pas encore activé côté serveur. Une mise à jour est en cours de déploiement — réessayez plus tard.'
+          : e.message,
+      }),
   });
 
   return (

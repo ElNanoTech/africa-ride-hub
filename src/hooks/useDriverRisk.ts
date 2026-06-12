@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import type { DriverRiskLevel } from '@/lib/driverRisk';
+import { retryUnlessMissingRpc } from '@/lib/rpcErrors';
 
 export interface DriverRisk {
   level: DriverRiskLevel;
@@ -31,6 +32,8 @@ export function useDriverRisk(driverId?: string) {
     queryKey: ['driver-risk', driverId],
     enabled: !!driverId,
     staleTime: 60_000,
+    // Pre-deploy the RPC may not exist (PGRST202) — retrying never helps.
+    retry: retryUnlessMissingRpc,
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc('driver_risk', {
         p_driver: driverId as string,
@@ -51,6 +54,8 @@ export function useDriversRiskSummary(enabled = true) {
     queryKey: ['drivers-risk-summary'],
     enabled,
     staleTime: 60_000,
+    // Pre-deploy the RPC may not exist (PGRST202) — retrying never helps.
+    retry: retryUnlessMissingRpc,
     queryFn: async () => {
       const { data, error } = await (supabase as any).rpc('drivers_risk_summary');
       if (error) throw error;

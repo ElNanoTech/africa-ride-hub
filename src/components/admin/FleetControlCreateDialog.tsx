@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Plus, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
+import { isMissingRpcError, MISSING_RPC_FR } from '@/lib/rpcErrors';
 
 const supabase = _supabase as any;
 
@@ -102,7 +103,12 @@ export function FleetControlCreateDialog({ open, onClose }: Props) {
       qc.invalidateQueries({ queryKey: ['fleet-control'] });
       onClose();
     },
-    onError: (e: any) => toast.error(e?.message ?? 'Erreur'),
+    onError: (e: any) =>
+      toast.error('Création du contrôle impossible', {
+        description: isMissingRpcError(e)
+          ? MISSING_RPC_FR
+          : e?.message ?? 'Erreur inconnue — réessayez.',
+      }),
   });
 
   return (

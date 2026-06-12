@@ -119,20 +119,27 @@ interface KpiClickTileProps {
    * the tile is non-interactive (clicking would filter on an empty set).
    */
   disabled?: boolean;
+  /**
+   * True when the tile's backing data FAILED to load (e.g. the risk RPC is
+   * not deployed yet): the count shows an honest '—' instead of a fake 0,
+   * and the tile is non-interactive.
+   */
+  unavailable?: boolean;
 }
 
 /** CH-L1 — KpiTile wrapped as a filter toggle (ring shows the active state). */
-function KpiClickTile({ label, value, icon, variant, hint, active, onClick, disabled }: KpiClickTileProps) {
+function KpiClickTile({ label, value, icon, variant, hint, active, onClick, disabled, unavailable }: KpiClickTileProps) {
+  const inert = disabled || unavailable;
   return (
     <button
       type="button"
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
+      onClick={inert ? undefined : onClick}
+      disabled={inert}
       aria-pressed={active}
-      className={`text-left rounded-2xl transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'ring-2 ring-primary' : ''} ${disabled ? 'opacity-60 cursor-default' : ''}`}
-      title={disabled ? 'Chargement…' : active ? 'Cliquer pour retirer le filtre' : 'Cliquer pour filtrer'}
+      className={`text-left rounded-2xl transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${active ? 'ring-2 ring-primary' : ''} ${inert ? 'opacity-60 cursor-default' : ''}`}
+      title={unavailable ? 'Données indisponibles pour le moment' : disabled ? 'Chargement…' : active ? 'Cliquer pour retirer le filtre' : 'Cliquer pour filtrer'}
     >
-      <KpiTile label={label} value={disabled ? '…' : value} icon={icon} variant={variant} hint={hint} className="h-full" />
+      <KpiTile label={label} value={unavailable ? '—' : disabled ? '…' : value} icon={icon} variant={variant} hint={hint} className="h-full" />
     </button>
   );
 }
@@ -173,7 +180,7 @@ export default function AdminDrivers() {
   // CH-L1/L2 — batched companion queries (one each, no per-row RPCs):
   // computed risk summary, wallet balances, active-rental rates, overdue
   // payments. Each is keyed by driver_id maps for O(1) row lookups.
-  const { data: riskRows, isLoading: riskLoading } = useDriversRiskSummary();
+  const { data: riskRows, isLoading: riskLoading, isError: riskUnavailable } = useDriversRiskSummary();
   const riskByDriver = useMemo(() => {
     const map = new Map<string, DriverRiskSummaryRow>();
     (riskRows ?? []).forEach((r) => map.set(r.driver_id, r));
@@ -829,12 +836,14 @@ export default function AdminDrivers() {
           hint="Élevé + Critique"
           active={riskFilter === 'atrisk'}
           disabled={riskLoading}
+          unavailable={riskUnavailable}
           onClick={() => setRiskFilter((v) => (v === 'atrisk' ? 'all' : 'atrisk'))}
         />
         <KpiClickTile
           label="Paiements en retard" value={kpiCounts.paiementsEnRetard} icon={AlertTriangle} variant="orange"
           active={overdueOnly}
           disabled={overdueLoading}
+          unavailable={riskUnavailable}
           onClick={() => setOverdueOnly((v) => !v)}
         />
       </div>
@@ -932,8 +941,11 @@ export default function AdminDrivers() {
                 <SelectItem value="without">Sans véhicule</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={riskFilter} onValueChange={(v) => setRiskFilter(v as typeof riskFilter)}>
-              <SelectTrigger className={`w-full sm:w-52 ${riskFilter !== 'all' ? 'border-primary ring-1 ring-primary/20' : ''}`}>
+            <Select value={riskFilter} onValueChange={(v) => setRiskFilter(v as typeof riskFilter)} disabled={riskUnavailable}>
+              <SelectTrigger
+                className={`w-full sm:w-52 ${riskFilter !== 'all' ? 'border-primary ring-1 ring-primary/20' : ''}`}
+                title={riskUnavailable ? 'Risque indisponible pour le moment' : undefined}
+              >
                 <SelectValue placeholder="Risque" />
               </SelectTrigger>
               <SelectContent>
@@ -950,6 +962,8 @@ export default function AdminDrivers() {
               size="sm"
               onClick={() => setOverdueOnly((v) => !v)}
               className="gap-1 h-10"
+              disabled={riskUnavailable}
+              title={riskUnavailable ? 'Données de retard indisponibles pour le moment' : undefined}
             >
               <AlertTriangle className="h-4 w-4" />
               Paiements en retard
