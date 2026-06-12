@@ -111,6 +111,13 @@ export interface FleetControlSettings {
   relance_cooldown_hours: number;
   require_all_photos: boolean;
   require_documents: boolean;
+  /**
+   * When true, the parking-check job authenticates against Uffizio and verifies
+   * the device, but does NOT transmit the SET_OUT engine-cut command. The
+   * command_ref is stamped `DRY_RUN:...` and audit rows note `dry_run: true`.
+   * Defaults to true so we never accidentally cut a live engine.
+   */
+  uffizio_immobilization_dry_run: boolean;
 }
 
 export const DEFAULT_FLEET_CONTROL_SETTINGS: FleetControlSettings = {
@@ -122,4 +129,5 @@ export const DEFAULT_FLEET_CONTROL_SETTINGS: FleetControlSettings = {
   relance_cooldown_hours: 24,
   require_all_photos: true,
   require_documents: true,
+  uffizio_immobilization_dry_run: true,
 };

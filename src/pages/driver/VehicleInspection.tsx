@@ -20,10 +20,12 @@ import {
   REQUIRED_ITEM_COUNT,
   STATUS_LABEL,
   STATUS_CLASS,
+  IMMO_LABEL,
   effectiveStatus,
   type ZoneKey,
   type FleetControlStatus,
   type ItemValidation,
+  type ImmobilizationState,
 } from '@/lib/fleetControl';
 
 // Supabase types lag the migration sync; cast for the new item-review columns.
@@ -46,7 +48,19 @@ interface Inspection {
   submitted_at: string | null;
   rejection_reason: string | null;
   notes: string | null;
+  immobilization_state: ImmobilizationState;
+  immobilization_command_ref: string | null;
+  immobilization_requested_at: string | null;
+  immobilization_cancelled_at: string | null;
   vehicles?: { license_plate: string | null; make: string | null; model_name: string | null } | null;
+}
+
+interface AuditRow {
+  id: string;
+  action: string;
+  actor_type: string;
+  metadata: any;
+  created_at: string;
 }
 
 export default function VehicleInspection() {
@@ -69,6 +83,7 @@ export default function VehicleInspection() {
         .from('vehicle_inspections')
         .select(`
           id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
+          immobilization_state, immobilization_command_ref, immobilization_requested_at, immobilization_cancelled_at,
           vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
         `)
         .eq('driver_id', driverId)
@@ -100,6 +115,7 @@ export default function VehicleInspection() {
           })
           .select(`
             id, vehicle_id, driver_id, status, due_at, submitted_at, rejection_reason, notes,
+            immobilization_state, immobilization_command_ref, immobilization_requested_at, immobilization_cancelled_at,
             vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
           `)
           .single();
@@ -112,12 +128,22 @@ export default function VehicleInspection() {
         .select('id, zone, storage_path, validation_status, rejection_reason')
         .eq('inspection_id', inspection!.id);
 
-      return { inspection, photos: (photos || []) as Photo[] };
+      // Pull the recent immobilization audit trail so the driver can see exactly
+      // what happened (requested → pending_stop → cut_sent/failed, with timestamps).
+      const { data: audit } = await supabase
+        .from('fleet_control_audit')
+        .select('id, action, actor_type, metadata, created_at')
+        .eq('fleet_control_id', inspection!.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      return { inspection, photos: (photos || []) as Photo[], audit: (audit || []) as AuditRow[] };
     },
   });
 
   const inspection = data?.inspection ?? null;
   const photos = data?.photos ?? [];
+  const audit = data?.audit ?? [];
 
   const photosByZone = useMemo(() => {
     const map: Record<string, Photo> = {};
@@ -340,6 +366,16 @@ export default function VehicleInspection() {
           </CardContent>
         </Card>
 
+        {inspection.immobilization_state && inspection.immobilization_state !== 'none' && (
+          <ImmobilizationPanel
+            state={inspection.immobilization_state}
+            commandRef={inspection.immobilization_command_ref}
+            requestedAt={inspection.immobilization_requested_at}
+            cancelledAt={inspection.immobilization_cancelled_at}
+            audit={audit}
+          />
+        )}
+
         <div>
           <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
             Photos du véhicule
@@ -392,5 +428,121 @@ export default function VehicleInspection() {
         />
       </div>
     </DriverLayout>
+  );
+}
+
+/**
+ * Status panel showing the live immobilization state for the driver:
+ * state badge, command reference (incl. DRY_RUN tag), and a compact audit
+ * timeline of every transition from `requested` → `pending_stop` →
+ * `cut_sent` / `failed` with timestamps.
+ */
+function ImmobilizationPanel({
+  state,
+  commandRef,
+  requestedAt,
+  cancelledAt,
+  audit,
+}: {
+  state: ImmobilizationState;
+  commandRef: string | null;
+  requestedAt: string | null;
+  cancelledAt: string | null;
+  audit: AuditRow[];
+}) {
+  const isDryRun = !!commandRef && commandRef.startsWith('DRY_RUN');
+  const failed = state === 'failed';
+  const cut    = state === 'cut_sent';
+  const tone =
+    failed ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-300 text-amber-900 dark:text-amber-200' :
+    cut    ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-300 text-rose-900 dark:text-rose-200' :
+             'bg-blue-50 dark:bg-blue-950/30 border-blue-300 text-blue-900 dark:text-blue-200';
+
+  // Keep only the moves relevant to the immobilization lifecycle.
+  const relevant = audit.filter((a) =>
+    ['immobilize_requested', 'immobilize_cancelled', 'status_recomputed', 'unblocked']
+      .includes(a.action) &&
+    (a.action !== 'status_recomputed' || a.metadata?.immobilization),
+  );
+
+  return (
+    <Card className={`border-2 ${tone}`}>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 font-semibold">
+            <Ban className="h-4 w-4" />
+            Immobilisation
+          </div>
+          <Badge variant="outline" className="bg-background/60">
+            {IMMO_LABEL[state] ?? state}
+          </Badge>
+        </div>
+
+        {isDryRun && (
+          <div className="text-xs rounded-md bg-background/60 px-2 py-1 inline-block">
+            Mode test Uffizio — aucune coupure réelle transmise
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          {requestedAt && (
+            <div>
+              <div className="opacity-70">Demandée</div>
+              <div className="font-medium">
+                {format(new Date(requestedAt), 'PPpp', { locale: fr })}
+              </div>
+            </div>
+          )}
+          {cancelledAt && (
+            <div>
+              <div className="opacity-70">Annulée</div>
+              <div className="font-medium">
+                {format(new Date(cancelledAt), 'PPpp', { locale: fr })}
+              </div>
+            </div>
+          )}
+          {commandRef && (
+            <div className="col-span-2">
+              <div className="opacity-70">Référence commande</div>
+              <div className="font-mono text-[11px] break-all">{commandRef}</div>
+            </div>
+          )}
+        </div>
+
+        {relevant.length > 0 && (
+          <div className="pt-2 border-t border-current/20">
+            <div className="text-xs font-semibold uppercase tracking-wide mb-2 opacity-80">
+              Historique
+            </div>
+            <ol className="space-y-1.5">
+              {relevant.map((a) => {
+                const m = a.metadata || {};
+                const label =
+                  a.action === 'immobilize_requested' ? 'Coupure demandée' :
+                  a.action === 'immobilize_cancelled' ? 'Coupure annulée' :
+                  a.action === 'unblocked'            ? 'Déblocage' :
+                  m.immobilization === 'pending_stop' ? "En attente d'arrêt"
+                    : m.immobilization === 'cut_sent' ? (m.dry_run ? 'Commande simulée (test)' : 'Commande envoyée')
+                    : m.immobilization === 'failed'   ? `Échec${m.error ? ' — ' + m.error : ''}`
+                    : a.action;
+                return (
+                  <li key={a.id} className="flex items-start justify-between gap-3 text-xs">
+                    <div className="flex-1">
+                      <div className="font-medium">{label}</div>
+                      {m.uffizio_status && (
+                        <div className="opacity-70">Uffizio : {m.uffizio_status}</div>
+                      )}
+                    </div>
+                    <div className="shrink-0 opacity-70 tabular-nums">
+                      {format(new Date(a.created_at), 'dd/MM HH:mm', { locale: fr })}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
