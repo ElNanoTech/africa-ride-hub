@@ -83,13 +83,15 @@ export function FleetControlCreateDialog({ open, onClose }: Props) {
         p_reason: reason.trim() || null,
       });
       if (error) throw error;
-      return data as { created: boolean; control_id: string };
+      return data as { created: boolean; control_id: string; driver_id: string | null; notified: boolean };
     },
     onSuccess: (r) => {
       if (r?.created) {
+        // Honest toast: derive from the RPC's actual outcome, not the
+        // client-side driver preview (which can be stale or race the server).
         toast.success('Contrôle créé', {
-          description: activeDriver?.drivers?.full_name
-            ? `Le chauffeur ${activeDriver.drivers.full_name} a été notifié.`
+          description: r.notified
+            ? 'Le chauffeur assigné a été notifié.'
             : 'Aucun chauffeur actif — le contrôle est créé sans assignation.',
         });
       } else {
