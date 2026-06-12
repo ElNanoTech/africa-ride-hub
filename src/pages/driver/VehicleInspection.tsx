@@ -68,6 +68,7 @@ export default function VehicleInspection() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [uploadingZone, setUploadingZone] = useState<ZoneKey | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [notes, setNotes] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
   const [pendingZone, setPendingZone] = useState<ZoneKey | null>(null);
@@ -175,22 +176,60 @@ export default function VehicleInspection() {
     const kind = pendingKind;
     setPendingKind(null);
     setUploadingZone(zone);
+    setUploadProgress(0);
     try {
       // Compress images; pass PDFs/other docs through as-is.
       const isImage = file.type.startsWith('image/');
-      const compressed = isImage ? await compressImage(file) : file;
+      let compressed: File;
+      try {
+        compressed = isImage ? await compressImage(file) : file;
+      } catch (cErr) {
+        console.error('compress failed', cErr);
+        toast.error('Image illisible', { description: 'Le fichier sélectionné est corrompu ou non supporté.' });
+        setUploadingZone(null);
+        return;
+      }
       const ext = (compressed.name.split('.').pop() || (isImage ? 'jpg' : 'bin')).toLowerCase();
-      // Size guard for non-image documents (Storage default ~50MB; we cap at 10MB).
-      if (!isImage && compressed.size > 10 * 1024 * 1024) {
-        toast.error('Fichier trop volumineux (max 10 Mo)');
+      // Hard size cap: 10 MB for any single piece of evidence (post-compression for images).
+      const MAX_BYTES = 10 * 1024 * 1024;
+      if (compressed.size > MAX_BYTES) {
+        const mb = (compressed.size / 1024 / 1024).toFixed(1);
+        toast.error('Fichier trop volumineux', {
+          description: `${mb} Mo dépasse la limite de 10 Mo. Réduisez la taille ou prenez une photo de moins bonne qualité.`,
+        });
         setUploadingZone(null);
         return;
       }
       const path = `${inspection.id}/${zone}-${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage
+
+      // Use a signed upload URL + XHR so we can surface real progress to the driver.
+      const { data: signed, error: signErr } = await supabase.storage
         .from('vehicle-inspections')
-        .upload(path, compressed, { contentType: compressed.type, upsert: true });
-      if (upErr) throw upErr;
+        .createSignedUploadUrl(path);
+      if (signErr || !signed?.signedUrl) {
+        throw signErr ?? new Error('signed-url-missing');
+      }
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', signed.signedUrl, true);
+        xhr.setRequestHeader('Content-Type', compressed.type || 'application/octet-stream');
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) {
+            setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            setUploadProgress(100);
+            resolve();
+          } else {
+            reject(new Error(`HTTP ${xhr.status}`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('network'));
+        xhr.onabort = () => reject(new Error('aborted'));
+        xhr.send(compressed);
+      });
 
       const zoneDef = ALL_ZONES.find(z => z.key === zone)!;
       const existing = photosByZone[zone];
@@ -233,10 +272,24 @@ export default function VehicleInspection() {
       toast.success('Pièce enregistrée');
       queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
     } catch (err: any) {
-      console.error(err);
-      toast.error("Échec de l'envoi de la pièce");
+      console.error('inspection upload failed', err);
+      const msg = String(err?.message ?? err ?? '');
+      let description = 'Veuillez réessayer.';
+      if (/network|Failed to fetch|aborted/i.test(msg)) {
+        description = 'Connexion interrompue. Vérifiez votre réseau et réessayez.';
+      } else if (/HTTP 413|too large|exceed/i.test(msg)) {
+        description = 'Fichier trop volumineux pour le serveur (max 10 Mo).';
+      } else if (/HTTP 401|HTTP 403|forbidden|permission/i.test(msg)) {
+        description = "Session expirée. Reconnectez-vous puis recommencez l'envoi.";
+      } else if (/HTTP 5\d\d/i.test(msg)) {
+        description = 'Serveur indisponible. Réessayez dans un instant.';
+      } else if (msg) {
+        description = msg;
+      }
+      toast.error("Échec de l'envoi de la pièce", { description });
     } finally {
       setUploadingZone(null);
+      setUploadProgress(0);
     }
   };
 
@@ -294,6 +347,7 @@ export default function VehicleInspection() {
   const renderZoneTile = (z: { key: ZoneKey; label: string; help: string }, kind: 'camera' | 'doc') => {
     const photo = photosByZone[z.key];
     const busy = uploadingZone === z.key;
+      const progress = busy ? uploadProgress : 0;
     const Icon = kind === 'doc' ? FileText : Camera;
     const rejected = photo?.validation_status === 'rejected';
     const approved = photo?.validation_status === 'approved';
@@ -325,6 +379,19 @@ export default function VehicleInspection() {
           )}
         </div>
         <div className="text-xs text-muted-foreground mt-1">{z.help}</div>
+        {busy && (
+          <div className="mt-2">
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all"
+                style={{ width: `${Math.max(5, progress)}%` }}
+              />
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1 tabular-nums">
+              Envoi… {progress}%
+            </div>
+          </div>
+        )}
         <div className="text-xs mt-2 font-medium">
           {rejected && photo?.rejection_reason
             ? `Refusé : ${photo.rejection_reason}`
