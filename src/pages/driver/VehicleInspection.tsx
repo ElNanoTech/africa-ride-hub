@@ -63,6 +63,13 @@ interface AuditRow {
   created_at: string;
 }
 
+interface ThumbsResult {
+  urls: Record<string, string>;
+  failed: Record<string, true>;
+}
+
+const EMPTY_THUMBS: ThumbsResult = { urls: {}, failed: {} };
+
 export default function VehicleInspection() {
   const { driverProfile } = useDriverAuth();
   const navigate = useNavigate();
@@ -157,7 +164,7 @@ export default function VehicleInspection() {
 
   // Resolve signed URLs for every uploaded item so we can show real thumbnails
   // (PDFs return a URL too; the tile falls back to a doc icon).
-  const { data: thumbs = { urls: {}, failed: {} }, isFetching: thumbsLoading } = useQuery({
+  const { data: thumbs = EMPTY_THUMBS, isFetching: thumbsLoading } = useQuery<ThumbsResult>({
     queryKey: ['driver-inspection-thumbs', inspection?.id, photos.map(p => p.id + p.storage_path).join('|')],
     enabled: !!inspection && photos.length > 0,
     queryFn: async () => {
