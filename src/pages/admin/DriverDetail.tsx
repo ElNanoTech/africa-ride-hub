@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AdminLayout, AdminPageHeader } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +45,7 @@ import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DriverWalletCard } from '@/components/admin/DriverWalletCard';
 import { StatusBadge } from '@/lib/statusBadges';
+import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
 
 const TIER_INFO = {
   A: { label: 'Excellent', color: 'hsl(142, 76%, 36%)' },
@@ -303,6 +304,46 @@ export default function AdminDriverDetail() {
     },
     enabled: !!id,
   });
+
+  // CH-B4: live refresh of the open profile — invalidate the exact query
+  // keys backing the page/panels when a row for THIS driver changes.
+  // Trailing-debounced (~2s) so a burst of writes (e.g. deposit → wallet txn
+  // + payment + invoice) triggers one refetch wave, not a storm (same
+  // pattern as the admin Fleet Control list, FC-A2).
+  const rtPendingKeys = useRef<Set<string>>(new Set());
+  const rtTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (rtTimer.current) clearTimeout(rtTimer.current);
+  }, []);
+  const queueInvalidate = (...keys: string[]) => {
+    keys.forEach((k) => rtPendingKeys.current.add(k));
+    if (rtTimer.current) clearTimeout(rtTimer.current);
+    rtTimer.current = setTimeout(() => {
+      rtTimer.current = null;
+      // Prefix match on [key, id] so parameterized keys
+      // (e.g. ['driver-activity-timeline', id, limit]) are covered too.
+      rtPendingKeys.current.forEach((k) =>
+        queryClient.invalidateQueries({ queryKey: [k, id] }),
+      );
+      rtPendingKeys.current.clear();
+    }, 2_000);
+  };
+  const matchesDriver = (p: { new: { driver_id?: string }; old: { driver_id?: string } }) =>
+    (p.new?.driver_id ?? p.old?.driver_id) === id;
+  // Tables limited to what this page actually renders (wallet card, header
+  // 360 summary, Paiements/Factures/Documents tabs, KYC card, Activité tab).
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_wallet_transactions', '*', matchesDriver,
+    () => queueInvalidate('driver-wallet', 'driver-360', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('payments', '*', matchesDriver,
+    () => queueInvalidate('admin-driver-payments', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('invoice', '*', matchesDriver,
+    () => queueInvalidate('driver-invoices', 'driver-360', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_score_events', '*', matchesDriver,
+    () => queueInvalidate('driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_documents', '*', matchesDriver,
+    () => queueInvalidate('driver-documents'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('kyc_submissions', '*', matchesDriver,
+    () => queueInvalidate('admin-driver-kyc', 'driver-360', 'admin-driver-detail'), !!id);
 
   // Process score data for charts
   const scoreChartData = scores?.map(s => ({
