@@ -131,8 +131,8 @@ export default function VehicleInspection() {
           vehicles:vehicles!vehicle_inspections_vehicle_id_fkey ( license_plate, make, model_name )
         `)
         .eq('driver_id', driverId)
-        .in('status', ['pending', 'submitted', 'rejected', 'overdue', 'blocked'])
-        .order('created_at', { ascending: false })
+        .in('status', ['pending', 'submitted', 'rejected', 'overdue', 'blocked', 'approved'])
+        .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle();
       if (error) throw error;
