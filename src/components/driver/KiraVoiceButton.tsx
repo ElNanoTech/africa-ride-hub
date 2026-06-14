@@ -23,7 +23,6 @@ export function KiraVoiceButton({
   const controllerRef = useRef<SpeechController | null>(null);
 
   useEffect(() => {
-    // Audio is supported either via HTMLAudioElement or speechSynthesis
     setIsSupported(typeof window !== 'undefined' && (!!window.Audio || 'speechSynthesis' in window));
     return () => {
       controllerRef.current?.stop();

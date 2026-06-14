@@ -70,6 +70,7 @@ const DriverIncomeReport = lazy(() => import("./pages/driver/IncomeReport"));
 const DriverFinance = lazy(() => import("./pages/driver/Finance"));
 const DriverLeaderboard = lazy(() => import("./pages/driver/Leaderboard"));
 const DriverSettings = lazy(() => import("./pages/driver/Settings"));
+const DriverActivityTimeline = lazy(() => import("./pages/driver/ActivityTimeline"));
 
 // Admin pages
 const AdminLogin = lazy(() => import("./pages/admin/Login"));
@@ -218,6 +219,7 @@ const App = () => {
                     <Route path="/driver/profile-required" element={<DriverProfileRequired />} />
                     <Route path="/driver/leaderboard" element={<DriverLeaderboard />} />
                     <Route path="/driver/settings" element={<DriverSettings />} />
+                    <Route path="/driver/historique" element={<DriverActivityTimeline />} />
                     <Route path="/driver/factures" element={<DriverFactures />} />
                     <Route path="/driver/factures/:id" element={<DriverFactureDetail />} />
                     <Route path="/driver/portefeuille" element={<DriverWallet />} />

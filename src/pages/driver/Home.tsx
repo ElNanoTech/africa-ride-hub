@@ -11,14 +11,13 @@ import { ScoreGauge, ScoreChangeIndicator } from '@/components/ScoreGauge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { HapticButton } from '@/components/HapticButton';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatCurrency, formatRelativeTime, formatDateShort } from '@/lib/format';
 import { UI, NAV, SCORE, RENTAL, KYC } from '@/lib/i18n';
 import { getScoreLevel } from '@/lib/scoreLevel';
 import { cn } from '@/lib/utils';
 import { useDriverCurrentScore, useDriverId, useDriverCreditScores, useDriverRentals, useDriverNotifications, useDriverLoans, useDriverPayments, useIsAuthResolving } from '@/hooks/useDriverData';
-import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
+import { useDriverActiveInspection, type DriverActiveInspection } from '@/hooks/useDriverActiveInspection';
 import {
   CLOSED_FLEET_CONTROL_STATUSES,
   formatDueDateRelative,
@@ -41,6 +40,22 @@ import { DriverAdBanner } from '@/components/DriverAdBanner';
 import { MVP_HIDE_DRIVER_KYC } from '@/lib/mvpFlags';
 import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
 import { DRIVER_DOCUMENT_STATUS_LABEL, deriveDriverDocumentStatus } from '@/lib/driverOps';
+import {
+  DailyBriefingCard,
+  HealthCard,
+  ProgressCard,
+  TimelineCard,
+  type DriverBriefingItem,
+  type DriverCardTone,
+  type DriverStatusItem,
+} from '@/components/driver/DriverExperienceCards';
+import { useDriverActivityTimeline } from '@/hooks/useDriverActivityTimeline';
+import {
+  CREDIT_OFFERS,
+  calculateOnTimeRate,
+  getEligibilityGaps,
+  getNextUnlock,
+} from '@/lib/creditJourney';
 
 
 // Hook to fetch driver profile.
@@ -85,8 +100,49 @@ interface HomeDriverDocument {
   rejection_reason: string | null;
 }
 
+interface HomePaymentLike {
+  id?: string;
+  rental_id?: string | null;
+  status?: string | null;
+  amount?: number | null;
+  amount_paid?: number | null;
+  total_ttc?: number | null;
+  remaining_due?: number | null;
+  due_date?: string | null;
+  paid_date?: string | null;
+  issued_at?: string | null;
+  created_at?: string | null;
+  invoice_number?: string | null;
+}
+
+interface HomeRental {
+  id: string;
+  status?: string | null;
+  end_date?: string | null;
+  vehicle?: {
+    image_url?: string | null;
+    model_name?: string | null;
+    license_plate?: string | null;
+  } | null;
+}
+
+interface HomeLoan {
+  status?: string | null;
+}
+
+interface HomeNotification {
+  id: string;
+  is_read: boolean;
+  notification_type?: string | null;
+  title?: string | null;
+  message?: string | null;
+  created_at: string;
+}
+
+type TierBadgeVariant = 'tier-a' | 'tier-b' | 'tier-c' | 'tier-d' | 'tier-e';
+
 // Calculate payment streak from payments (paid + overpaid both count)
-function calculatePaymentStreak(payments: any[]): number {
+function calculatePaymentStreak(payments: HomePaymentLike[]): number {
   const isPaid = (s: string) => s === 'paid' || s === 'overpaid';
   const paidPayments = payments
     .filter(p => isPaid(p.status))
@@ -101,68 +157,6 @@ function calculatePaymentStreak(payments: any[]): number {
     }
   }
   return Math.min(streak, 52); // Cap at 52 weeks
-}
-
-// Determine next best action based on driver state
-function getNextBestAction(driver: DriverData | null, hasActiveRental: boolean) {
-  if (!driver) return null;
-
-  // KYC-related actions are suppressed during MVP — admin handles KYC.
-  if (!MVP_HIDE_DRIVER_KYC) {
-    if (driver.kycStatus === 'not_submitted') {
-      return {
-        title: 'Vérifiez votre identité',
-        description: 'Complétez votre KYC pour louer un véhicule',
-        action: '/driver/kyc',
-        actionLabel: 'Commencer',
-        variant: 'primary' as const,
-      };
-    }
-
-    if (driver.kycStatus === 'pending') {
-      return {
-        title: 'Vérification en cours',
-        description: 'Votre KYC est en attente de validation',
-        action: '/driver/kyc',
-        actionLabel: 'Voir le statut',
-        variant: 'warning' as const,
-      };
-    }
-
-    if (driver.kycStatus === 'rejected') {
-      return {
-        title: 'KYC refusé',
-        description: 'Veuillez soumettre à nouveau vos documents',
-        action: '/driver/kyc',
-        actionLabel: 'Recommencer',
-        variant: 'warning' as const,
-      };
-    }
-  }
-
-  // If close to next tier
-  const pointsToTierA = 800 - driver.score;
-  if (pointsToTierA <= 100 && driver.tier === 'B') {
-    return {
-      title: `Plus que ${pointsToTierA} points!`,
-      description: 'Atteignez le Niveau A pour le Prêt Voiture',
-      action: '/driver/score',
-      actionLabel: 'Voir mon score',
-      variant: 'success' as const,
-    };
-  }
-
-  if (!hasActiveRental) {
-    return {
-      title: 'Louez un véhicule',
-      description: 'Parcourez notre flotte de véhicules disponibles',
-      action: '/driver/vehicles',
-      actionLabel: 'Voir les véhicules',
-      variant: 'primary' as const,
-    };
-  }
-
-  return null;
 }
 
 interface InsightCardProps {
@@ -213,7 +207,7 @@ function FleetControlCard() {
     queryKey: ['driver-inspection-has-history', driverId],
     enabled: !!driverId && !isLoading && !inspection,
     queryFn: async () => {
-      const { count, error } = await (supabase as any)
+      const { count, error } = await supabase
         .from('vehicle_inspections')
         .select('id', { count: 'exact', head: true })
         .eq('driver_id', driverId)
@@ -372,10 +366,10 @@ function CommandCenterCard({
 }: {
   driverName: string;
   driverStatus?: string | null;
-  activeRental: any;
-  nextPayment: any;
+  activeRental: HomeRental | null | undefined;
+  nextPayment: HomePaymentLike | null | undefined;
   walletBalance: number;
-  activeInspection: any;
+  activeInspection: DriverActiveInspection | null | undefined;
   score: number;
 }) {
   const paymentDue = nextPayment ? getOutstandingAmount(nextPayment) : 0;
@@ -520,7 +514,7 @@ function CommandCenterCard({
   );
 }
 
-function getOutstandingAmount(item: any) {
+function getOutstandingAmount(item: HomePaymentLike | null | undefined) {
   if (!item) return 0;
   if (item.remaining_due != null) return Math.max(0, Number(item.remaining_due));
   const total = Number(item.amount ?? item.total_ttc ?? 0);
@@ -528,11 +522,221 @@ function getOutstandingAmount(item: any) {
   return Math.max(0, total - paid);
 }
 
-function getDueDateLabel(item: any) {
+function getDueDateLabel(item: HomePaymentLike | null | undefined) {
   const rawDate = item?.due_date ?? item?.issued_at ?? item?.created_at;
   if (!rawDate) return 'A payer';
   const date = new Date(rawDate);
   return Number.isNaN(date.getTime()) ? 'A payer' : formatDateShort(date);
+}
+
+function isOpenPaymentLike(item: HomePaymentLike | null | undefined) {
+  return item && !['paid', 'overpaid', 'cancelled'].includes(item.status ?? '');
+}
+
+function isPaymentLate(item: HomePaymentLike | null | undefined) {
+  if (!isOpenPaymentLike(item)) return false;
+  if (['overdue', 'late'].includes(item.status ?? '')) return true;
+  const rawDate = item?.due_date ?? item?.issued_at;
+  if (!rawDate) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(rawDate);
+  due.setHours(0, 0, 0, 0);
+  return due.getTime() < today.getTime();
+}
+
+function dueInDays(item: HomePaymentLike | null | undefined): number | null {
+  const rawDate = item?.due_date ?? item?.issued_at;
+  if (!rawDate) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(rawDate);
+  due.setHours(0, 0, 0, 0);
+  return Math.round((due.getTime() - today.getTime()) / 86_400_000);
+}
+
+function buildHealthItems({
+  nextPayment,
+  activeInspection,
+  kycStatus,
+  score,
+  activeRental,
+  driverStatus,
+}: {
+  nextPayment: HomePaymentLike | null | undefined;
+  activeInspection: DriverActiveInspection | null | undefined;
+  kycStatus?: string | null;
+  score: number;
+  activeRental: HomeRental | null | undefined;
+  driverStatus?: string | null;
+}): DriverStatusItem[] {
+  const late = isPaymentLate(nextPayment);
+  const paymentDays = dueInDays(nextPayment);
+  const controlStatus = activeInspection?.effective_status ?? activeInspection?.status;
+  const scoreMissing = Math.max(0, 850 - score);
+
+  const paymentItem: DriverStatusItem = nextPayment
+    ? {
+        key: 'payments',
+        label: 'Paiements',
+        value: late ? 'En retard' : paymentDays === 0 ? "Aujourd'hui" : paymentDays === 1 ? 'Demain' : 'Prévu',
+        tone: late ? 'danger' : paymentDays != null && paymentDays <= 1 ? 'warning' : 'info',
+        icon: CreditCard,
+        to: '/driver/finance',
+      }
+    : {
+        key: 'payments',
+        label: 'Paiements',
+        value: 'À jour',
+        tone: 'good',
+        icon: CreditCard,
+        to: '/driver/finance',
+      };
+
+  const controlTone: DriverCardTone =
+    !controlStatus || controlStatus === 'approved' ? 'good'
+    : controlStatus === 'submitted' ? 'info'
+    : ['rejected', 'overdue', 'blocked'].includes(controlStatus) ? 'danger'
+    : 'warning';
+
+  const controlValue =
+    !controlStatus || controlStatus === 'approved' ? 'Validé'
+    : controlStatus === 'submitted' ? 'Envoyé'
+    : controlStatus === 'rejected' ? 'À corriger'
+    : controlStatus === 'overdue' ? 'En retard'
+    : controlStatus === 'blocked' ? 'Bloqué'
+    : 'À faire';
+
+  const normalizedKyc = kycStatus === 'approved' ? 'verified' : kycStatus;
+  const kycTone: DriverCardTone =
+    normalizedKyc === 'verified' ? 'good'
+    : normalizedKyc === 'rejected' ? 'danger'
+    : normalizedKyc === 'pending' ? 'warning'
+    : 'neutral';
+
+  const vehicleTone: DriverCardTone =
+    driverStatus === 'suspended' || driverStatus === 'inactive' ? 'danger'
+    : activeRental ? 'good'
+    : 'warning';
+
+  return [
+    paymentItem,
+    {
+      key: 'control',
+      label: 'Contrôle véhicule',
+      value: controlValue,
+      tone: controlTone,
+      icon: ClipboardCheck,
+      to: '/driver/fleet-control',
+    },
+    {
+      key: 'kyc',
+      label: 'KYC',
+      value:
+        normalizedKyc === 'verified' ? 'Vérifié'
+        : normalizedKyc === 'pending' ? 'En cours'
+        : normalizedKyc === 'rejected' ? 'Refusé'
+        : 'À compléter',
+      tone: kycTone,
+      icon: Shield,
+      to: '/driver/profile/kyc',
+    },
+    {
+      key: 'credit',
+      label: 'Crédit',
+      value: scoreMissing > 0 ? `${score} / 850` : 'Éligible',
+      tone: scoreMissing > 0 ? 'warning' : 'good',
+      icon: TrendingUp,
+      to: '/driver/credit',
+      detail: scoreMissing > 0 ? `${scoreMissing} points restants` : undefined,
+    },
+    {
+      key: 'vehicle',
+      label: 'Véhicule',
+      value:
+        driverStatus === 'suspended' || driverStatus === 'inactive' ? 'Bloqué'
+        : activeRental ? 'Actif'
+        : 'Non assigné',
+      tone: vehicleTone,
+      icon: Car,
+      to: '/driver/vehicles',
+    },
+  ];
+}
+
+function buildBriefingItems({
+  nextPayment,
+  activeInspection,
+  activeRental,
+  score,
+  nextUnlockTitle,
+  nextUnlockScoreGap,
+}: {
+  nextPayment: HomePaymentLike | null | undefined;
+  activeInspection: DriverActiveInspection | null | undefined;
+  activeRental: HomeRental | null | undefined;
+  score: number;
+  nextUnlockTitle?: string;
+  nextUnlockScoreGap?: number;
+}): DriverBriefingItem[] {
+  const late = isPaymentLate(nextPayment);
+  const days = dueInDays(nextPayment);
+  const amount = nextPayment ? formatCurrency(getOutstandingAmount(nextPayment)) : null;
+  const controlStatus = activeInspection?.effective_status ?? activeInspection?.status;
+  const controlNeedsAction = ['pending', 'rejected', 'overdue', 'blocked'].includes(controlStatus);
+
+  const items: DriverBriefingItem[] = [];
+
+  if (!nextPayment) {
+    items.push({ key: 'payment-ok', text: 'Aucun paiement en retard', tone: 'good', icon: CheckCircle, to: '/driver/finance' });
+  } else if (late) {
+    items.push({ key: 'payment-late', text: 'Paiement en retard', value: amount ?? undefined, tone: 'danger', icon: AlertTriangle, to: '/driver/finance' });
+  } else if (days === 0) {
+    items.push({ key: 'payment-today', text: "Paiement prévu aujourd'hui", value: amount ?? undefined, tone: 'warning', icon: Clock, to: '/driver/finance' });
+  } else if (days === 1) {
+    items.push({ key: 'payment-tomorrow', text: 'Paiement demain', value: amount ?? undefined, tone: 'warning', icon: Clock, to: '/driver/finance' });
+  } else {
+    items.push({ key: 'payment-next', text: 'Prochain paiement planifié', value: amount ? `${amount} · ${getDueDateLabel(nextPayment)}` : getDueDateLabel(nextPayment), tone: 'info', icon: CreditCard, to: '/driver/finance' });
+  }
+
+  items.push({
+    key: 'control',
+    text: controlNeedsAction ? 'Contrôle véhicule à traiter' : 'Contrôle véhicule valide',
+    tone: controlNeedsAction ? 'warning' : 'good',
+    icon: ClipboardCheck,
+    to: '/driver/fleet-control',
+  });
+
+  items.push({
+    key: 'vehicle',
+    text: activeRental ? 'Véhicule actif' : 'Aucun véhicule actif',
+    tone: activeRental ? 'good' : 'warning',
+    icon: Car,
+    to: '/driver/vehicles',
+  });
+
+  if (nextUnlockTitle && nextUnlockScoreGap != null) {
+    items.push({
+      key: 'next-unlock',
+      text: nextUnlockScoreGap > 0
+        ? `Vous êtes à ${nextUnlockScoreGap} points de ${nextUnlockTitle}`
+        : `${nextUnlockTitle} est presque accessible`,
+      tone: score >= 850 ? 'good' : 'info',
+      icon: Target,
+      to: '/driver/credit',
+    });
+  }
+
+  return items.slice(0, 4);
+}
+
+function tierBadgeVariant(tier: string): TierBadgeVariant {
+  const normalized = tier.toLowerCase();
+  if (normalized === 'a') return 'tier-a';
+  if (normalized === 'b') return 'tier-b';
+  if (normalized === 'c') return 'tier-c';
+  if (normalized === 'd') return 'tier-d';
+  return 'tier-e';
 }
 
 function DailyStreakBadge() {
@@ -1018,11 +1222,12 @@ export default function DriverHome() {
   const { data: creditScores = [], isLoading: isScoresLoading } = useDriverCreditScores();
   const { data: currentScore, isLoading: isCurrentScoreLoading } = useDriverCurrentScore();
   const { data: rentals = [], isLoading: isRentalsLoading } = useDriverRentals();
-  const { data: notifications = [], isLoading: isNotificationsLoading } = useDriverNotifications();
-  const { data: loans = [], isLoading: isLoansLoading } = useDriverLoans();
-  const { data: payments = [], isLoading: isPaymentsLoading } = useDriverPayments();
+  const { data: notifications = [] } = useDriverNotifications();
+  const { data: loans = [] } = useDriverLoans();
+  const { data: payments = [] } = useDriverPayments();
   const { data: invoices = [] } = useDriverInvoices(driverId);
   const { data: activeInspection } = useDriverActiveInspection();
+  const { data: activityItems = [] } = useDriverActivityTimeline(driverId, 12);
   useFinancialRealtime({ scope: 'driver', driverId: driverId ?? null });
   const { data: isChatbotEnabled } = useIsFeatureEnabled('ai_driver_chatbot');
   const { data: isIncomeInsightsEnabled } = useIsFeatureEnabled('ai_income_insights');
@@ -1105,10 +1310,16 @@ export default function DriverHome() {
   const displayedTier = getScoreLevel(displayedScore).level;
   const displayedScoreStatus = (latestScore?.status === 'provisional' ? 'provisional' : 'active') as 'provisional' | 'active';
 
-  const unreadNotifications = notifications.filter((n: any) => !n.is_read).length;
-  const activeRental = (rentals as any[]).find(r => r.status === 'active');
-  const pendingLoans = (loans as any[]).filter(l => l.status === 'pending').length;
-  const paymentStreak = calculatePaymentStreak(payments as any[]);
+  const notificationRows = notifications as HomeNotification[];
+  const rentalRows = rentals as HomeRental[];
+  const loanRows = loans as HomeLoan[];
+  const paymentRows = payments as HomePaymentLike[];
+  const invoiceRows = invoices as HomePaymentLike[];
+
+  const unreadNotifications = notificationRows.filter((n) => !n.is_read).length;
+  const activeRental = rentalRows.find((r) => r.status === 'active');
+  const pendingLoans = loanRows.filter((l) => l.status === 'pending').length;
+  const paymentStreak = calculatePaymentStreak(paymentRows);
 
   const driverData: DriverData | null = driverProfile ? {
     full_name: driverProfile.full_name,
@@ -1121,7 +1332,6 @@ export default function DriverHome() {
     unreadNotifications,
   } : null;
 
-  const nextAction = getNextBestAction(driverData, !!activeRental);
   const documentWarnings = useMemo(() => {
     return (driverDocuments as HomeDriverDocument[])
       .map((doc) => ({
@@ -1162,12 +1372,12 @@ export default function DriverHome() {
   }, []);
   // Get next amount due. Open invoices are authoritative; fall back to raw
   // rental payments only when no invoice has been issued yet.
-  const nextRentalPayment = activeRental ? (payments as any[])
+  const nextRentalPayment = activeRental ? paymentRows
     .filter(p => p.rental_id === activeRental.id && p.status !== 'paid' && p.status !== 'overpaid')
-    .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0]
+    .sort((a, b) => new Date(a.due_date ?? a.created_at ?? 0).getTime() - new Date(b.due_date ?? b.created_at ?? 0).getTime())[0]
     : null;
-  const nextOpenInvoice = (invoices as any[])
-    .filter((invoice) => ['issued', 'partial', 'overdue'].includes(invoice.status) && getOutstandingAmount(invoice) > 0)
+  const nextOpenInvoice = invoiceRows
+    .filter((invoice) => ['issued', 'partial', 'overdue'].includes(invoice.status ?? '') && getOutstandingAmount(invoice) > 0)
     .sort((a, b) => {
       const aDate = new Date(a.issued_at ?? a.created_at ?? 0).getTime();
       const bDate = new Date(b.issued_at ?? b.created_at ?? 0).getTime();
@@ -1175,6 +1385,44 @@ export default function DriverHome() {
     })[0] ?? null;
   const nextPayment = nextOpenInvoice ?? nextRentalPayment;
   const walletBalance = Number(walletSummary?.balance ?? 0);
+  const weeksHistory = creditScores.length;
+  const paymentRate = calculateOnTimeRate(paymentRows);
+  const creditMetrics = { score: displayedScore, weeksHistory, onTimeRate: paymentRate };
+  const nextUnlock = getNextUnlock(CREDIT_OFFERS, creditMetrics);
+  const nextUnlockGaps = nextUnlock ? getEligibilityGaps(nextUnlock, creditMetrics) : null;
+  const nextUnlockScoreGap = nextUnlockGaps?.score ?? 0;
+  const successProgress = nextUnlock
+    ? Math.max(0, Math.min(100, Math.round((displayedScore / Math.max(nextUnlock.requiredScore, 1)) * 100)))
+    : 100;
+  const healthItems = buildHealthItems({
+    nextPayment,
+    activeInspection,
+    kycStatus: driverData?.kycStatus,
+    score: displayedScore,
+    activeRental,
+    driverStatus: driverProfile?.driver_status,
+  });
+  const briefingItems = buildBriefingItems({
+    nextPayment,
+    activeInspection,
+    activeRental,
+    score: displayedScore,
+    nextUnlockTitle: nextUnlock?.category,
+    nextUnlockScoreGap,
+  });
+  const briefingVoiceText = briefingItems
+    .map((item) => `${item.text}${item.value ? ` : ${item.value}` : ''}`)
+    .join('. ');
+  const successHelper = nextUnlock
+    ? nextUnlockGaps?.score
+      ? `Encore ${nextUnlockGaps.score} points pour ${nextUnlock.category}.`
+      : nextUnlockGaps?.weeks
+      ? `Encore ${nextUnlockGaps.weeks} semaines d'ancienneté.`
+      : nextUnlockGaps?.onTimeRate
+      ? `Améliorez les paiements à temps de ${nextUnlockGaps.onTimeRate}%.`
+      : `${nextUnlock.category} est prêt pour étude.`
+    : 'Vous avez accès aux meilleures offres disponibles.';
+  const successValue = nextUnlock ? `${displayedScore} / ${nextUnlock.requiredScore}` : 'Prêt';
 
   // Calculate days remaining for active rental
   const daysRemaining = activeRental?.end_date 
@@ -1255,10 +1503,6 @@ export default function DriverHome() {
           <KYCStatusBadge status={driverData?.kycStatus || 'not_submitted'} />
           <DailyStreakBadge />
         </div>
-        {/* Test version indicator */}
-        <div className="absolute top-6 right-20">
-          <span className="bg-primary/20 text-primary text-[10px] px-2 py-0.5 rounded-full">v3</span>
-        </div>
       </div>
 
       <CommandCenterCard
@@ -1270,6 +1514,34 @@ export default function DriverHome() {
         activeInspection={activeInspection}
         score={displayedScore}
       />
+
+      <div className="px-4 mt-4 space-y-4">
+        <DailyBriefingCard
+          items={briefingItems}
+          voiceAction={
+            <KiraVoiceButton
+              text={briefingVoiceText}
+              compact
+              className="border-background/20 bg-background/10 text-background hover:bg-background/20"
+            />
+          }
+        />
+        <HealthCard items={healthItems} />
+        <ProgressCard
+          title="Prochaine étape"
+          value={successValue}
+          helper={successHelper}
+          progress={nextUnlock ? successProgress : 100}
+          icon={Target}
+          to="/driver/credit"
+        />
+        <TimelineCard
+          title="Activité récente"
+          items={activityItems}
+          to="/driver/historique"
+          limit={5}
+        />
+      </div>
 
       {/* Score Card */}
       <div className="px-4 mt-4 relative z-10">
@@ -1285,7 +1557,7 @@ export default function DriverHome() {
                 />
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge variant={`tier-${driverData.tier.toLowerCase()}` as any}>
+                    <Badge variant={tierBadgeVariant(driverData.tier)}>
                       Niveau {driverData.tier}
                     </Badge>
                     <ScoreChangeIndicator change={scoreChange} />
@@ -1358,55 +1630,13 @@ export default function DriverHome() {
         </div>
       )}
 
-      {/* Next Best Action CTA */}
-      {nextAction && (
-        <div className="px-4 mt-4">
-          <Link to={nextAction.action}>
-            <Card className={cn(
-              'overflow-hidden border-2',
-              nextAction.variant === 'primary' && 'border-primary bg-primary/5',
-              nextAction.variant === 'warning' && 'border-warning bg-warning/5',
-              nextAction.variant === 'success' && 'border-tier-a bg-tier-a/5',
-            )}>
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    'w-10 h-10 rounded-xl flex items-center justify-center',
-                    nextAction.variant === 'primary' && 'bg-primary/20',
-                    nextAction.variant === 'warning' && 'bg-warning/20',
-                    nextAction.variant === 'success' && 'bg-tier-a/20',
-                  )}>
-                    <Target className={cn(
-                      'h-5 w-5',
-                      nextAction.variant === 'primary' && 'text-primary',
-                      nextAction.variant === 'warning' && 'text-warning',
-                      nextAction.variant === 'success' && 'text-tier-a',
-                    )} />
-                  </div>
-                  <div>
-                    <p className="font-semibold">{nextAction.title}</p>
-                    <p className="text-xs text-muted-foreground">{nextAction.description}</p>
-                  </div>
-                </div>
-                <ArrowRight className={cn(
-                  'h-5 w-5',
-                  nextAction.variant === 'primary' && 'text-primary',
-                  nextAction.variant === 'warning' && 'text-warning',
-                  nextAction.variant === 'success' && 'text-tier-a',
-                )} />
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      )}
-
       {/* Daily Tip - personalized by tier & activity */}
       <div className="px-4 mt-4">
         <DailyTipCard tipContext={{
           tier: driverData?.tier,
           paymentStreak,
           scoreChange,
-          hasOverduePayment: (payments as any[]).some(p => p.status === 'overdue'),
+          hasOverduePayment: paymentRows.some((p) => p.status === 'overdue'),
         }} />
       </div>
 
@@ -1594,10 +1824,10 @@ export default function DriverHome() {
             Voir tout
           </Link>
         </div>
-        {notifications.length > 0 ? (
+        {notificationRows.length > 0 ? (
           <Card>
             <CardContent className="p-0 divide-y divide-border">
-              {(notifications as any[]).slice(0, 3).map((notif) => (
+              {notificationRows.slice(0, 3).map((notif) => (
                 <div key={notif.id} className="p-4 flex items-start gap-3">
                   <div className={cn(
                     'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',

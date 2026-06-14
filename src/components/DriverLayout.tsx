@@ -7,6 +7,7 @@ import { PullToRefresh } from './PullToRefresh';
 import { OfflineIndicator } from './OfflineIndicator';
 import { OfflineScreen } from './OfflineScreen';
 import { OverduePaymentModal } from './OverduePaymentModal';
+import { UniversalActionCenter } from '@/components/driver/UniversalActionCenter';
 import { cn } from '@/lib/utils';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
 import { LoadingState } from './LoadingState';
@@ -255,6 +256,7 @@ export function DriverLayout({
         )}
 
         {!hideNav && <BottomNav />}
+        {!hideNav && <UniversalActionCenter />}
         {!hideNav && <AccidentFAB />}
       </div>
     </div>

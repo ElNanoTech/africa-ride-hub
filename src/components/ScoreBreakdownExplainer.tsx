@@ -42,8 +42,8 @@ interface ImproveTip {
 /**
  * Short, transparent score explainer designed for low-literacy drivers.
  * Shows: Base 500 → list of events with deltas → current score (the math).
- * Plus 3 actionable tips and a "Read aloud" button using the browser's
- * native French speech synthesis (no API key, works offline on mobile).
+ * Plus 3 actionable tips and a "Read aloud" button using neural speech with
+ * a browser fallback.
  */
 export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
