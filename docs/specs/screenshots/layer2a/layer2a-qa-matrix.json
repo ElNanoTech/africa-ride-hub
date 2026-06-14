@@ -1,0 +1,123 @@
+{
+  "checks": [
+    {
+      "name": "primary route /admin/attention",
+      "passed": true
+    },
+    {
+      "name": "hero title",
+      "passed": true
+    },
+    {
+      "name": "hero subtitle",
+      "passed": true
+    },
+    {
+      "name": "action queue title",
+      "passed": true
+    },
+    {
+      "name": "kpi À encaisser aujourd'hui",
+      "passed": true
+    },
+    {
+      "name": "kpi En retard",
+      "passed": true
+    },
+    {
+      "name": "kpi Contrôles à valider",
+      "passed": true
+    },
+    {
+      "name": "kpi Véhicules indisponibles",
+      "passed": true
+    },
+    {
+      "name": "kpi Chauffeurs à risque",
+      "passed": true
+    },
+    {
+      "name": "kpi Demandes en attente",
+      "passed": true
+    },
+    {
+      "name": "route /admin",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/dashboard",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/attention?filter=overdue",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "overdue filter state",
+      "passed": true
+    },
+    {
+      "name": "refresh button works",
+      "passed": true
+    },
+    {
+      "name": "export button state",
+      "passed": true,
+      "detail": "enabled for current action queue"
+    },
+    {
+      "name": "alerts CTA route",
+      "passed": true,
+      "detail": "http://127.0.0.1:8080/admin/alertes"
+    },
+    {
+      "name": "first action CTA works",
+      "passed": true,
+      "detail": "/admin/payments?payment=e04f977f-c516-4858-935b-9d4db1abe52f"
+    },
+    {
+      "name": "route /admin/rentals",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/payments",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/finance",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/billing/wallets",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/fleet-control",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/drivers",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "route /admin/vehicles",
+      "passed": true,
+      "detail": "loaded"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}

@@ -47,6 +47,8 @@ const getRoleBadgeConfig = (roleKey: string) => {
 // Route order for determining animation direction
 const ADMIN_ROUTE_ORDER = [
   '/admin',
+  '/admin/attention',
+  '/admin/dashboard',
   '/admin/alertes',
   '/admin/support',
   '/admin/drivers',
@@ -128,6 +130,7 @@ interface SidebarItem {
   icon: LucideIcon;
   label: string;
   exact?: boolean;
+  aliases?: string[];
   allowedRoles: AppRole[];
   badgeKey?: 'pendingKyc'; // Key to get badge count
   section?: AdminSidebarSection;
@@ -146,10 +149,11 @@ const ADMIN_SECTION_LABELS: Record<AdminSidebarSection, string> = {
 // Role-based menu configuration
 const sidebarItems: SidebarItem[] = [
   { 
-    to: '/admin', 
+    to: '/admin/attention',
     icon: LayoutDashboard, 
     label: 'Attention',
     exact: true,
+    aliases: ['/admin', '/admin/dashboard'],
     allowedRoles: ['super_admin', 'manager'],
     section: 'attention',
   },
@@ -360,6 +364,7 @@ const hasAccess = (userRoleKey: string, allowedRoles: AppRole[]): boolean => {
 };
 
 const matchesSidebarItem = (item: SidebarItem, pathname: string) => {
+  if (item.aliases?.includes(pathname)) return true;
   if (item.exact) return pathname === item.to;
   return pathname === item.to || pathname.startsWith(`${item.to}/`);
 };

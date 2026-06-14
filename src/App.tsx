@@ -251,6 +251,8 @@ const App = () => {
                   {/* Protected Admin Routes (B2) */}
                   <Route element={<AdminRouteGuard />}>
                     <Route path="/admin" element={<AdminDashboard />} />
+                    <Route path="/admin/attention" element={<AdminDashboard />} />
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
                     <Route path="/admin/drivers" element={<AdminDrivers />} />
                     <Route path="/admin/drivers/new" element={<AdminDriverCreate />} />
                     <Route path="/admin/drivers/:id" element={<AdminDriverDetail />} />

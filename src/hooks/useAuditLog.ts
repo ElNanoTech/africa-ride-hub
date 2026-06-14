@@ -30,7 +30,10 @@ export type AuditAction =
   | 'driver_created'
   | 'driver_updated'
   | 'driver_pin_reset'
-  | 'auth_mode_changed';
+  | 'auth_mode_changed'
+  | 'attention_center_opened_item'
+  | 'attention_center_refreshed'
+  | 'attention_center_exported_report';
 
 export type TargetType =
   | 'admin_user'
@@ -39,7 +42,14 @@ export type TargetType =
   | 'loan'
   | 'rental'
   | 'payment'
+  | 'invoice'
   | 'vehicle'
+  | 'fleet_control'
+  | 'traffic_violation'
+  | 'accident'
+  | 'maintenance_order'
+  | 'support_ticket'
+  | 'attention_center'
   | 'scoring_config'
   | 'session';
 
