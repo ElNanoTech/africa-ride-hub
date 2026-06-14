@@ -5716,6 +5716,7 @@ export type Database = {
         Returns: undefined
       }
       fleet_control_remind: { Args: { p_control: string }; Returns: Json }
+      fleet_control_required_zones: { Args: never; Returns: string[] }
       fleet_control_settings: { Args: never; Returns: Json }
       fleet_control_submit: { Args: { p_control: string }; Returns: undefined }
       fleet_control_unblock: { Args: { p_control: string }; Returns: undefined }
