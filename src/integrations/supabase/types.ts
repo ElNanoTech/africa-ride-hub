@@ -2052,6 +2052,87 @@ export type Database = {
           },
         ]
       }
+      driver_vehicle_reports: {
+        Row: {
+          category: string
+          created_at: string
+          customer_id: string | null
+          description: string
+          driver_id: string
+          id: string
+          photo_paths: string[]
+          status: string
+          support_ticket_id: string | null
+          updated_at: string
+          urgency: string
+          vehicle_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          customer_id?: string | null
+          description: string
+          driver_id: string
+          id?: string
+          photo_paths?: string[]
+          status?: string
+          support_ticket_id?: string | null
+          updated_at?: string
+          urgency?: string
+          vehicle_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          customer_id?: string | null
+          description?: string
+          driver_id?: string
+          id?: string
+          photo_paths?: string[]
+          status?: string
+          support_ticket_id?: string | null
+          updated_at?: string
+          urgency?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_vehicle_reports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_support_ticket_id_fkey"
+            columns: ["support_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_wallet_transactions: {
         Row: {
           amount: number
@@ -5658,6 +5739,10 @@ export type Database = {
         }
       }
       driver_360: { Args: { p_driver: string }; Returns: Json }
+      driver_acknowledge_alert: {
+        Args: { p_alert: string; p_status?: string }
+        Returns: undefined
+      }
       driver_generate_access_code: {
         Args: { p_driver: string }
         Returns: {
