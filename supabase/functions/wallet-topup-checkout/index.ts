@@ -101,7 +101,17 @@ serve(async (req) => {
       throw new Error("Impossible de créer la recharge.");
     }
 
-    const origin = req.headers.get("origin") || "";
+    const publicAppUrl = (Deno.env.get("PUBLIC_APP_URL") || "").replace(/\/$/, "");
+    const originHeader = req.headers.get("origin") || "";
+    const baseUrl = (originHeader.startsWith("https://") ? originHeader : publicAppUrl).replace(/\/$/, "");
+    if (!baseUrl.startsWith("https://")) {
+      return new Response(
+        JSON.stringify({ success: false, error: "PUBLIC_APP_URL must be configured as an https URL.", code: "CONFIG_MISSING" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+    const safeSuccess = successUrl && /^https:\/\//.test(successUrl) ? successUrl : `${baseUrl}/driver/portefeuille?topup=success`;
+    const safeError = errorUrl && /^https:\/\//.test(errorUrl) ? errorUrl : `${baseUrl}/driver/portefeuille?topup=error`;
     const restrictedMobile = normalizeWavePhone(driver.phone_number);
     const waveResponse = await fetch(`${WAVE_API_URL}/checkout/sessions`, {
       method: "POST",
@@ -112,8 +122,8 @@ serve(async (req) => {
       body: JSON.stringify({
         amount: String(numericAmount),
         currency: "XOF",
-        error_url: errorUrl || `${origin}/driver/portefeuille?topup=error`,
-        success_url: successUrl || `${origin}/driver/portefeuille?topup=success`,
+        error_url: safeError,
+        success_url: safeSuccess,
         client_reference: payment.id,
         ...(restrictedMobile ? { restrict_payer_mobile: restrictedMobile } : {}),
       }),
