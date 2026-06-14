@@ -218,7 +218,7 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
         </CardHeader>
 
         <CardContent className="pt-0 space-y-4">
-          {isSpeechLoading ? (
+          {isLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
