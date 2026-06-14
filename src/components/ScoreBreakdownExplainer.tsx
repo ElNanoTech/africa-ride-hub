@@ -50,7 +50,7 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
   const [isSpeechLoading, setIsSpeechLoading] = useState(false);
   const controllerRef = useRef<SpeechController | null>(null);
 
-  const { data: events = [], isSpeechLoading } = useQuery({
+  const { data: events = [], isLoading } = useQuery({
     queryKey: ['score-breakdown-events', driverId],
     enabled: !!driverId,
     queryFn: async (): Promise<ScoreEventRow[]> => {
