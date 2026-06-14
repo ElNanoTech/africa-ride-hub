@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Volume2, VolumeX } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Loader2, Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { speakNatural, stopAllSpeech, type SpeechController } from '@/lib/naturalSpeech';
 
 interface KiraVoiceButtonProps {
   text: string;
@@ -16,37 +17,42 @@ export function KiraVoiceButton({
   className,
   compact = false,
 }: KiraVoiceButtonProps) {
-  const [isSupported, setIsSupported] = useState(false);
+  const [isSupported, setIsSupported] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const controllerRef = useRef<SpeechController | null>(null);
 
   useEffect(() => {
-    setIsSupported(typeof window !== 'undefined' && 'speechSynthesis' in window);
+    // Audio is supported either via HTMLAudioElement or speechSynthesis
+    setIsSupported(typeof window !== 'undefined' && (!!window.Audio || 'speechSynthesis' in window));
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      controllerRef.current?.stop();
+      stopAllSpeech();
     };
   }, []);
 
   const cleanText = useMemo(() => text.replace(/\s+/g, ' ').trim(), [text]);
 
-  const speak = () => {
-    if (!isSupported || !cleanText) return;
-
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    utterance.lang = 'fr-FR';
-    utterance.rate = 0.92;
-    utterance.pitch = 1;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utterance);
+  const speak = async () => {
+    if (!cleanText || isLoading) return;
+    setIsLoading(true);
+    try {
+      const ctrl = await speakNatural(cleanText);
+      controllerRef.current = ctrl;
+      setIsSpeaking(true);
+      setIsLoading(false);
+      await ctrl.done;
+      setIsSpeaking(false);
+    } catch (err) {
+      console.error('KiraVoice speak failed', err);
+      setIsLoading(false);
+      setIsSpeaking(false);
+    }
   };
 
   const stop = () => {
-    if (!isSupported) return;
-    window.speechSynthesis.cancel();
+    controllerRef.current?.stop();
+    stopAllSpeech();
     setIsSpeaking(false);
   };
 
@@ -56,7 +62,7 @@ export function KiraVoiceButton({
       variant="outline"
       size={compact ? 'sm' : 'default'}
       onClick={isSpeaking ? stop : speak}
-      disabled={!isSupported || !cleanText}
+      disabled={!isSupported || !cleanText || isLoading}
       aria-label={isSupported ? label : 'Audio indisponible sur ce telephone'}
       title={isSupported ? label : 'Audio indisponible sur ce telephone'}
       className={cn(
@@ -65,8 +71,22 @@ export function KiraVoiceButton({
         className,
       )}
     >
-      {isSupported ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
-      <span>{isSupported ? (isSpeaking ? 'Stop' : label) : 'Audio indisponible'}</span>
+      {!isSupported ? (
+        <VolumeX className="h-4 w-4" />
+      ) : isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <Volume2 className="h-4 w-4" />
+      )}
+      <span>
+        {!isSupported
+          ? 'Audio indisponible'
+          : isLoading
+            ? 'Chargement…'
+            : isSpeaking
+              ? 'Stop'
+              : label}
+      </span>
     </Button>
   );
 }
