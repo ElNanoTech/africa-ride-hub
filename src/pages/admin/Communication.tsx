@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabaseAdmin as supabase } from "@/integrations/supabase/clients";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,10 +15,35 @@ import { GraduationCap, Megaphone, Sparkles, Plus, Send, Trash2, Pencil, BarChar
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import type { Database } from "@/integrations/supabase/types";
 
-type Module = any;
-type Broadcast = any;
-type Ad = any;
+type Tables = Database["public"]["Tables"];
+type Functions = Database["public"]["Functions"];
+type Module = Tables["training_modules"]["Row"];
+type ModuleInsert = Tables["training_modules"]["Insert"];
+type Broadcast = Tables["broadcasts"]["Row"];
+type BroadcastInsert = Tables["broadcasts"]["Insert"];
+type Ad = Tables["driver_ads"]["Row"];
+type AdInsert = Tables["driver_ads"]["Insert"];
+type TrainingProgress = Tables["training_progress"]["Row"];
+type ModuleStats = Functions["get_module_completion_stats"]["Returns"][number];
+type DriverRosterRow = Pick<Tables["drivers"]["Row"], "id" | "full_name" | "phone_number" | "customer_id"> & {
+  progress?: TrainingProgress;
+};
+
+type ModuleForm = Partial<ModuleInsert> & {
+  duration_minutes?: number | string | null;
+  order_index?: number | string | null;
+  due_days?: number | string | null;
+};
+
+type BroadcastForm = Pick<BroadcastInsert, "title" | "message" | "audience" | "channel">;
+
+type AdForm = Partial<AdInsert> & {
+  priority?: number | string;
+  starts_at?: string;
+  ends_at?: string | null;
+};
 
 const CATEGORIES = [
   { value: "safety", label: "Sécurité" },
@@ -98,15 +123,15 @@ export default function Communication() {
 /* ---------------- Tracking ---------------- */
 function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean }) {
   const [selected, setSelected] = useState<Module | null>(null);
-  const [stats, setStats] = useState<Record<string, any>>({});
-  const [roster, setRoster] = useState<any[]>([]);
+  const [stats, setStats] = useState<Record<string, ModuleStats>>({});
+  const [roster, setRoster] = useState<DriverRosterRow[]>([]);
   const [rosterLoading, setRosterLoading] = useState(false);
 
   // Load completion stats for all modules
   useEffect(() => {
     if (modules.length === 0) return;
     (async () => {
-      const results: Record<string, any> = {};
+      const results: Record<string, ModuleStats> = {};
       await Promise.all(modules.map(async (m) => {
         const { data } = await supabase.rpc("get_module_completion_stats", { p_module_id: m.id });
         if (data && data[0]) results[m.id] = data[0];
@@ -119,16 +144,18 @@ function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean
     setSelected(m);
     setRosterLoading(true);
     // Drivers (scoped by customer if module has one) + their progress for this module
-    const sb: any = supabase;
-    let driversQ: any = sb.from("drivers").select("id, full_name, phone, customer_id").eq("status", "active");
+    let driversQ = supabase
+      .from("drivers")
+      .select("id, full_name, phone_number, customer_id")
+      .eq("driver_status", "active");
     if (m.customer_id) driversQ = driversQ.eq("customer_id", m.customer_id);
     const [drvRes, progRes] = await Promise.all([
       driversQ,
       supabase.from("training_progress").select("*").eq("module_id", m.id),
     ]);
-    const progMap: Record<string, any> = {};
-    (progRes.data ?? []).forEach((p: any) => { progMap[p.driver_id] = p; });
-    const list = (drvRes.data ?? []).map((d: any) => ({ ...d, progress: progMap[d.id] }));
+    const progMap: Record<string, TrainingProgress> = {};
+    (progRes.data ?? []).forEach((p) => { progMap[p.driver_id] = p; });
+    const list: DriverRosterRow[] = (drvRes.data ?? []).map((d) => ({ ...d, progress: progMap[d.id] }));
     list.sort((a, b) => {
       const sa = a.progress?.status ?? "not_started";
       const sb = b.progress?.status ?? "not_started";
@@ -146,7 +173,7 @@ function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean
       const p = r.progress;
       rows.push([
         r.full_name ?? "",
-        r.phone ?? "",
+        r.phone_number ?? "",
         p?.status ?? "not_started",
         String(p?.progress_percent ?? 0),
         p?.score != null ? String(p.score) : "",
@@ -250,7 +277,7 @@ function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean
                   return (
                     <TableRow key={r.id}>
                       <TableCell className="font-medium">{r.full_name}</TableCell>
-                      <TableCell className="text-xs">{r.phone}</TableCell>
+                      <TableCell className="text-xs">{r.phone_number}</TableCell>
                       <TableCell>
                         {status === "completed" ? (
                           <Badge className="bg-green-600 hover:bg-green-700"><CheckCircle2 className="h-3 w-3 mr-1" /> Terminé</Badge>
@@ -277,14 +304,14 @@ function TrackingTab({ modules, loading }: { modules: Module[]; loading: boolean
 function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: boolean; reload: () => void }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Module | null>(null);
-  const [form, setForm] = useState<any>({});
+  const [form, setForm] = useState<ModuleForm>({});
 
   const openNew = () => { setEditing(null); setForm({ title: "", description: "", category: "safety", video_url: "", duration_minutes: 5, is_mandatory: false, is_published: true, order_index: 0, due_days: null }); setOpen(true); };
   const openEdit = (m: Module) => { setEditing(m); setForm(m); setOpen(true); };
 
   const save = async () => {
-    const payload = {
-      title: form.title, description: form.description, category: form.category,
+    const payload: ModuleInsert = {
+      title: form.title ?? "", description: form.description, category: form.category,
       video_url: form.video_url || null, content: form.content || null,
       duration_minutes: Number(form.duration_minutes) || 0,
       order_index: Number(form.order_index) || 0,
@@ -383,7 +410,7 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
 /* ---------------- Broadcasts ---------------- */
 function BroadcastsTab({ broadcasts, loading, reload }: { broadcasts: Broadcast[]; loading: boolean; reload: () => void }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState<any>({ title: "", message: "", audience: "all", channel: "in_app" });
+  const [form, setForm] = useState<BroadcastForm>({ title: "", message: "", audience: "all", channel: "in_app" });
   const [sending, setSending] = useState(false);
 
   const create = async (send: boolean) => {
@@ -478,14 +505,14 @@ function BroadcastsTab({ broadcasts, loading, reload }: { broadcasts: Broadcast[
 function AdsTab({ ads, loading, reload }: { ads: Ad[]; loading: boolean; reload: () => void }) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Ad | null>(null);
-  const [form, setForm] = useState<any>({});
+  const [form, setForm] = useState<AdForm>({});
 
   const openNew = () => { setEditing(null); setForm({ title: "", body: "", placement: "home_banner", is_active: true, priority: 0 }); setOpen(true); };
   const openEdit = (a: Ad) => { setEditing(a); setForm({ ...a, starts_at: a.starts_at?.slice(0, 16), ends_at: a.ends_at?.slice(0, 16) }); setOpen(true); };
 
   const save = async () => {
-    const payload: any = {
-      title: form.title, body: form.body || null, image_url: form.image_url || null,
+    const payload: AdInsert = {
+      title: form.title ?? "", body: form.body || null, image_url: form.image_url || null,
       cta_label: form.cta_label || null, cta_url: form.cta_url || null,
       placement: form.placement, priority: Number(form.priority) || 0,
       is_active: !!form.is_active,

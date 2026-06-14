@@ -1,0 +1,18 @@
+{
+  "checks": [
+    {
+      "name": "training module created through admin UI",
+      "passed": true
+    },
+    {
+      "name": "training module cleanup",
+      "passed": true
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}
