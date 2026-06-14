@@ -2052,6 +2052,87 @@ export type Database = {
           },
         ]
       }
+      driver_vehicle_reports: {
+        Row: {
+          category: string
+          created_at: string
+          customer_id: string | null
+          description: string
+          driver_id: string
+          id: string
+          photo_paths: string[]
+          status: string
+          support_ticket_id: string | null
+          updated_at: string
+          urgency: string
+          vehicle_id: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          customer_id?: string | null
+          description: string
+          driver_id: string
+          id?: string
+          photo_paths?: string[]
+          status?: string
+          support_ticket_id?: string | null
+          updated_at?: string
+          urgency?: string
+          vehicle_id: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          customer_id?: string | null
+          description?: string
+          driver_id?: string
+          id?: string
+          photo_paths?: string[]
+          status?: string
+          support_ticket_id?: string | null
+          updated_at?: string
+          urgency?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "driver_vehicle_reports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_support_ticket_id_fkey"
+            columns: ["support_ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       driver_wallet_transactions: {
         Row: {
           amount: number
@@ -5658,6 +5739,10 @@ export type Database = {
         }
       }
       driver_360: { Args: { p_driver: string }; Returns: Json }
+      driver_acknowledge_alert: {
+        Args: { p_alert: string; p_status?: string }
+        Returns: undefined
+      }
       driver_generate_access_code: {
         Args: { p_driver: string }
         Returns: {
@@ -5680,12 +5765,37 @@ export type Database = {
       }
       driver_reactivate: { Args: { p_driver: string }; Returns: undefined }
       driver_revoke_access: { Args: { p_driver: string }; Returns: undefined }
+      driver_risk: { Args: { p_driver: string }; Returns: Json }
+      driver_risk_from_factors: {
+        Args: {
+          p_control_late: boolean
+          p_kyc_verified: boolean
+          p_open_accidents: number
+          p_overdue_invoices: number
+          p_score: number
+          p_unpaid_violations: number
+        }
+        Returns: Json
+      }
       driver_suspend: {
         Args: { p_driver: string; p_reason: string }
         Returns: undefined
       }
+      drivers_risk_summary: {
+        Args: never
+        Returns: {
+          driver_id: string
+          level: string
+          overdue_payments: number
+          reasons: string[]
+        }[]
+      }
       fc_require_admin: { Args: { p_customer: string }; Returns: undefined }
       fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
+      fleet_control_create_manual: {
+        Args: { p_driver?: string; p_reason?: string; p_vehicle: string }
+        Returns: Json
+      }
       fleet_control_immobilize_cancel: {
         Args: { p_control: string }
         Returns: undefined
@@ -5712,6 +5822,7 @@ export type Database = {
         Returns: undefined
       }
       fleet_control_remind: { Args: { p_control: string }; Returns: Json }
+      fleet_control_required_zones: { Args: never; Returns: string[] }
       fleet_control_settings: { Args: never; Returns: Json }
       fleet_control_submit: { Args: { p_control: string }; Returns: undefined }
       fleet_control_unblock: { Args: { p_control: string }; Returns: undefined }

@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { formatCurrency } from '@/lib/format';
 
-const QUICK_AMOUNTS = [5000, 10000, 20000, 50000];
+const QUICK_AMOUNTS = [2000, 5000, 10000, 20000];
 const MIN_TOPUP = 500;
 const FALLBACK_TOPUP_ERROR = 'Impossible de démarrer la recharge.';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -103,7 +103,7 @@ interface Props {
 export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeuille' }: Props) {
   const [amount, setAmount] = useState<number | ''>(5000);
   const [loading, setLoading] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
 
   const handlePay = async () => {
     const value = Number(amount);
@@ -112,7 +112,7 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
       return;
     }
     setLoading(true);
-    setCheckoutUrl(null);
+    setFallbackUrl(null);
     try {
       const data = await createTopupCheckout({
         amount: value,
@@ -123,9 +123,26 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
       if (!data?.success || !data?.checkout_url) {
         throw new Error(cleanMessage(data?.error) || 'Erreur Wave');
       }
-      setCheckoutUrl(data.checkout_url);
-      window.open(data.checkout_url, '_blank', 'noopener,noreferrer');
-      setLoading(false);
+
+      const url = data.checkout_url;
+      setFallbackUrl(url);
+      const popup = window.open(url, '_blank', 'noopener,noreferrer');
+      try {
+        if (window.top && window.top !== window.self) {
+          window.top.location.href = url;
+        } else {
+          window.location.assign(url);
+        }
+      } catch {
+        window.location.href = url;
+      }
+
+      setTimeout(() => {
+        if (!popup || popup.closed) {
+          setLoading(false);
+          toast.message('Appuyez sur « Continuer vers Wave » pour finaliser.');
+        }
+      }, 1500);
     } catch (e: unknown) {
       const message = cleanMessage(e instanceof Error ? e.message : null) || FALLBACK_TOPUP_ERROR;
       console.error('Wallet top-up checkout error:', e);
@@ -198,15 +215,15 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
             )}
           </Button>
 
-          {checkoutUrl && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="w-full h-12 bg-emerald-600 text-white hover:bg-emerald-700"
-              onClick={() => window.open(checkoutUrl, '_blank', 'noopener,noreferrer')}
+          {fallbackUrl && (
+            <a
+              href={fallbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center h-14 leading-[3.5rem] rounded-md bg-primary text-primary-foreground font-semibold"
             >
               Continuer vers Wave →
-            </Button>
+            </a>
           )}
 
           <p className="text-[11px] text-center text-muted-foreground">

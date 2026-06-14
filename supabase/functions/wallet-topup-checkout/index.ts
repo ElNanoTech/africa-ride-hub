@@ -142,7 +142,6 @@ serve(async (req) => {
 
     const service = createClient(supabaseUrl, supabaseServiceRoleKey);
 
-    // Resolve driver
     const { data: driver, error: drvErr } = await service
       .from("drivers")
       .select("id, customer_id")
@@ -156,8 +155,6 @@ serve(async (req) => {
       });
     }
 
-    // Create a payments row with amount=0 — the receipt for `numericAmount` will be
-    // recorded as overpayment and credited to the wallet by the existing trigger.
     const { data: payment, error: payErr } = await service
       .from("payments")
       .insert({
@@ -183,8 +180,6 @@ serve(async (req) => {
       error_url: resolveRedirectUrl(errorUrl, publicAppUrl, "/driver/portefeuille?topup=error"),
       success_url: resolveRedirectUrl(successUrl, publicAppUrl, "/driver/portefeuille?topup=success"),
       client_reference: payment.id,
-      // Do not restrict payer mobile: login/profile phone can differ from
-      // the Wave wallet a driver controls. Ownership is enforced by auth.
     });
     const waveSignature = await createWaveSignature(waveRequestBody, waveSigningSecret);
 
@@ -202,7 +197,6 @@ serve(async (req) => {
       const errorText = await waveResponse.text();
       const waveError = parseWaveError(errorText);
       console.error(`Wave API error [${waveResponse.status}]:`, errorText);
-      // best-effort cleanup
       await service.from("payments").delete().eq("id", payment.id);
       return new Response(
         JSON.stringify({
