@@ -33,6 +33,16 @@ Scope: admin information architecture, Attention Center dashboard framing, route
 | `git diff --check` | PASS |
 | `npm run lint` | FAIL, pre-existing repo-wide lint debt outside Layer 1A scope: 427 errors, 37 warnings |
 
+## Production Deployment Evidence
+
+| Check | Result |
+| --- | --- |
+| Layer 1A implementation commit pushed to `origin/codex/kira-driver-v2-part1` | PASS, `276e3a7` |
+| Layer 1A implementation commit pushed to `origin/main` | PASS, `276e3a7` |
+| `https://damafricahub.com/` switched to new JS asset | PASS, `/assets/index-C-XEzhFn.js` |
+| Live dashboard chunk contains `Ce qui demande votre attention` | PASS |
+| Live admin layout chunk contains `Centre d’attention`, `Confiance & Risque`, `Croissance` | PASS |
+
 ## PASS/FAIL Matrix
 
 | Acceptance item | Result | Evidence |
