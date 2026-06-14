@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Volume2,
   Square,
+  Loader2,
   CheckCircle2,
   CreditCard,
   Car,
@@ -19,6 +20,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { clampScore, DEFAULT_BASE_SCORE } from '@/lib/scoringEngine';
+import { speakNatural, stopAllSpeech, type SpeechController } from '@/lib/naturalSpeech';
 
 interface ScoreEventRow {
   id: string;
@@ -45,7 +47,8 @@ interface ImproveTip {
  */
 export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const [isSpeechLoading, setIsSpeechLoading] = useState(false);
+  const controllerRef = useRef<SpeechController | null>(null);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ['score-breakdown-events', driverId],
@@ -141,45 +144,35 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
   // Stop any ongoing speech when the component unmounts or events change.
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-      }
+      controllerRef.current?.stop();
+      stopAllSpeech();
     };
   }, []);
 
-  const handleToggleSpeech = () => {
-    if (typeof window === 'undefined' || !window.speechSynthesis) return;
-    const synth = window.speechSynthesis;
-
+  const handleToggleSpeech = async () => {
     if (isSpeaking) {
-      synth.cancel();
+      controllerRef.current?.stop();
+      stopAllSpeech();
       setIsSpeaking(false);
       return;
     }
-
-    synth.cancel();
-    const utterance = new SpeechSynthesisUtterance(speechText);
-    utterance.lang = 'fr-FR';
-    utterance.rate = 0.95;
-    utterance.pitch = 1;
-
-    // Try to pick a French voice if available.
-    const voices = synth.getVoices();
-    const frenchVoice =
-      voices.find((v) => v.lang === 'fr-FR') ||
-      voices.find((v) => v.lang.startsWith('fr'));
-    if (frenchVoice) utterance.voice = frenchVoice;
-
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
-
-    utteranceRef.current = utterance;
-    synth.speak(utterance);
-    setIsSpeaking(true);
+    setIsSpeechLoading(true);
+    try {
+      const ctrl = await speakNatural(speechText);
+      controllerRef.current = ctrl;
+      setIsSpeaking(true);
+      setIsSpeechLoading(false);
+      await ctrl.done;
+      setIsSpeaking(false);
+    } catch (err) {
+      console.error('Score explainer speech failed', err);
+      setIsSpeechLoading(false);
+      setIsSpeaking(false);
+    }
   };
 
   const speechSupported =
-    typeof window !== 'undefined' && 'speechSynthesis' in window;
+    typeof window !== 'undefined' && (!!window.Audio || 'speechSynthesis' in window);
 
   if (!driverId) return null;
 
@@ -197,12 +190,18 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
                 size="sm"
                 variant={isSpeaking ? 'destructive' : 'outline'}
                 onClick={handleToggleSpeech}
+                disabled={isSpeechLoading}
                 className="gap-2 h-8"
                 aria-label={
                   isSpeaking ? 'Arrêter la lecture' : 'Écouter l’explication'
                 }
               >
-                {isSpeaking ? (
+                {isSpeechLoading ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span className="text-xs font-medium">Chargement…</span>
+                  </>
+                ) : isSpeaking ? (
                   <>
                     <Square className="h-3.5 w-3.5" />
                     <span className="text-xs font-medium">Arrêter</span>
