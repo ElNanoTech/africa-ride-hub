@@ -13,6 +13,9 @@ import { downloadInvoicePDF, shareInvoicePDF } from "@/lib/invoicePdf";
 import { ChevronLeft, Download, Share2, FileText, Calendar, User, Phone, Car, CreditCard, Info, Loader2 } from "lucide-react";
 import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
 import { InvoicePaymentBreakdown } from "@/components/InvoicePaymentBreakdown";
+import { DriverLayout } from "@/components/DriverLayout";
+import { KiraVoiceButton } from "@/components/driver/KiraVoiceButton";
+import { getInvoiceRemainingDue, getPaymentRemaining } from "@/lib/financeAmounts";
 
 export default function DriverFactureDetail() {
   const { id } = useParams<{ id: string }>();
@@ -62,15 +65,22 @@ export default function DriverFactureDetail() {
   }, [searchParams, setSearchParams]);
 
   const payment = linkedPayment?.payment ?? null;
-  const remainingDue = payment
-    ? Math.max(0, Number(payment.amount ?? 0) - Number(payment.amount_paid ?? 0))
-    : 0;
+  const remainingDue = payment ? getPaymentRemaining(payment) : invoice ? getInvoiceRemainingDue(invoice) : 0;
+  const voiceSummary = invoice
+    ? remainingDue > 0
+      ? `Facture ${invoice.invoice_number ?? ''}. Montant total ${formatCurrency(invoice.total_ttc)}. Reste a payer ${formatCurrency(remainingDue)}.`
+      : `Facture ${invoice.invoice_number ?? ''}. Montant total ${formatCurrency(invoice.total_ttc)}. Cette facture est soldee.`
+    : "Facture en cours de chargement.";
   const canPayWithWave =
     !!invoice &&
-    invoice.status === "issued" &&
+    ["issued", "partial", "overdue"].includes(invoice.status) &&
     !invoice.paid_at &&
     !!payment &&
     remainingDue > 0;
+  const shouldShowPaymentCard =
+    !!invoice &&
+    ["issued", "partial", "overdue"].includes(invoice.status) &&
+    !invoice.paid_at;
 
   const handlePayWithWave = async () => {
     if (!invoice || !payment) return;
@@ -103,23 +113,30 @@ export default function DriverFactureDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <DriverLayout hideHeader className="bg-background">
+    <div className="min-h-full bg-background pb-8">
       <header className="sticky top-0 z-10 bg-primary text-primary-foreground p-4 flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           className="text-primary-foreground hover:bg-primary-foreground/10"
-          onClick={() => navigate("/driver/factures")}
+          onClick={() => navigate("/driver/finance")}
           aria-label="Retour"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold truncate">Détails de la facture</h1>
           <p className="text-xs opacity-80 font-mono truncate">
             {invoice?.invoice_number || (isLoading ? "Chargement…" : "—")}
           </p>
         </div>
+        <KiraVoiceButton
+          text={voiceSummary}
+          label="Aide"
+          compact
+          className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
+        />
       </header>
 
       <main className="p-4 space-y-4 max-w-2xl mx-auto">
@@ -156,8 +173,8 @@ export default function DriverFactureDetail() {
               </CardContent>
             </Card>
 
-            {/* Pay this invoice — only when issued and not yet paid */}
-            {invoice.status === "issued" && !invoice.paid_at && (() => {
+            {/* Pay this invoice — including partial invoices with remaining due */}
+            {shouldShowPaymentCard && (() => {
               const paymentLink = (invoice as unknown as { payment_link?: string | null }).payment_link;
               return (
                 <Card>
@@ -391,5 +408,6 @@ export default function DriverFactureDetail() {
         )}
       </main>
     </div>
+    </DriverLayout>
   );
 }

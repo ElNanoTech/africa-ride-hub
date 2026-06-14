@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import { triggerConfetti } from '@/hooks/useConfetti';
 import { compressImage } from '@/lib/imageCompression';
+import { DRIVER_DOCUMENT_STATUS_LABEL, deriveDriverDocumentStatus, type DriverDocumentStatus } from '@/lib/driverOps';
 
 // User-friendly page title (not "KYC")
 const PAGE_TITLE = "Vérification d'identité";
@@ -411,6 +412,87 @@ function WelcomeBanner() {
 
 type KYCStatus = 'pending' | 'approved' | 'rejected' | 'not_submitted' | 'verified';
 
+interface DriverDocument {
+  id: string;
+  document_type: string;
+  status: string;
+  expiry_date: string | null;
+  rejection_reason: string | null;
+  uploaded_at: string;
+}
+
+const KYC_DOC_STATUS_VARIANT: Record<DriverDocumentStatus, 'success' | 'pending' | 'destructive' | 'outline'> = {
+  approved: 'success',
+  pending: 'pending',
+  rejected: 'destructive',
+  expired: 'destructive',
+  expiring_soon: 'outline',
+  missing: 'outline',
+};
+
+function KycDocumentStatusList({
+  kycSubmission,
+  documents,
+  status,
+}: {
+  kycSubmission: any;
+  documents: DriverDocument[];
+  status: KYCStatus;
+}) {
+  const statusForUploaded = (uploaded: boolean): DriverDocumentStatus => {
+    if (!uploaded) return 'missing';
+    if (status === 'rejected') return 'rejected';
+    if (status === 'verified' || status === 'approved') return 'approved';
+    return 'pending';
+  };
+  const residence = documents.find((doc) => doc.document_type === 'attestation_residence');
+  const selfie = documents.find((doc) => doc.document_type === 'photo_portrait');
+  const rows = [
+    {
+      label: "Pièce d'identité",
+      status: statusForUploaded(!!kycSubmission?.id_proof_url),
+      detail: status === 'rejected' ? kycSubmission?.rejection_reason : null,
+    },
+    {
+      label: 'Permis',
+      status: statusForUploaded(!!kycSubmission?.license_url),
+      detail: status === 'rejected' && kycSubmission?.license_url ? kycSubmission?.rejection_reason : null,
+    },
+    {
+      label: 'Justificatif',
+      status: deriveDriverDocumentStatus(residence?.status, residence?.expiry_date),
+      detail: residence?.rejection_reason ?? null,
+    },
+    {
+      label: 'Selfie',
+      status: deriveDriverDocumentStatus(selfie?.status, selfie?.expiry_date),
+      detail: selfie?.rejection_reason ?? null,
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg">Mes pièces KYC</CardTitle>
+        <CardDescription>Statut de chaque document demandé</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {rows.map((row) => (
+          <div key={row.label} className="flex items-center justify-between gap-3 rounded-lg border p-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">{row.label}</p>
+              {row.detail && <p className="text-xs text-destructive truncate">{row.detail}</p>}
+            </div>
+            <Badge variant={KYC_DOC_STATUS_VARIANT[row.status]} className="text-[10px]">
+              {DRIVER_DOCUMENT_STATUS_LABEL[row.status]}
+            </Badge>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function KYCPage() {
   const navigate = useNavigate();
   const { driverProfile } = useDriverAuth();
@@ -446,7 +528,7 @@ export default function KYCPage() {
   const banksLoading = false; // No async loading needed for static list
 
   // Fetch existing KYC submission
-  const { data: kycSubmission, isLoading: kycLoading } = useQuery({
+	  const { data: kycSubmission, isLoading: kycLoading } = useQuery({
     queryKey: ['kyc-submission', driverId],
     queryFn: async () => {
       if (!driverId) return null;
@@ -461,8 +543,27 @@ export default function KYCPage() {
       if (error) throw error;
       return data;
     },
-    enabled: !!driverId
-  });
+	    enabled: !!driverId
+	  });
+
+	  const { data: driverDocuments = [] } = useQuery({
+	    queryKey: ['driver-documents-kyc', driverId],
+	    queryFn: async () => {
+	      if (!driverId) return [];
+	      const { data, error } = await (supabase as any)
+	        .from('driver_documents')
+	        .select('id, document_type, status, expiry_date, rejection_reason, uploaded_at')
+	        .eq('driver_id', driverId)
+	        .order('uploaded_at', { ascending: false });
+	      if (error) {
+	        console.warn('KYC driver documents query failed:', error);
+	        return [];
+	      }
+	      return (data ?? []) as DriverDocument[];
+	    },
+	    enabled: !!driverId,
+	    retry: false,
+	  });
 
   // Determine KYC status - also check driver profile kyc_status for immediate feedback
   const kycStatus: KYCStatus = submissionComplete 
@@ -844,9 +945,17 @@ export default function KYCPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
-          
-          {/* Tips card */}
+	          </motion.div>
+
+	          <div className="mt-4">
+	            <KycDocumentStatusList
+	              kycSubmission={kycSubmission}
+	              documents={driverDocuments as DriverDocument[]}
+	              status={kycStatus}
+	            />
+	          </div>
+
+	          {/* Tips card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -879,10 +988,10 @@ export default function KYCPage() {
     return (
       <DriverLayout>
         <DriverBreadcrumb items={[{ label: PAGE_TITLE }]} />
-        <PageHeader title={PAGE_TITLE} />
-        <div className="px-4 pb-6">
-          <Card>
-            <CardContent className="p-8 text-center">
+	        <PageHeader title={PAGE_TITLE} />
+	        <div className="px-4 pb-6 space-y-4">
+	          <Card>
+	            <CardContent className="p-8 text-center">
               <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FileCheck className="h-8 w-8 text-primary" />
               </div>
@@ -896,22 +1005,27 @@ export default function KYCPage() {
               <HapticButton className="mt-6" onClick={() => navigate('/driver/vehicles')} hapticType="success">
                 Voir les véhicules
                 <ChevronRight className="h-4 w-4 ml-1" />
-              </HapticButton>
-            </CardContent>
-          </Card>
-        </div>
-      </DriverLayout>
-    );
+	              </HapticButton>
+	            </CardContent>
+	          </Card>
+	          <KycDocumentStatusList
+	            kycSubmission={kycSubmission}
+	            documents={driverDocuments as DriverDocument[]}
+	            status={kycStatus}
+	          />
+	        </div>
+	      </DriverLayout>
+	    );
   }
 
   if (kycStatus === 'rejected') {
     return (
       <DriverLayout>
-        <DriverBreadcrumb items={[{ label: PAGE_TITLE }]} />
-        <PageHeader title={PAGE_TITLE} />
-        <div className="px-4 pb-6">
-          <Card className="border-destructive/50">
-            <CardContent className="p-8 text-center">
+	        <DriverBreadcrumb items={[{ label: PAGE_TITLE }]} />
+	        <PageHeader title={PAGE_TITLE} />
+	        <div className="px-4 pb-6 space-y-4">
+	          <Card className="border-destructive/50">
+	            <CardContent className="p-8 text-center">
               <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <XCircle className="h-8 w-8 text-destructive" />
               </div>
@@ -929,12 +1043,17 @@ export default function KYCPage() {
                 hapticType="light"
               >
                 Soumettre à nouveau
-              </HapticButton>
-            </CardContent>
-          </Card>
-        </div>
-      </DriverLayout>
-    );
+	              </HapticButton>
+	            </CardContent>
+	          </Card>
+	          <KycDocumentStatusList
+	            kycSubmission={kycSubmission}
+	            documents={driverDocuments as DriverDocument[]}
+	            status={kycStatus}
+	          />
+	        </div>
+	      </DriverLayout>
+	    );
   }
 
   return (
@@ -954,10 +1073,18 @@ export default function KYCPage() {
         />
         
         <div className="px-4 pb-6">
-        {/* Welcome Banner for first-time users */}
-        <WelcomeBanner />
-        
-        {/* Progress Stepper */}
+	        {/* Welcome Banner for first-time users */}
+	        <WelcomeBanner />
+
+	        <div className="mb-4">
+	          <KycDocumentStatusList
+	            kycSubmission={kycSubmission}
+	            documents={driverDocuments as DriverDocument[]}
+	            status={kycStatus}
+	          />
+	        </div>
+
+	        {/* Progress Stepper */}
         <ProgressStepper 
           currentStep={currentStep} 
           step1Complete={step1Complete} 

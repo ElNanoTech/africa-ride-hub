@@ -5,10 +5,21 @@ import { useHapticFeedback } from './useHapticFeedback';
 // Main driver navigation routes in order
 const DRIVER_ROUTES = [
   '/driver',
-  '/driver/score',
+  '/driver/finance',
   '/driver/vehicles',
-  '/driver/loans',
+  '/driver/fleet-control',
   '/driver/profile',
+];
+
+const FINANCE_ROUTE_PREFIXES = [
+  '/driver/finance',
+  '/driver/portefeuille',
+  '/driver/wallet',
+  '/driver/factures',
+  '/driver/loans',
+  '/driver/credit',
+  '/driver/ownership',
+  '/driver/income',
 ];
 
 interface SwipeState {
@@ -43,6 +54,12 @@ export function useSwipeNavigation({
 
   // Find current route index
   const getCurrentRouteIndex = useCallback(() => {
+    if (location.pathname === '/driver/vehicle' || location.pathname.startsWith('/driver/vehicle/')) {
+      return DRIVER_ROUTES.indexOf('/driver/vehicles');
+    }
+    if (FINANCE_ROUTE_PREFIXES.some((prefix) => location.pathname === prefix || location.pathname.startsWith(`${prefix}/`))) {
+      return DRIVER_ROUTES.indexOf('/driver/finance');
+    }
     // Check for exact match first
     const exactIndex = DRIVER_ROUTES.indexOf(location.pathname);
     if (exactIndex !== -1) return exactIndex;

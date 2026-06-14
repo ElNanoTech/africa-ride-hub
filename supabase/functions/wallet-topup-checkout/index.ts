@@ -11,12 +11,84 @@ const WAVE_API_URL = "https://api.wave.com/v1";
 const MIN_TOPUP = 500;
 const MAX_TOPUP = 500000;
 
-function normalizeWavePhone(phone?: string | null): string | null {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, "");
-  if (/^225\d{10}$/.test(digits)) return `+${digits}`;
-  if (/^\d{10}$/.test(digits)) return `+225${digits}`;
-  return null;
+type WaveErrorBody = {
+  error_code?: string;
+  error_message?: string;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+};
+
+function isHttpsUrl(value?: string | null): value is string {
+  if (!value) return false;
+  try {
+    return new URL(value).protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function resolveRedirectUrl(candidate: unknown, publicAppUrl: string, fallbackPath: string) {
+  if (typeof candidate === "string" && isHttpsUrl(candidate)) {
+    return candidate;
+  }
+
+  const baseUrl = isHttpsUrl(publicAppUrl) ? publicAppUrl : "https://damafricahub.com";
+  return new URL(fallbackPath, baseUrl).toString();
+}
+
+function toHex(bytes: ArrayBuffer) {
+  return Array.from(new Uint8Array(bytes))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function createWaveSignature(body: string, signingSecret?: string | null) {
+  if (!signingSecret) return null;
+
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const encoder = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    "raw",
+    encoder.encode(signingSecret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, encoder.encode(`${timestamp}${body}`));
+  return `t=${timestamp},v1=${toHex(signature)}`;
+}
+
+function parseWaveError(errorText: string) {
+  try {
+    const parsed = JSON.parse(errorText) as WaveErrorBody;
+    return {
+      code: parsed.error_code || parsed.error?.code || null,
+      message: parsed.error_message || parsed.error?.message || null,
+    };
+  } catch {
+    return { code: null, message: errorText.trim() || null };
+  }
+}
+
+function getWaveCheckoutUserMessage(code: string | null, message: string | null) {
+  if (code === "missing-signature") {
+    return "Wave demande une signature API. Configurez WAVE_SIGNING_SECRET puis redeployez.";
+  }
+  if (code === "ip-not-allowed") {
+    return "Wave bloque l'adresse IP du serveur. Ajoutez l'IP Supabase autorisee dans Wave ou adaptez la liste blanche.";
+  }
+  if (code === "unauthorized-wallet" || code === "invalid-wallet" || code === "disabled-wallet") {
+    return "Le compte Wave Business n'est pas autorise pour ce checkout. Verifiez la cle API Wave.";
+  }
+  if (code === "request-validation-error" && message) {
+    return `Wave a refuse la recharge: ${message}`;
+  }
+  if (code) {
+    return `Wave a refuse la recharge. Code: ${code}.`;
+  }
+  return "Wave a refusé la recharge. Vérifiez votre numéro mobile money ou réessayez.";
 }
 
 serve(async (req) => {
@@ -27,9 +99,13 @@ serve(async (req) => {
   try {
     const waveApiKey = Deno.env.get("WAVE_API_KEY");
     if (!waveApiKey) throw new Error("WAVE_API_KEY is not configured");
+    const waveSigningSecret = Deno.env.get("WAVE_SIGNING_SECRET");
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!supabaseServiceRoleKey) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+    const publicAppUrl = Deno.env.get("PUBLIC_APP_URL") || "https://damafricahub.com";
 
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
@@ -64,13 +140,13 @@ serve(async (req) => {
       );
     }
 
-    const service = createClient(supabaseUrl, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const service = createClient(supabaseUrl, supabaseServiceRoleKey);
 
     // Resolve driver
     const { data: driver, error: drvErr } = await service
       .from("drivers")
-      .select("id, customer_id, phone_number")
-      .eq("user_id", user.id)
+      .select("id, customer_id")
+      .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id}`)
       .maybeSingle();
 
     if (drvErr || !driver) {
@@ -101,34 +177,41 @@ serve(async (req) => {
       throw new Error("Impossible de créer la recharge.");
     }
 
-    const origin = req.headers.get("origin") || "";
-    const restrictedMobile = normalizeWavePhone(driver.phone_number);
+    const waveRequestBody = JSON.stringify({
+      amount: String(numericAmount),
+      currency: "XOF",
+      error_url: resolveRedirectUrl(errorUrl, publicAppUrl, "/driver/portefeuille?topup=error"),
+      success_url: resolveRedirectUrl(successUrl, publicAppUrl, "/driver/portefeuille?topup=success"),
+      client_reference: payment.id,
+      // Do not restrict payer mobile: login/profile phone can differ from
+      // the Wave wallet a driver controls. Ownership is enforced by auth.
+    });
+    const waveSignature = await createWaveSignature(waveRequestBody, waveSigningSecret);
+
     const waveResponse = await fetch(`${WAVE_API_URL}/checkout/sessions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${waveApiKey}`,
         "Content-Type": "application/json",
+        ...(waveSignature ? { "Wave-Signature": waveSignature } : {}),
       },
-      body: JSON.stringify({
-        amount: String(numericAmount),
-        currency: "XOF",
-        error_url: errorUrl || `${origin}/driver/portefeuille?topup=error`,
-        success_url: successUrl || `${origin}/driver/portefeuille?topup=success`,
-        client_reference: payment.id,
-        ...(restrictedMobile ? { restrict_payer_mobile: restrictedMobile } : {}),
-      }),
+      body: waveRequestBody,
     });
 
     if (!waveResponse.ok) {
       const errorText = await waveResponse.text();
+      const waveError = parseWaveError(errorText);
       console.error(`Wave API error [${waveResponse.status}]:`, errorText);
       // best-effort cleanup
       await service.from("payments").delete().eq("id", payment.id);
       return new Response(
         JSON.stringify({
           success: false,
-          error: "Wave a refusé la recharge. Vérifiez votre numéro mobile money ou réessayez.",
+          error: getWaveCheckoutUserMessage(waveError.code, waveError.message),
           code: "WAVE_CHECKOUT_FAILED",
+          wave_status: waveResponse.status,
+          wave_error_code: waveError.code,
+          wave_error_message: waveError.message,
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );

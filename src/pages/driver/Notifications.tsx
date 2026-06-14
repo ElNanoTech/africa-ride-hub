@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
 
 // Map a notification type to the in-app destination it should open.
 function getNotificationDeeplink(type: string): string | null {
@@ -220,6 +221,10 @@ export default function NotificationsPage() {
   
   const unreadCount = notifications.filter((n) => !n.is_read).length;
   const groupedNotifications = groupNotificationsByDate(notifications as Notification[]);
+  const latestNotification = (notifications as Notification[])[0];
+  const voiceText = latestNotification
+    ? `Vous avez ${unreadCount} notification non lue. Derniere alerte: ${latestNotification.title}. ${latestNotification.message}`
+    : 'Aucune notification pour le moment.';
 
   const handleMarkAllRead = () => {
     markAllRead.mutate();
@@ -237,17 +242,21 @@ export default function NotificationsPage() {
       <PageHeader 
         title={NAV.NOTIFICATIONS}
         action={
-          hasDriverProfile && unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleMarkAllRead}
-              disabled={markAllRead.isPending}
-            >
-              <CheckCheck className="h-4 w-4 mr-1" />
-              Tout marquer lu
-            </Button>
-          )
+          <div className="flex items-center gap-2">
+            <KiraVoiceButton text={voiceText} compact />
+            {hasDriverProfile && unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleMarkAllRead}
+                disabled={markAllRead.isPending}
+                className="min-h-11"
+              >
+                <CheckCheck className="h-4 w-4 mr-1" />
+                Tout lu
+              </Button>
+            )}
+          </div>
         }
       />
 

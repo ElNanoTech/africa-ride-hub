@@ -151,8 +151,8 @@ export function useAddTicketMessage() {
       const { data: driver } = await supabase
         .from('drivers')
         .select('id')
-        .eq('user_id', user.id)
-        .single();
+        .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id}`)
+        .maybeSingle();
 
       if (!driver) throw new Error('Profil conducteur non trouvé');
 

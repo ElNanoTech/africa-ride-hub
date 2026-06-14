@@ -1,32 +1,46 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Star, Car, User, Banknote, KeyRound, AlertTriangle, Clock, Wallet, ClipboardCheck } from 'lucide-react';
+import { Home, Car, User, Wallet, ClipboardCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDriverRentals } from '@/hooks/useDriverData';
 import { useDriverActiveInspection } from '@/hooks/useDriverActiveInspection';
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import { differenceInDays, isToday, isPast, parseISO, differenceInHours, differenceInMinutes } from 'date-fns';
+import { isToday, isPast, parseISO, differenceInHours, differenceInMinutes } from 'date-fns';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface NavItem {
   to: string;
+  label: string;
   icon: React.ComponentType<{ className?: string }>;
+  activeWhen?: string[];
   badge?: string | number;
   badgeVariant?: 'default' | 'warning' | 'danger' | 'countdown';
-  isNew?: boolean;
 }
 
+type DriverRentalSummary = {
+  id: string;
+  status: string | null;
+};
+
+type RentalPaymentSummary = {
+  id: string;
+  due_date: string;
+  status: string | null;
+};
+
 const baseNavItems: NavItem[] = [
-  { to: '/driver', icon: Home },
-  { to: '/driver/score', icon: Star },
-  { to: '/driver/income', icon: Banknote },
-  { to: '/driver/vehicles', icon: Car },
-  { to: '/driver/fleet-control', icon: ClipboardCheck },
-  { to: '/driver/loans', icon: Wallet },
-  { to: '/driver/sinistres', icon: AlertTriangle },
-  { to: '/driver/profile', icon: User },
+  { to: '/driver', label: 'Accueil', icon: Home, activeWhen: ['/driver-dashboard'] },
+  {
+    to: '/driver/finance',
+    label: 'Finance',
+    icon: Wallet,
+    activeWhen: ['/driver/portefeuille', '/driver/wallet', '/driver/factures', '/driver/loans', '/driver/credit', '/driver/ownership', '/driver/income'],
+  },
+  { to: '/driver/vehicles', label: 'Véhicule', icon: Car, activeWhen: ['/vehicles', '/driver/vehicle', '/driver/rental'] },
+  { to: '/driver/fleet-control', label: 'Contrôle', icon: ClipboardCheck, activeWhen: ['/driver/inspection'] },
+  { to: '/driver/profile', label: 'Profil', icon: User, activeWhen: ['/profile', '/driver/settings', '/driver/support', '/driver/kyc', '/driver/profile/kyc'] },
 ];
 
 export function BottomNav() {
@@ -34,18 +48,14 @@ export function BottomNav() {
   const haptic = useHapticFeedback();
   const { data: rentals = [] } = useDriverRentals();
   const { data: activeInspection } = useDriverActiveInspection();
-  const [showNewAnimation, setShowNewAnimation] = useState(false);
-  const [previousHadRental, setPreviousHadRental] = useState<boolean | null>(null);
   const [previousPaymentStatus, setPreviousPaymentStatus] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<string | null>(null);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const activeRental = useMemo(() => 
-    rentals.find((r: any) => r.status === 'active'),
+    (rentals as DriverRentalSummary[]).find((r) => r.status === 'active'),
     [rentals]
   );
-
-  const hasActiveRental = !!activeRental;
 
   const { data: rentalPayments = [] } = useQuery({
     queryKey: ['rentalPayments', activeRental?.id],
@@ -58,7 +68,7 @@ export function BottomNav() {
         .eq('status', 'pending')
         .order('due_date', { ascending: true });
       if (error) throw error;
-      return data || [];
+      return (data || []) as RentalPaymentSummary[];
     },
     enabled: !!activeRental?.id,
     refetchInterval: 60000,
@@ -91,11 +101,11 @@ export function BottomNav() {
 
   const paymentStatus = useMemo(() => {
     if (!rentalPayments.length) return null;
-    const overduePayment = rentalPayments.find((p: any) => {
+    const overduePayment = rentalPayments.find((p) => {
       const dueDate = parseISO(p.due_date);
       return isPast(dueDate) && !isToday(dueDate);
     });
-    const dueTodayPayment = rentalPayments.find((p: any) => isToday(parseISO(p.due_date)));
+    const dueTodayPayment = rentalPayments.find((p) => isToday(parseISO(p.due_date)));
     if (overduePayment) return 'overdue';
     if (dueTodayPayment) return 'due_today';
     if (countdown) return 'countdown';
@@ -107,38 +117,25 @@ export function BottomNav() {
     setPreviousPaymentStatus(paymentStatus);
   }, [paymentStatus, previousPaymentStatus, haptic]);
 
-  const { rentalBadge, badgeVariant } = useMemo(() => {
-    if (!activeRental) return { rentalBadge: undefined, badgeVariant: 'default' as const };
-    if (paymentStatus === 'overdue') return { rentalBadge: '!', badgeVariant: 'danger' as const };
-    if (paymentStatus === 'due_today') return { rentalBadge: '!', badgeVariant: 'warning' as const };
-    if (countdown) return { rentalBadge: countdown, badgeVariant: 'countdown' as const };
-    const daysActive = differenceInDays(new Date(), new Date(activeRental.start_date));
-    if (daysActive === 0) return { rentalBadge: '✨', badgeVariant: 'default' as const };
-    return { rentalBadge: `${daysActive}`, badgeVariant: 'default' as const };
+  const { financeBadge, financeBadgeVariant } = useMemo(() => {
+    if (!activeRental) return { financeBadge: undefined, financeBadgeVariant: 'default' as const };
+    if (paymentStatus === 'overdue') return { financeBadge: '!', financeBadgeVariant: 'danger' as const };
+    if (paymentStatus === 'due_today') return { financeBadge: '!', financeBadgeVariant: 'warning' as const };
+    if (countdown) return { financeBadge: countdown, financeBadgeVariant: 'countdown' as const };
+    return { financeBadge: undefined, financeBadgeVariant: 'default' as const };
   }, [activeRental, paymentStatus, countdown]);
 
-  useEffect(() => {
-    if (previousHadRental === false && hasActiveRental) {
-      setShowNewAnimation(true);
-      const timer = setTimeout(() => setShowNewAnimation(false), 3000);
-      return () => clearTimeout(timer);
-    }
-    setPreviousHadRental(hasActiveRental);
-  }, [hasActiveRental, previousHadRental]);
-
-  const getRentalIcon = () => {
-    if (paymentStatus === 'overdue' || paymentStatus === 'due_today') return AlertTriangle;
-    if (countdown) return Clock;
-    return KeyRound;
-  };
-
   const navItems = useMemo(() => {
-    const withControl = baseNavItems.map(item => {
-      if (item.to !== '/driver/fleet-control') return item;
-      if (!activeInspection) return item;
+    return baseNavItems.map(item => {
+      if (item.to === '/driver/finance') {
+        return { ...item, badge: financeBadge, badgeVariant: financeBadgeVariant };
+      }
+
+      if (item.to !== '/driver/fleet-control' || !activeInspection) return item;
+
       const s = activeInspection.effective_status;
       // Only badge when driver action is required.
-      // approved = done, submitted = waiting on admin → no "!" needed.
+      // approved = done, submitted = waiting on admin -> no urgent badge needed.
       if (s === 'approved' || s === 'submitted') return item;
       const variant: NavItem['badgeVariant'] =
         s === 'rejected' || s === 'overdue' || s === 'blocked' ? 'danger'
@@ -146,31 +143,17 @@ export function BottomNav() {
         : 'default';
       return { ...item, badge: '!', badgeVariant: variant };
     });
-    if (!hasActiveRental) return withControl;
-    const items: NavItem[] = [...withControl];
-    items.splice(items.length - 1, 0, {
-      to: '/driver/rental',
-      icon: getRentalIcon(),
-      badge: rentalBadge,
-      badgeVariant,
-      isNew: showNewAnimation,
-    });
-    return items;
-  }, [hasActiveRental, rentalBadge, badgeVariant, showNewAnimation, paymentStatus, countdown, activeInspection]);
+  }, [financeBadge, financeBadgeVariant, activeInspection]);
 
   const handleNavClick = (to: string) => {
-    const isActive = location.pathname === to || 
-      (to !== '/driver' && location.pathname.startsWith(to));
+    const item = navItems.find((n) => n.to === to);
+    const isActive = isNavItemActive(item, location.pathname);
     if (!isActive) haptic.selection();
   };
 
   const getActiveIndex = () => {
     for (let i = navItems.length - 1; i >= 0; i--) {
-      const item = navItems[i];
-      if (location.pathname === item.to || 
-          (item.to !== '/driver' && location.pathname.startsWith(item.to))) {
-        return i;
-      }
+      if (isNavItemActive(navItems[i], location.pathname)) return i;
     }
     return location.pathname.startsWith('/driver') ? 0 : -1;
   };
@@ -196,10 +179,9 @@ export function BottomNav() {
                   <motion.div
                     whileTap={{ scale: 0.85 }}
                     className={cn(
-                      'relative flex h-10 w-full min-w-0 items-center justify-center rounded-xl px-1 transition-all duration-200 sm:h-14 sm:max-w-14 sm:px-0 sm:rounded-2xl',
+                      'relative flex h-14 w-full min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1 transition-all duration-200',
                       isActive && 'bg-primary/15',
                       !isActive && 'active:bg-muted/50',
-                      item.isNew && 'animate-bounce'
                     )}
                   >
                     {isActive && (
@@ -211,14 +193,22 @@ export function BottomNav() {
                     )}
                     
                       <Icon className={cn(
-                        'h-4.5 w-4.5 shrink-0 transition-all duration-200 sm:h-6 sm:w-6',
+                        'h-5 w-5 shrink-0 transition-all duration-200',
                       isActive && 'text-primary scale-110',
                       !isActive && 'text-muted-foreground',
                       item.badgeVariant === 'danger' && 'text-destructive',
                       item.badgeVariant === 'warning' && 'text-warning',
                       item.badgeVariant === 'countdown' && 'text-orange-500',
-                      item.isNew && 'text-primary',
                     )} />
+
+                    <span className={cn(
+                      'max-w-full truncate text-[10px] font-semibold leading-none',
+                      isActive ? 'text-primary' : 'text-muted-foreground',
+                      item.badgeVariant === 'danger' && 'text-destructive',
+                      item.badgeVariant === 'warning' && 'text-warning',
+                    )}>
+                      {item.label}
+                    </span>
 
                     <AnimatePresence>
                       {isActive && (
@@ -251,4 +241,13 @@ export function BottomNav() {
       </div>
     </nav>
   );
+}
+
+function isNavItemActive(item: NavItem | undefined, pathname: string) {
+  if (!item) return false;
+  if (item.to === '/driver') {
+    return pathname === '/driver' || pathname === '/driver-dashboard' || pathname === '/driver/home';
+  }
+  if (pathname === item.to || pathname.startsWith(`${item.to}/`)) return true;
+  return item.activeWhen?.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)) ?? false;
 }

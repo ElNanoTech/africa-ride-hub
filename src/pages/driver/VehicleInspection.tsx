@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
@@ -6,7 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, AlertTriangle, ShieldCheck, Send, RefreshCw, Ban, Upload, Clock, Inbox, CheckCheck, History } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Loader2, AlertTriangle, ShieldCheck, Send, RefreshCw, Ban, Upload, Clock, Inbox, CheckCheck, History, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   Dialog,
@@ -18,11 +19,20 @@ import {
 } from '@/components/ui/dialog';
 import { supabase as _supabase } from '@/integrations/supabase/routeClient';
 import { useDriverAuth } from '@/hooks/useDriverAuth';
+import { useOfflineStatus } from '@/hooks/useOfflineStatus';
 import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
 import { compressImage } from '@/lib/imageCompression';
+import { logDiagnostic } from '@/lib/diagnostics';
+import {
+  deleteFleetControlPendingUpload,
+  listFleetControlPendingUploads,
+  saveFleetControlPendingUpload,
+  type FleetControlUploadKind,
+} from '@/lib/fleetControlUploadRecovery';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { FleetControlZoneTile } from '@/components/driver/FleetControlZoneTile';
+import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
 import {
   ALL_ZONES,
   PHOTO_ZONES,
@@ -44,8 +54,7 @@ import {
 } from '@/lib/fleetControl';
 import { useFleetControlSettings } from '@/hooks/useFleetControlSettings';
 
-// Supabase types lag the migration sync; cast for the new item-review columns.
-const supabase = _supabase as any;
+const supabase = _supabase;
 
 interface Photo {
   id: string;
@@ -75,7 +84,13 @@ interface AuditRow {
   id: string;
   action: string;
   actor_type: string;
-  metadata: any;
+  metadata: {
+    immobilization?: string;
+    dry_run?: boolean;
+    error?: string;
+    uffizio_status?: string;
+    [key: string]: unknown;
+  } | null;
   created_at: string;
 }
 
@@ -87,6 +102,31 @@ interface ThumbsResult {
 const EMPTY_THUMBS: ThumbsResult = { urls: {}, failed: {} };
 
 type SignedCacheEntry = { url: string; signedAt: number } | { failed: true; signedAt: number };
+type UploadKind = FleetControlUploadKind;
+
+interface FailedUpload {
+  zone: ZoneKey;
+  kind: UploadKind;
+  file: File;
+  message: string;
+  failedAt: string;
+}
+
+type CandidateInspection = Inspection & { reviewed_at?: string | null };
+
+function getErrorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === 'string') return err;
+  if (err && typeof err === 'object' && 'message' in err) {
+    return String((err as { message?: unknown }).message ?? '');
+  }
+  return String(err ?? '');
+}
+
+function isZoneKey(zone: string): zone is ZoneKey {
+  return ALL_ZONES.some((item) => item.key === zone);
+}
+
 // Signed URLs live 1h; re-sign well before expiry.
 const SIGNED_URL_REUSE_MS = 45 * 60_000;
 // Ignore realtime echoes of our own uploads for this long.
@@ -96,6 +136,7 @@ export default function VehicleInspection() {
   const { driverProfile } = useDriverAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { isOnline, quality } = useOfflineStatus();
   const [uploadingZone, setUploadingZone] = useState<ZoneKey | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [notes, setNotes] = useState('');
@@ -105,6 +146,7 @@ export default function VehicleInspection() {
   const pendingZoneRef = useRef<ZoneKey | null>(null);
   const pendingKindRef = useRef<'camera' | 'gallery' | 'document' | null>(null);
   const [brokenThumbs, setBrokenThumbs] = useState<Record<string, true>>({});
+  const [failedUploads, setFailedUploads] = useState<Partial<Record<ZoneKey, FailedUpload>>>({});
   // Per-photo signed-URL cache (keyed id+storage_path) so unchanged tiles
   // reuse their URL instead of re-signing on every photos change.
   const signedUrlCacheRef = useRef(new Map<string, SignedCacheEntry>());
@@ -157,7 +199,7 @@ export default function VehicleInspection() {
 
       // Prefer what the driver must act on now. A relance creates/surfaces a
       // pending cycle, so pending/overdue must win over a recently approved row.
-      const list = (candidates ?? []) as any[];
+      const list = (candidates ?? []) as unknown as CandidateInspection[];
       const pickActive = list.find((r) =>
         ['pending', 'overdue', 'rejected', 'blocked'].includes(r.status),
       );
@@ -168,7 +210,7 @@ export default function VehicleInspection() {
           Date.now() - new Date(r.reviewed_at).getTime() < 24 * 60 * 60 * 1000,
       );
       let inspection: Inspection | null =
-        (pickActive ?? recentlyApproved ?? list[0] ?? null) as any;
+        pickActive ?? recentlyApproved ?? list[0] ?? null;
 
       if (!inspection) {
         const { data: rental } = await supabase
@@ -195,7 +237,7 @@ export default function VehicleInspection() {
           `)
           .single();
         if (cErr) throw cErr;
-        inspection = created as any;
+        inspection = created as unknown as Inspection;
       }
 
       const { data: photos } = await supabase
@@ -220,8 +262,48 @@ export default function VehicleInspection() {
   });
 
   const inspection = data?.inspection ?? null;
-  const photos = data?.photos ?? [];
-  const audit = data?.audit ?? [];
+  const photos = useMemo(() => data?.photos ?? [], [data?.photos]);
+  const audit = useMemo(() => data?.audit ?? [], [data?.audit]);
+
+  useEffect(() => {
+    if (!inspection?.id) return;
+    let cancelled = false;
+
+    void listFleetControlPendingUploads(inspection.id)
+      .then((uploads) => {
+        if (cancelled || uploads.length === 0) return;
+        setFailedUploads((prev) => {
+          const next = { ...prev };
+          for (const upload of uploads) {
+            if (!isZoneKey(upload.zone)) continue;
+            next[upload.zone] = {
+              zone: upload.zone,
+              kind: upload.kind,
+              file: upload.file,
+              message: upload.message,
+              failedAt: upload.failedAt,
+            };
+          }
+          return next;
+        });
+      })
+      .catch((err: unknown) => {
+        logDiagnostic(
+          'driver_upload_failure',
+          {
+            driverId,
+            inspectionId: inspection.id,
+            recoveryStage: 'restore_failed',
+            errorMessage: getErrorMessage(err),
+          },
+          'warn',
+        );
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [driverId, inspection?.id]);
 
   // FC-D5: live refresh of the driver's own items. Control-row changes are
   // handled by useDriverActiveInspection's single shared channel (mounted via
@@ -329,6 +411,10 @@ export default function VehicleInspection() {
     completedCount === reqZones.length &&
     inspection?.status !== 'submitted' &&
     inspection?.status !== 'approved';
+  const failedUploadList = useMemo(
+    () => Object.values(failedUploads).filter((entry): entry is FailedUpload => !!entry),
+    [failedUploads],
+  );
 
   const handlePickPhoto = (zone: ZoneKey, kind: 'camera' | 'gallery' | 'document') => {
     if (!inspection) return;
@@ -344,21 +430,15 @@ export default function VehicleInspection() {
     input.click();
   };
 
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    const selectedZone = pendingZoneRef.current ?? pendingZone;
-    const selectedKind = pendingKindRef.current ?? pendingKind;
-    pendingZoneRef.current = null;
-    pendingKindRef.current = null;
-    if (!file || !selectedZone || !inspection) return;
-    const zone = selectedZone;
-    setPendingZone(null);
-    const kind = selectedKind;
-    setPendingKind(null);
+  const uploadEvidenceFile = async (zone: ZoneKey, file: File, kind: UploadKind) => {
+    if (!inspection) return;
     setUploadingZone(zone);
     setUploadProgress(0);
     try {
+      if (!isOnline || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+        throw new Error('offline');
+      }
+
       // Compress images; pass PDFs/other docs through as-is.
       const isImage = file.type.startsWith('image/');
       let compressed: File;
@@ -416,7 +496,7 @@ export default function VehicleInspection() {
       const existing = photosByZone[zone];
       if (existing) {
         await supabase.storage.from('vehicle-inspections').remove([existing.storage_path]).catch(() => {});
-        await supabase
+        const { error: updateErr } = await supabase
           .from('vehicle_inspection_photos')
           .update({
             storage_path: path,
@@ -425,8 +505,9 @@ export default function VehicleInspection() {
             submitted_at: new Date().toISOString(),
           })
           .eq('id', existing.id);
+        if (updateErr) throw updateErr;
       } else {
-        await supabase
+        const { error: insertErr } = await supabase
           .from('vehicle_inspection_photos')
           .insert({
             inspection_id: inspection.id,
@@ -440,6 +521,7 @@ export default function VehicleInspection() {
             validation_status: 'pending',
             submitted_at: new Date().toISOString(),
           });
+        if (insertErr) throw insertErr;
       }
 
       // Remember our own write so the realtime photos channel skips its echo.
@@ -453,11 +535,18 @@ export default function VehicleInspection() {
           .eq('id', inspection.id);
       }
 
+      setFailedUploads((prev) => {
+        if (!prev[zone]) return prev;
+        const next = { ...prev };
+        delete next[zone];
+        return next;
+      });
+      void deleteFleetControlPendingUpload(inspection.id, zone);
       toast.success('Pièce enregistrée');
       queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('inspection upload failed', err);
-      const msg = String(err?.message ?? err ?? '');
+      const msg = getErrorMessage(err);
       let description = 'Veuillez réessayer.';
       if (/network|Failed to fetch|aborted/i.test(msg)) {
         description = 'Connexion interrompue. Vérifiez votre réseau et réessayez.';
@@ -470,15 +559,96 @@ export default function VehicleInspection() {
       } else if (msg) {
         description = msg;
       }
-      toast.error("Échec de l'envoi de la pièce", { description });
+      setFailedUploads((prev) => ({
+        ...prev,
+        [zone]: {
+          zone,
+          kind,
+          file,
+          message: description,
+          failedAt: new Date().toISOString(),
+        },
+      }));
+      void saveFleetControlPendingUpload({
+        inspectionId: inspection.id,
+        driverId,
+        zone,
+        kind,
+        file,
+        message: description,
+        failedAt: new Date().toISOString(),
+      }).catch((storageErr: unknown) => {
+        logDiagnostic(
+          'driver_upload_failure',
+          {
+            driverId,
+            customerId: driverProfile?.customer_id ?? null,
+            inspectionId: inspection.id,
+            zone,
+            itemKind: kind,
+            recoveryStage: 'persist_failed',
+            errorMessage: getErrorMessage(storageErr),
+          },
+          'warn',
+        );
+      });
+      logDiagnostic(
+        'driver_upload_failure',
+        {
+          driverId,
+          customerId: driverProfile?.customer_id ?? null,
+          inspectionId: inspection.id,
+          zone,
+          itemKind: kind,
+          networkQuality: quality,
+          errorMessage: msg || description,
+        },
+        'warn',
+      );
+      toast.error("Échec de l'envoi de la pièce", {
+        description: `${description} La pièce reste prête à réessayer sur cet appareil.`,
+      });
     } finally {
       setUploadingZone(null);
       setUploadProgress(0);
     }
   };
 
+  const retryFailedUpload = (zone: ZoneKey) => {
+    const entry = failedUploads[zone];
+    if (!entry) return;
+    if (!isOnline) {
+      toast.error('Connexion requise', {
+        description: 'La pièce est conservée. Réessayez dès que la connexion revient.',
+      });
+      return;
+    }
+    void uploadEvidenceFile(entry.zone, entry.file, entry.kind);
+  };
+
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    const selectedZone = pendingZoneRef.current ?? pendingZone;
+    const selectedKind = pendingKindRef.current ?? pendingKind;
+    pendingZoneRef.current = null;
+    pendingKindRef.current = null;
+    if (!file || !selectedZone || !selectedKind || !inspection) return;
+    const zone = selectedZone;
+    setPendingZone(null);
+    const kind = selectedKind;
+    setPendingKind(null);
+    await uploadEvidenceFile(zone, file, kind);
+  };
+
   const handleSubmit = async () => {
     if (!inspection || !canSubmit) return;
+    if (!isOnline) {
+      toast.error('Connexion requise', {
+        description: 'Le contrôle reste visible, mais la soumission nécessite une connexion.',
+      });
+      return;
+    }
     try {
       if (notes && notes !== (inspection.notes ?? '')) {
         await supabase.from('vehicle_inspections').update({ notes }).eq('id', inspection.id);
@@ -488,9 +658,9 @@ export default function VehicleInspection() {
       if (error) throw error;
       toast.success('Contrôle envoyé pour validation');
       queryClient.invalidateQueries({ queryKey: ['driver-inspection', driverId] });
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      toast.error(err?.message ?? "Échec de l'envoi");
+      toast.error(getErrorMessage(err) || "Échec de l'envoi");
     }
   };
 
@@ -537,6 +707,15 @@ export default function VehicleInspection() {
   // items stay read-only until the next cycle.
   const cycleLocked = inspection.status === 'approved';
   const reviewInProgress = inspection.status === 'submitted';
+  const controlVoiceText = `Controle du vehicule. Statut ${STATUS_LABEL[eff]}. ${completedCount} pieces sur ${reqZones.length} fournies. ${
+    canSubmit
+      ? 'Vous pouvez envoyer le controle maintenant.'
+      : reviewInProgress
+      ? 'Votre gestionnaire verifie les pieces envoyees.'
+      : cycleLocked
+      ? 'Aucune action requise jusqu au prochain controle.'
+      : 'Ajoutez les photos et documents demandes avant de soumettre.'
+  }`;
 
   const renderZoneTile = (z: { key: ZoneKey; label: string; help: string }, kind: 'camera' | 'doc') => {
     const photo = photosByZone[z.key];
@@ -582,7 +761,11 @@ export default function VehicleInspection() {
 
   return (
     <DriverLayout>
-      <PageHeader title="Contrôle du véhicule" subtitle={inspection.vehicles?.license_plate || ''} />
+      <PageHeader
+        title="Contrôle du véhicule"
+        subtitle={inspection.vehicles?.license_plate || ''}
+        action={<KiraVoiceButton text={controlVoiceText} compact />}
+      />
       <div className="p-4 space-y-4 max-w-2xl mx-auto">
         <Card>
           <CardContent className="p-4 space-y-3">
@@ -597,15 +780,16 @@ export default function VehicleInspection() {
               </div>
               <Badge className={STATUS_CLASS[eff]}>{STATUS_LABEL[eff]}</Badge>
             </div>
-            <div className="text-sm">
-              <span className="font-medium">{completedCount}/{reqZones.length} pièces fournies</span>
-              {reqPhotoZones.length > 0 && reqDocZones.length > 0 && (
-                <span className="text-muted-foreground">
-                  {' '}· Véhicule : {photosDone}/{reqPhotoZones.length} · Documents : {docsDone}/{reqDocZones.length}
-                </span>
-              )}
-            </div>
-            {inspection.status === 'rejected' && inspection.rejection_reason && (
+	            <div className="text-sm">
+	              <span className="font-medium">{completedCount}/{reqZones.length} pièces fournies</span>
+	              {reqPhotoZones.length > 0 && reqDocZones.length > 0 && (
+	                <span className="text-muted-foreground">
+	                  {' '}· Véhicule : {photosDone}/{reqPhotoZones.length} · Documents : {docsDone}/{reqDocZones.length}
+	                </span>
+	              )}
+	            </div>
+	            <Progress value={Math.round((completedCount / Math.max(reqZones.length, 1)) * 100)} className="h-2" />
+	            {inspection.status === 'rejected' && inspection.rejection_reason && (
               <div className="rounded-md bg-rose-50 dark:bg-rose-950/30 p-3 text-sm text-rose-700 dark:text-rose-300">
                 <div className="flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
@@ -649,6 +833,68 @@ export default function VehicleInspection() {
             )}
           </CardContent>
         </Card>
+
+        {quality === 'poor' && (
+          <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+              <div>
+                <div className="font-medium">Connexion limitée</div>
+                <div className="opacity-90">
+                  Les photos peuvent prendre plus de temps. Si un envoi échoue, la pièce restera disponible pour réessayer.
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {failedUploadList.length > 0 && (
+          <Card className="border-warning/50 bg-warning/5">
+            <CardContent className="p-4 space-y-3">
+              <div className="flex items-start gap-2 text-warning">
+                <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
+                <div>
+                  <div className="font-semibold">Envoi à reprendre</div>
+                  <div className="text-sm opacity-90">
+                    La pièce reste sur cet appareil. Réessayez sans reprendre la photo.
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {failedUploadList.map((entry) => {
+                  const zoneLabel = ALL_ZONES.find((zone) => zone.key === entry.zone)?.label ?? entry.zone;
+                  const busy = uploadingZone === entry.zone;
+                  return (
+                    <div key={entry.zone} className="rounded-lg border bg-background/80 p-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium truncate">{zoneLabel}</div>
+                          <div className="text-xs text-muted-foreground truncate">{entry.message}</div>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={!!uploadingZone}
+                          onClick={() => retryFailedUpload(entry.zone)}
+                          className="shrink-0"
+                        >
+                          {busy ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : isOnline ? (
+                            'Réessayer'
+                          ) : (
+                            'Hors ligne'
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {inspection.immobilization_state && inspection.immobilization_state !== 'none' && (
           <ImmobilizationPanel
@@ -724,6 +970,7 @@ export default function VehicleInspection() {
         required={reqZones.length}
         rejectedCount={rejectedCount}
         canSubmit={canSubmit}
+        isOnline={isOnline}
         onSubmit={handleSubmit}
       />
 
@@ -731,7 +978,7 @@ export default function VehicleInspection() {
           ref={fileRef}
           type="file"
           accept={pendingKind === 'document' ? 'image/*,application/pdf' : 'image/*'}
-          {...(pendingKind === 'camera' ? { capture: 'environment' as any } : {})}
+          {...(pendingKind === 'camera' ? { capture: 'environment' as const } : {})}
           className="hidden"
           onChange={handleFile}
         />
@@ -1005,6 +1252,7 @@ function StickyActionBar({
   required,
   rejectedCount,
   canSubmit,
+  isOnline,
   onSubmit,
 }: {
   status: FleetControlStatus;
@@ -1012,6 +1260,7 @@ function StickyActionBar({
   required: number;
   rejectedCount: number;
   canSubmit: boolean;
+  isOnline: boolean;
   onSubmit: () => void;
 }) {
   let label = 'Soumettre le contrôle';
@@ -1039,6 +1288,11 @@ function StickyActionBar({
     disabled = true;
     variant = 'secondary';
     icon = <Clock className="h-5 w-5 mr-2" />;
+  } else if (!isOnline) {
+    label = 'Connexion requise';
+    disabled = true;
+    variant = 'secondary';
+    icon = <WifiOff className="h-5 w-5 mr-2" />;
   }
 
   return (
@@ -1052,6 +1306,9 @@ function StickyActionBar({
             <span>{completed}/{required} pièces</span>
             {rejectedCount > 0 && (
               <span className="text-rose-600 font-medium">{rejectedCount} à corriger</span>
+            )}
+            {!isOnline && rejectedCount === 0 && (
+              <span className="text-warning font-medium">Soumission en ligne uniquement</span>
             )}
           </div>
         )}

@@ -53,7 +53,7 @@ export function useDriverAuth() {
       const { data, error } = await supabase
         .from('drivers')
         .select('*')
-        .eq('user_id', userId)
+        .or(`user_id.eq.${userId},auth_user_id.eq.${userId}`)
         .maybeSingle();
 
       if (error) throw error;
@@ -80,7 +80,12 @@ export function useDriverAuth() {
       }
       return data;
     } catch (error) {
-      console.error('Error fetching driver profile:', error);
+      const message = error instanceof Error ? error.message : String((error as { message?: string })?.message ?? error);
+      if (message.includes('Failed to fetch')) {
+        console.warn('Driver profile fetch will retry:', error);
+      } else {
+        console.error('Error fetching driver profile:', error);
+      }
       return null;
     }
   }, []);
@@ -203,8 +208,9 @@ export function useDriverAuth() {
         toast.error(result.error);
       }
       return result;
-    } catch (error: any) {
-      return { success: false, error: error.message };
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
+      return { success: false, error: message };
     }
   };
 
@@ -234,9 +240,10 @@ export function useDriverAuth() {
         toast.error(result.error);
       }
       return result;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erreur inconnue';
       toast.error('Erreur d\'envoi du code');
-      return { success: false, error: error.message };
+      return { success: false, error: message };
     } finally {
       setIsLoading(false);
     }

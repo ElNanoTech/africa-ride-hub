@@ -2,11 +2,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { usePaymentReceipts, useInvoiceLinkedPayment } from "@/hooks/useBilling";
 import { formatCurrency, formatDateShort } from "@/lib/format";
-import { Wallet, CreditCard, Banknote, Smartphone } from "lucide-react";
+import { getInvoiceRemainingDue } from "@/lib/financeAmounts";
+import { Wallet, CreditCard, Banknote, Smartphone, CheckCircle2, Circle, Clock } from "lucide-react";
 import type { Invoice } from "@/types/billing";
 
 interface Props {
-  invoice: Pick<Invoice, "id" | "total_ttc" | "amount_paid" | "status" | "cancelled_at">;
+  invoice: Pick<Invoice, "id" | "total_ttc" | "amount_paid" | "remaining_due" | "status" | "cancelled_at" | "issued_at" | "paid_at">;
   compact?: boolean;
 }
 
@@ -48,8 +49,53 @@ export function InvoicePaymentBreakdown({ invoice, compact }: Props) {
     else otherAmount += r.amount;
   }
 
-  const totalPaid = damCredit + waveAmount + otherAmount;
-  const remaining = Math.max(0, total - totalPaid);
+  const receiptPaid = damCredit + waveAmount + otherAmount;
+  const recordedPaid = Math.max(
+    receiptPaid,
+    Number(invoice.amount_paid ?? 0),
+    Number(linked?.payment.amount_paid ?? 0),
+  );
+  const unreceiptedPaid = Math.max(0, recordedPaid - receiptPaid);
+  const remaining = getInvoiceRemainingDue(invoice, linked?.payment ?? null);
+  const damReceipt = receipts?.find((r) => isDamCreditReceipt(r));
+  const waveReceipt = receipts?.find((r) => r.method === "wave");
+  const finalTimelineLabel = invoice.cancelled_at
+    ? "Annulée"
+    : remaining === 0
+    ? "Réglée"
+    : invoice.status === "partial"
+    ? "Partielle"
+    : "Reste à payer";
+  const timeline = [
+    {
+      label: "Émise",
+      detail: invoice.issued_at ? formatDateShort(invoice.issued_at) : "Date non disponible",
+      done: true,
+    },
+    ...(damCredit > 0
+      ? [{
+          label: "Crédit appliqué",
+          detail: `${formatCurrency(damCredit)}${damReceipt?.received_at ? ` · ${formatDateShort(damReceipt.received_at)}` : ""}`,
+          done: true,
+        }]
+      : []),
+    ...(waveAmount > 0
+      ? [{
+          label: "Paiement Wave",
+          detail: `${formatCurrency(waveAmount)}${waveReceipt?.received_at ? ` · ${formatDateShort(waveReceipt.received_at)}` : ""}`,
+          done: true,
+        }]
+      : []),
+    {
+      label: finalTimelineLabel,
+      detail: remaining === 0
+        ? invoice.paid_at
+          ? formatDateShort(invoice.paid_at)
+          : "Montant soldé"
+        : `${formatCurrency(remaining)} restant`,
+      done: remaining === 0 || !!invoice.cancelled_at,
+    },
+  ];
 
   // Story sentence
   let storyClass = "text-muted-foreground";
@@ -123,6 +169,17 @@ export function InvoicePaymentBreakdown({ invoice, compact }: Props) {
               <span className="font-mono font-semibold">−{formatCurrency(otherAmount)}</span>
             </li>
           )}
+          {unreceiptedPaid > 0 && (
+            <li className="flex justify-between py-1.5">
+              <span className="flex items-center gap-1.5">
+                <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                Déjà payé
+              </span>
+              <span className="font-mono font-semibold">
+                −{formatCurrency(unreceiptedPaid)}
+              </span>
+            </li>
+          )}
           <li className="flex justify-between py-1.5 border-t-2 border-foreground/10 pt-2">
             <span className="font-semibold">Reste à payer</span>
             <span
@@ -138,6 +195,26 @@ export function InvoicePaymentBreakdown({ invoice, compact }: Props) {
         {story && (
           <p className={`text-sm font-medium ${storyClass}`}>{story}</p>
         )}
+
+        <div className="pt-2">
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1.5">
+            Parcours de la facture
+          </p>
+          <ol className="space-y-1.5">
+            {timeline.map((item, index) => {
+              const Icon = item.done ? CheckCircle2 : index === timeline.length - 1 ? Clock : Circle;
+              return (
+                <li key={`${item.label}-${index}`} className="flex items-start gap-2 text-xs">
+                  <Icon className={item.done ? "h-4 w-4 text-success mt-0.5" : "h-4 w-4 text-warning mt-0.5"} />
+                  <div className="min-w-0">
+                    <p className="font-medium">{item.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{item.detail}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
 
         {/* Receipts timeline */}
         {receipts && receipts.length > 0 && (

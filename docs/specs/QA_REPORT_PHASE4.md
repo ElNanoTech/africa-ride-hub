@@ -181,3 +181,62 @@ deep-link · `60–61` full approval · `70–73` driver history ·
 `80–85` drivers list / 15 profile tabs / contraventions · `90–99c` quick
 actions + KYC approve · `100–102` driver invoice + active rental ·
 `110–112` post-fix verification (honest tiles + French toasts).
+
+---
+
+# Addendum — KIRA Driver App v2 Part 1 blocker QA
+
+- **Date:** 2026-06-14
+- **Branch:** `codex/kira-driver-v2-part1`
+- **Environment:** local Vite app at `127.0.0.1:8080`, Playwright mobile
+  viewport, live Supabase project `fihrjavcdwpttvnlqqxc`, isolated seeded E2E
+  tenant/driver data.
+- **Seeded driver:** `4c9bea2b-4a82-4d7f-bccb-b9baef1618fa`
+- **Seeded vehicle:** `QA-E2E-100`
+- **Current Fleet Control cycle:** `a6815764-3dd1-4378-bf8e-91c557543a45`
+- **Partial invoice/payment used for finance QA:** invoice
+  `d68bddf4-4628-4e75-8322-1fdf580c9e1f`, total `1 000 FCFA`,
+  `amount_paid = 400`, `remaining_due = 600`, payment
+  `cbc36fa5-c730-4ee1-abe7-3b9b6666f120`.
+- **Wave remote retest payments after final redeploy:** own partial payment
+  `29dd2ea2-60a8-4c70-9916-590a1bfc25ee` (`amount = 1 000`,
+  `amount_paid = 400`, expected `remaining_due = 600`) and other-driver
+  payment `23a478d8-6ed3-4565-8ff3-5ae3ee6063be`.
+
+## Blocker matrix
+
+| Blocker | Result | Evidence / notes |
+|---|---|---|
+| A. Deploy updated `wave-checkout` Edge Function | **PASS** | User redeployed the hardened function, then local live retest confirmed the fixed behavior against `https://fihrjavcdwpttvnlqqxc.supabase.co/functions/v1/wave-checkout`. |
+| A. Re-test driver can only pay own payment | **PASS** | Signed in as seeded driver, called `wave-checkout` for another driver's payment `23a478d8-6ed3-4565-8ff3-5ae3ee6063be`; returned `403` with `Payment belongs to another driver`. |
+| A. Re-test admin callers are blocked | **PASS** | Signed in as E2E customer admin, called `wave-checkout` for seeded driver's partial payment `29dd2ea2-60a8-4c70-9916-590a1bfc25ee`; returned `403` with `Admin users cannot create driver Wave checkout sessions`. |
+| A. Re-test partial invoice checkout uses `remaining_due` only | **PASS** | Payment `29dd2ea2-60a8-4c70-9916-590a1bfc25ee` had `amount = 1 000`, `amount_paid = 400`, expected remaining due `600`. Calling checkout with `amount = 1 000` returned `400` with `remaining_due = 600`; calling checkout with `amount = 600` returned `200` and created session `cos-25djkqy802bz4`. Driver UI evidence for the partial invoice remains in `/tmp/kira-driver-v2-qa/browser-finance-partial-invoice-390.png` and `/tmp/kira-driver-v2-qa/browser-invoice-detail-partial-fixed-390.png`. |
+| A. Re-test no duplicate checkout/payment is created | **PASS** | Repeated checkout on payment `29dd2ea2-60a8-4c70-9916-590a1bfc25ee` returned `409`; database check confirmed `wave_transaction_id` remained `cos-25djkqy802bz4`, so no replacement checkout was stored. |
+| B. Active Fleet Control seeded for driver | **PASS** | User seeded one pending inspection; QA ran against current control `a6815764-3dd1-4378-bf8e-91c557543a45`. |
+| B. Driver sees required control | **PASS** | `/tmp/qa-shots/30-driver-home-active.png`, `/tmp/qa-shots/31-driver-fc-start.png`; QA script confirmed home mentions the required control. |
+| B. Driver uploads photos/docs | **PASS** | `/tmp/qa-shots/32-driver-fc-photos-done.png`, `/tmp/qa-shots/33-driver-fc-all-uploaded.png`; progress reached `11/11`, with `7/7` vehicle photos and `4/4` documents. Reload persistence confirmed in `/tmp/qa-shots/34-driver-fc-after-reload.png`. |
+| B. Driver submits | **PASS** | `/tmp/qa-shots/35-driver-fc-submitted.png`; submit button was enabled and the submitted banner rendered. |
+| B. Admin rejects one item | **PASS** | Admin-auth RPCs reviewed the correct current cycle: first item approved, second item rejected with reason `Photo trop floue — test QA`, and the control was marked rejected. |
+| B. Driver sees rejection reason | **PASS** | `/tmp/qa-shots/50-driver-fc-after-review.png`; QA confirmed the rejection reason and approved-item state were visible. |
+| B. Driver resubmits | **PASS** | `/tmp/qa-shots/51-driver-fc-retaken.png`, `/tmp/qa-shots/54-driver-fc-ready-resubmit.png`, `/tmp/qa-shots/55-driver-fc-resubmitted.png`; QA confirmed the rejection reason cleared after retake, progress stayed `11/11`, and resubmit showed the submitted banner. |
+| B. Admin approves | **PASS** | Admin-auth RPCs approved all non-approved items and called `fleet_control_approve`; database check confirmed control status `approved` and all item statuses `approved`. |
+| B. Driver sees approved state | **PASS** | `/tmp/qa-shots/57-driver-fc-approved-clean.png`; rerun after the driver-profile fetch patch showed approved state with no console/network findings. |
+| C. Screenshots retained and PASS/FAIL added | **PASS** | This addendum preserves the screenshot paths and marks each requested blocker step. |
+
+## Verification commands
+
+| Check | Result |
+|---|---|
+| `~/.bun/bin/bun x tsc -p tsconfig.app.json --noEmit` | **PASS** |
+| `~/.bun/bin/bun run test` | **PASS** — 106 tests |
+| `~/.bun/bin/bun run build` | **PASS** — only pre-existing Browserslist / chunk-size style warnings |
+| Focused ESLint on new/closely touched Part 1 files (`BottomNav`, `Finance`, `KiraVoiceButton`, `useDriverAuth`, `wave-checkout`) | **PASS** |
+| `git diff --check` | **PASS** |
+
+## Remaining deployment gates
+
+1. No Part 1 deployment gates remain from blockers A/B/C.
+2. `fleet_control_create_manual` is no longer a blocker for this Fleet Control
+   pass; the seeded active-control cycle passed end-to-end.
+3. SPEC_KIRA_DRIVER_APP_v2 Parts 2-6 are still not present in the provided
+   local spec file; Part 2 can start once the next spec section is provided.

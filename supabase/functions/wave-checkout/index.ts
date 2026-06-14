@@ -22,6 +22,10 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!serviceRoleKey) {
+      throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+    }
 
     // Authenticate user
     const authHeader = req.headers.get("Authorization");
@@ -67,6 +71,90 @@ serve(async (req) => {
       );
     }
 
+    const serviceClient = createClient(supabaseUrl, serviceRoleKey);
+
+    const { data: adminUser, error: adminUserError } = await serviceClient
+      .from("admin_users")
+      .select("id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (adminUserError) {
+      console.error("Admin role lookup failed:", adminUserError);
+      return new Response(JSON.stringify({ error: "Unable to verify caller role" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (adminUser) {
+      return new Response(JSON.stringify({ error: "Driver checkout only" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: driver, error: driverError } = await supabase
+      .from("drivers")
+      .select("id, customer_id")
+      .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id}`)
+      .maybeSingle();
+
+    if (driverError || !driver) {
+      return new Response(JSON.stringify({ error: "Driver profile not found" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const { data: payment, error: paymentError } = await serviceClient
+      .from("payments")
+      .select("id, driver_id, customer_id, amount, amount_paid, status, wave_transaction_id")
+      .eq("id", paymentId)
+      .maybeSingle();
+
+    if (paymentError || !payment) {
+      return new Response(JSON.stringify({ error: "Payment not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (payment.driver_id !== driver.id || payment.customer_id !== driver.customer_id) {
+      return new Response(JSON.stringify({ error: "Payment does not belong to this driver" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (["paid", "overpaid", "cancelled"].includes(payment.status)) {
+      return new Response(JSON.stringify({ error: "Payment is already closed" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (payment.wave_transaction_id) {
+      return new Response(JSON.stringify({ error: "Checkout already created" }), {
+        status: 409,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const remainingDue = Math.max(0, Number(payment.amount ?? 0) - Number(payment.amount_paid ?? 0));
+    const roundedAmount = Math.round(numericAmount);
+    if (remainingDue <= 0 || roundedAmount > remainingDue) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Le montant demandé dépasse le restant dû.",
+          code: "AMOUNT_EXCEEDS_REMAINING_DUE",
+          remaining_due: remainingDue,
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Resolve base URL for success/error redirects.
     // Origin header (preferred) → fallback to PUBLIC_APP_URL env → fallback to a sane default.
     const origin = req.headers.get("Origin")
@@ -82,7 +170,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        amount: String(Math.round(amount)),
+        amount: String(roundedAmount),
         currency: "XOF",
         error_url: errorUrl || `${origin}/driver/rental?payment=error`,
         success_url: successUrl || `${origin}/driver/rental?payment=success`,
@@ -100,16 +188,11 @@ serve(async (req) => {
     const session = await waveResponse.json();
     console.log("Wave checkout session created:", session.id);
 
-    // Store the Wave checkout session ID on the payment record
-    const serviceClient = createClient(
-      supabaseUrl,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-    );
-
     await serviceClient
       .from("payments")
       .update({ wave_transaction_id: session.id })
-      .eq("id", paymentId);
+      .eq("id", paymentId)
+      .eq("driver_id", driver.id);
 
     return new Response(
       JSON.stringify({

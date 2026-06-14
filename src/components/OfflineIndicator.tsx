@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 export function OfflineIndicator() {
-  const { isOnline, wasOffline, clearWasOffline } = useOfflineStatus();
+  const { isOnline, wasOffline, clearWasOffline, quality, effectiveType } = useOfflineStatus();
   const [showReconnected, setShowReconnected] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
@@ -31,6 +31,8 @@ export function OfflineIndicator() {
     clearWasOffline();
   };
 
+  const showLimited = quality === 'poor' && !showReconnected;
+
   return (
     <AnimatePresence>
       {/* Offline Banner */}
@@ -43,16 +45,61 @@ export function OfflineIndicator() {
           className={cn(
             'fixed top-0 left-0 right-0 z-[100] safe-top',
             'bg-destructive text-destructive-foreground',
-            'px-4 py-3 flex items-center justify-center gap-2'
+            'px-3 py-3 flex items-center justify-center gap-2'
           )}
         >
           <WifiOff className="h-4 w-4" />
-          <span className="text-sm font-medium">
-            Vous êtes hors ligne
-          </span>
-          <span className="text-sm opacity-80">
-            • Les données en cache sont disponibles
-          </span>
+          <div className="min-w-0">
+            <span className="text-sm font-semibold">Hors ligne</span>
+            <span className="text-xs opacity-85"> · données en cache disponibles</span>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={cn(
+              'ml-1 flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1',
+              'bg-white/15 hover:bg-white/25 text-xs font-medium transition-colors',
+              'active:scale-95'
+            )}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
+            Réessayer
+          </button>
+        </motion.div>
+      )}
+
+      {/* Limited Connection Banner */}
+      {showLimited && (
+        <motion.div
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: -100, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+          className={cn(
+            'fixed top-0 left-0 right-0 z-[100] safe-top',
+            'bg-warning text-warning-foreground',
+            'px-3 py-3 flex items-center justify-center gap-2'
+          )}
+        >
+          <Wifi className="h-4 w-4" />
+          <div className="min-w-0">
+            <span className="text-sm font-semibold">Connexion limitée</span>
+            <span className="text-xs opacity-85">
+              {effectiveType ? ` · ${effectiveType.toUpperCase()}` : ' · certaines actions peuvent échouer'}
+            </span>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className={cn(
+              'ml-1 flex shrink-0 items-center gap-1 rounded-full px-2.5 py-1',
+              'bg-black/10 hover:bg-black/15 text-xs font-medium transition-colors',
+              'active:scale-95'
+            )}
+          >
+            <RefreshCw className={cn('h-3.5 w-3.5', isRefreshing && 'animate-spin')} />
+            Actualiser
+          </button>
         </motion.div>
       )}
 
@@ -94,17 +141,19 @@ export function OfflineIndicator() {
 
 // Compact version for header integration
 export function OfflineStatusDot() {
-  const { isOnline } = useOfflineStatus();
+  const { quality } = useOfflineStatus();
 
   return (
     <div className="relative">
       <div
         className={cn(
           'w-2 h-2 rounded-full transition-colors',
-          isOnline ? 'bg-primary' : 'bg-destructive animate-pulse'
+          quality === 'online' && 'bg-primary',
+          quality === 'poor' && 'bg-warning animate-pulse',
+          quality === 'offline' && 'bg-destructive animate-pulse'
         )}
       />
-      {!isOnline && (
+      {quality !== 'online' && (
         <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive/20 rounded-full animate-ping" />
       )}
     </div>

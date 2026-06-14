@@ -22,14 +22,30 @@ import damFlotteLogo from '@/assets/dam-flotte-logo.png';
 
 const ROUTE_ORDER = [
   '/driver',
-  '/driver/score',
+  '/driver/finance',
   '/driver/vehicles',
-  '/driver/loans',
-  '/driver/settings',
+  '/driver/fleet-control',
   '/driver/profile',
 ];
 
+const FINANCE_ROUTE_PREFIXES = [
+  '/driver/finance',
+  '/driver/portefeuille',
+  '/driver/wallet',
+  '/driver/factures',
+  '/driver/loans',
+  '/driver/credit',
+  '/driver/ownership',
+  '/driver/income',
+];
+
 function getRouteIndex(pathname: string): number {
+  if (pathname === '/driver/vehicle' || pathname.startsWith('/driver/vehicle/')) {
+    return ROUTE_ORDER.indexOf('/driver/vehicles');
+  }
+  if (FINANCE_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return ROUTE_ORDER.indexOf('/driver/finance');
+  }
   const exactIndex = ROUTE_ORDER.indexOf(pathname);
   if (exactIndex !== -1) return exactIndex;
   for (let i = ROUTE_ORDER.length - 1; i >= 0; i--) {
@@ -250,11 +266,11 @@ function AccidentFAB() {
   const { data: isEnabled } = useIsFeatureEnabled('enable_accident_reporting');
 
   // Hide on accident page itself
-  if (!isEnabled || location.pathname === '/driver/accident') return null;
+  if (!isEnabled || location.pathname.startsWith('/driver/sinistres')) return null;
 
   return (
     <Link
-      to="/driver/accident"
+      to="/driver/sinistres"
       className="fixed bottom-20 right-4 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-destructive text-destructive-foreground shadow-lg active:scale-95 transition-transform"
       aria-label="Déclarer un accident"
     >

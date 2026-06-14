@@ -6,9 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatusBadge } from "@/lib/statusBadges";
 import { formatCurrency, formatDateShort } from "@/lib/format";
+import { getInvoicePaidAmount, getInvoiceRemainingDue, isInvoicePayable } from "@/lib/financeAmounts";
 import { FileText, ChevronLeft, ChevronRight, CreditCard, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useFinancialRealtime } from "@/hooks/useFinancialRealtime";
+import { DriverLayout } from "@/components/DriverLayout";
+import { KiraVoiceButton } from "@/components/driver/KiraVoiceButton";
+import type { Invoice } from "@/types/billing";
 
 export default function DriverFactures() {
   const navigate = useNavigate();
@@ -25,7 +29,20 @@ export default function DriverFactures() {
   const allIds = useMemo(() => (invoices ?? []).map((i) => i.id), [invoices]);
   const { data: linkedByInvoice } = useInvoiceLinkedPaymentsBatch(allIds);
 
-  const renderList = (list: typeof facts, emptyLabel: string) =>
+  const getLinked = (inv: Invoice) => linkedByInvoice?.[inv.id] ?? null;
+  const payableFacts = facts.filter((inv) => isInvoicePayable(inv, getLinked(inv)));
+  const paidFacts = facts.filter((inv) => {
+    const linked = getLinked(inv);
+    if (isInvoicePayable(inv, linked)) return false;
+    return inv.status === "paid" || !!inv.paid_at || linked?.status === "paid" || linked?.status === "overpaid";
+  });
+  const historyFacts = [...facts, ...stats];
+  const totalPayable = payableFacts.reduce((sum, inv) => sum + getInvoiceRemainingDue(inv, getLinked(inv)), 0);
+  const voiceSummary = totalPayable > 0
+    ? `Vous avez ${payableFacts.length} facture a payer pour un reste total de ${formatCurrency(totalPayable)}.`
+    : "Aucune facture a payer. Vos factures payees restent dans l'historique.";
+
+  const renderList = (list: Invoice[], emptyLabel: string, mode: "payable" | "paid" | "history") =>
     isLoading ? (
       <p className="text-center py-12 text-muted-foreground">Chargement…</p>
     ) : list.length === 0 ? (
@@ -36,18 +53,30 @@ export default function DriverFactures() {
     ) : (
       <div className="space-y-2">
         {list.map((inv) => {
-          const linked = linkedByInvoice?.[inv.id];
+          const linked = getLinked(inv);
+          const due = getInvoiceRemainingDue(inv, linked);
+          const paid = getInvoicePaidAmount(inv, linked);
+          const payable = isInvoicePayable(inv, linked);
+          const isPartial = payable && paid > 0 && due > 0;
           // Prefer the payment status whenever a payment is linked — it reflects
           // partial / overpaid states that the invoice row alone cannot express,
           // mirroring what admins see in /admin/billing.
           const effectiveBadge = linked
             ? <StatusBadge kind="payment" status={linked.status} withTooltip={false} className="text-xs" />
             : <StatusBadge kind="invoice" status={inv.status} withTooltip={false} className="text-xs" />;
-          const showPartial = linked && (linked.status === "partial" || linked.status === "overpaid");
-          const needsPayment =
-            inv.status === "issued" &&
-            !inv.paid_at &&
-            (!linked || (linked.status !== "paid" && linked.status !== "overpaid"));
+          const showPartial = isPartial || (linked && (linked.status === "partial" || linked.status === "overpaid"));
+          const needsPayment = payable;
+          const amountLabel =
+            mode === "payable"
+              ? "Reste à payer"
+              : inv.status === "paid" || linked?.status === "paid" || linked?.status === "overpaid"
+              ? "Payé"
+              : due > 0
+              ? "Reste"
+              : "Montant";
+          const amountValue = mode === "payable" || due > 0
+            ? due
+            : Math.max(paid, Number(inv.total_ttc ?? 0));
           return (
             <Card
               key={inv.id}
@@ -79,10 +108,11 @@ export default function DriverFactures() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="text-right">
-                    <p className="font-bold">{formatCurrency(inv.total_ttc)}</p>
+                    <p className="text-[10px] text-muted-foreground">{amountLabel}</p>
+                    <p className="font-bold">{formatCurrency(amountValue)}</p>
                     {showPartial && (
                       <p className="text-[10px] text-muted-foreground font-mono">
-                        Payé {formatCurrency(linked!.amount_paid)} / {formatCurrency(linked!.amount)}
+                        Payé {formatCurrency(paid)} / {formatCurrency(inv.total_ttc)}
                       </p>
                     )}
                     {effectiveBadge}
@@ -97,20 +127,29 @@ export default function DriverFactures() {
     );
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <DriverLayout hideHeader className="bg-background">
+    <div className="min-h-full bg-background pb-8">
       <header className="sticky top-0 z-10 bg-primary text-primary-foreground p-4 flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
           className="text-primary-foreground hover:bg-primary-foreground/10"
-          onClick={() => navigate('/driver/settings')}
+          onClick={() => navigate('/driver/finance')}
           aria-label="Retour"
         >
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold">Mes factures</h1>
-          <p className="text-xs opacity-80">Factures et relevés mensuels</p>
+          <p className="text-xs opacity-80">À payer, payées et historique</p>
+        </div>
+        <div className="ml-auto">
+          <KiraVoiceButton
+            text={voiceSummary}
+            label="Aide"
+            compact
+            className="border-primary-foreground/30 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
+          />
         </div>
       </header>
 
@@ -136,19 +175,24 @@ export default function DriverFactures() {
             <ChevronRight className="h-4 w-4 text-muted-foreground" />
           </CardContent>
         </Card>
-        <Tabs defaultValue="invoices">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="invoices">Factures</TabsTrigger>
-            <TabsTrigger value="statements">Relevés</TabsTrigger>
+        <Tabs defaultValue="payable">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="payable">À payer</TabsTrigger>
+            <TabsTrigger value="paid">Payées</TabsTrigger>
+            <TabsTrigger value="history">Historique</TabsTrigger>
           </TabsList>
-          <TabsContent value="invoices" className="mt-4">
-            {renderList(facts, "Aucune facture pour le moment")}
+          <TabsContent value="payable" className="mt-4">
+            {renderList(payableFacts, "Aucune facture à payer", "payable")}
           </TabsContent>
-          <TabsContent value="statements" className="mt-4">
-            {renderList(stats, "Aucun relevé mensuel")}
+          <TabsContent value="paid" className="mt-4">
+            {renderList(paidFacts, "Aucune facture payée", "paid")}
+          </TabsContent>
+          <TabsContent value="history" className="mt-4">
+            {renderList(historyFacts, "Aucun historique disponible", "history")}
           </TabsContent>
         </Tabs>
       </main>
     </div>
+    </DriverLayout>
   );
 }

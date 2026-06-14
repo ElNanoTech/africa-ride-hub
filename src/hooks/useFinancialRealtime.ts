@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { logDiagnostic } from '@/lib/diagnostics';
 
 /**
  * useFinancialRealtime
@@ -147,7 +148,21 @@ export function useFinancialRealtime({
       );
     }
 
-    channel.subscribe();
+    channel.subscribe((status, err) => {
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        logDiagnostic(
+          'realtime_connection_unhealthy',
+          {
+            scope,
+            driverId,
+            channelName,
+            realtimeStatus: status,
+            errorMessage: err instanceof Error ? err.message : undefined,
+          },
+          'warn',
+        );
+      }
+    });
 
     return () => {
       if (timer != null) clearTimeout(timer);

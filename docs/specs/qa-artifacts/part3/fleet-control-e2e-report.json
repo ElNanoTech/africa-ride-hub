@@ -1,0 +1,270 @@
+{
+  "ok": true,
+  "passed": 16,
+  "total": 17,
+  "seeded": {
+    "customerId": "6fe4aac9-250f-4d15-b5ed-fc1ba4a230de",
+    "customerName": "FC E2E Test",
+    "adminUserId": "6e19ad18-f52d-4dc5-88de-a82215af2352",
+    "driverUserId": "57884fdf-844b-41c8-abf8-e3c227dce131",
+    "driverId": "f8da654f-d1c7-4739-94b2-38283f8e6dc1",
+    "driverName": "Mamadou Test E2E",
+    "vehicleId": "386428b9-f4af-4df2-96dd-e8163b9b25ac",
+    "plate": "FC-E2E-001",
+    "imei": "FCE2E000000001",
+    "rentalId": "7963328c-b1b8-42f4-a0f4-3e917d898a3f",
+    "controlId": "057cc384-c804-4e72-96f6-6466edbb2013"
+  },
+  "report": [
+    {
+      "id": "1",
+      "name": "Control auto-created from active rental",
+      "pass": true,
+      "details": {
+        "control_id": "057cc384-c804-4e72-96f6-6466edbb2013",
+        "status": "pending",
+        "cycle_days": 14,
+        "due_at": "2026-06-28T05:54:00.85944+00:00",
+        "due_matches_setting": true,
+        "driver_can_see": true
+      }
+    },
+    {
+      "id": "2",
+      "name": "Driver submits all 11 required items",
+      "pass": true,
+      "details": {
+        "status": "submitted",
+        "submitted_count": 11,
+        "required_count": 11
+      }
+    },
+    {
+      "id": "3",
+      "name": "Per-item approve + reject persist with reason",
+      "pass": true,
+      "details": {
+        "approved": {
+          "id": "953e92a0-24b6-4bd2-9629-75af3be42f13",
+          "validation_status": "approved",
+          "rejection_reason": null
+        },
+        "rejected": {
+          "id": "c49af1c7-36b2-4102-85fb-6bc029425d69",
+          "validation_status": "rejected",
+          "rejection_reason": "Photo trop floue"
+        },
+        "driver_sees_reason": "Photo trop floue"
+      }
+    },
+    {
+      "id": "4",
+      "name": "Admin rejects → status=rejected + driver notified",
+      "pass": true,
+      "details": {
+        "row": {
+          "status": "rejected",
+          "rejection_reason": "Documents illisibles, à refaire"
+        },
+        "notification": {
+          "notification_type": "fleet_control_rejected",
+          "message": "Documents illisibles, à refaire"
+        }
+      }
+    },
+    {
+      "id": "5",
+      "name": "Approval → approved + due_at reset + counts cleared + notif",
+      "pass": true,
+      "details": {
+        "row": {
+          "status": "approved",
+          "last_validated_at": "2026-06-14T05:54:03.744737+00:00",
+          "due_at": "2026-06-28T05:54:03.744737+00:00",
+          "reminder_count": 0,
+          "cycle_days": 14
+        },
+        "due_reset_ok": true,
+        "notification_id": "0098e1f1-d498-418d-9a9c-513096aa307c"
+      }
+    },
+    {
+      "id": "5b",
+      "name": "Submit refused on approved control (invalid_status_for_submit)",
+      "pass": true,
+      "details": {
+        "error": "invalid_status_for_submit"
+      }
+    },
+    {
+      "id": "6",
+      "name": "Reminder increments + cooldown blocks 2nd click",
+      "pass": true,
+      "details": {
+        "reminder_count": 1,
+        "first": {
+          "sent": true,
+          "control_id": "057cc384-c804-4e72-96f6-6466edbb2013"
+        },
+        "second": {
+          "sent": false,
+          "control_id": "057cc384-c804-4e72-96f6-6466edbb2013",
+          "cooldown_until": "2026-06-15T05:54:03.848401+00:00"
+        },
+        "notifications_total": 1
+      }
+    },
+    {
+      "id": "7",
+      "name": "Recompute flips past-due pending → overdue",
+      "pass": true,
+      "details": {
+        "status": "overdue",
+        "recompute": {
+          "ok": true,
+          "overdue_marked": 1,
+          "cancelled": 0,
+          "auto_immobilization_queued": 0,
+          "auto_enabled": false
+        },
+        "audit_count": 1
+      }
+    },
+    {
+      "id": "8",
+      "name": "Manual immobilize → state=requested + command queued (no fake cut)",
+      "pass": true,
+      "details": {
+        "row": {
+          "immobilization_state": "requested",
+          "immobilization_requested_at": "2026-06-14T05:54:04.53664+00:00",
+          "immobilization_command_ref": null
+        },
+        "command": {
+          "status": "pending",
+          "source": "manual"
+        }
+      }
+    },
+    {
+      "id": "9",
+      "name": "Cancel immobilization → state=cancelled, command cancelled",
+      "pass": true,
+      "details": {
+        "row": {
+          "immobilization_state": "cancelled",
+          "immobilization_cancelled_at": "2026-06-14T05:54:04.594748+00:00"
+        },
+        "command": {
+          "status": "cancelled"
+        }
+      }
+    },
+    {
+      "id": "10",
+      "name": "Parking check advances requested→pending_stop→cut_sent (honest)",
+      "pass": false,
+      "details": {
+        "row": {
+          "immobilization_state": "cut_sent",
+          "immobilization_command_ref": "DRY_RUN:setOutput:FCE2E000000001",
+          "status": "blocked"
+        },
+        "tick1": {
+          "ok": true,
+          "dry_run": true,
+          "advanced": 1,
+          "cut_sent": 0,
+          "cut_failed": 0,
+          "checked": 1
+        },
+        "tick2": {
+          "ok": true,
+          "dry_run": true,
+          "advanced": 0,
+          "cut_sent": 1,
+          "cut_failed": 0,
+          "checked": 1
+        }
+      }
+    },
+    {
+      "id": "11",
+      "name": "auto_immobilisation_enabled=false → no system request",
+      "pass": true,
+      "details": {
+        "immobilization_state": "none"
+      }
+    },
+    {
+      "id": "12",
+      "name": "auto_immobilisation_enabled=true → system immobilization request",
+      "pass": true,
+      "details": {
+        "immobilization_state": "requested",
+        "audit": {
+          "actor_type": "system",
+          "action": "immobilization_requested"
+        }
+      }
+    },
+    {
+      "id": "13",
+      "name": "cycle_days=7 → next due is 7 days after approval",
+      "pass": true,
+      "details": {
+        "row": {
+          "due_at": "2026-06-21T05:54:10.180072+00:00",
+          "cycle_days": 7
+        }
+      }
+    },
+    {
+      "id": "14",
+      "name": "RLS: driver sees only own controls; driver cannot approve",
+      "pass": true,
+      "details": {
+        "driver_visible_rows": 1,
+        "all_belong_to_self": true,
+        "driver_approve_error": "admin_required",
+        "status_after_driver_attempt": "cancelled"
+      }
+    },
+    {
+      "id": "15",
+      "name": "Driver receives all required notification types",
+      "pass": true,
+      "details": {
+        "received": [
+          "fleet_control_approved",
+          "fleet_control_reminder",
+          "fleet_control_blocked",
+          "rental_status",
+          "fleet_control_overdue",
+          "fleet_control_rejected"
+        ],
+        "missing": []
+      }
+    },
+    {
+      "id": "16",
+      "name": "Audit trail records all key actions",
+      "pass": true,
+      "details": {
+        "actions": [
+          "status_recomputed",
+          "immobilization_requested",
+          "immobilization_cancelled",
+          "reminder_sent",
+          "control_approved",
+          "control_submitted",
+          "control_rejected",
+          "item_rejected",
+          "item_approved",
+          "item_submitted"
+        ],
+        "missing": []
+      }
+    }
+  ]
+}

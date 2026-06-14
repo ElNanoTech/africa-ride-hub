@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, MessageCircle, ChevronRight, Clock, CheckCircle, AlertCircle, User, Send, ArrowLeft } from 'lucide-react';
+import { Plus, MessageCircle, ChevronRight, Clock, CheckCircle, AlertCircle, User, Send, ArrowLeft, BookOpen, LifeBuoy, Video, CreditCard } from 'lucide-react';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
 import { DriverBreadcrumb } from '@/components/DriverBreadcrumb';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -559,18 +559,30 @@ export default function SupportPage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <MessageCircle className="h-5 w-5 text-primary" />
-              Besoin d'aide ?
+              Aide chauffeur
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <p className="text-sm text-muted-foreground">
-              Questions fréquentes :
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" size="sm">Paiement</Button>
-              <Button variant="outline" size="sm">Score</Button>
-              <Button variant="outline" size="sm">Location</Button>
-              <Button variant="outline" size="sm">Prêt</Button>
+            <div className="grid grid-cols-3 gap-2">
+              <CreateTicketDialog onCreated={handleTicketCreated} />
+              <Button variant="outline" size="sm" className="h-auto flex-col gap-1 py-3">
+                <BookOpen className="h-4 w-4" />
+                FAQ
+              </Button>
+              <Button variant="outline" size="sm" className="h-auto flex-col gap-1 py-3">
+                <Video className="h-4 w-4" />
+                Tutoriels
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <Button variant="ghost" size="sm" className="justify-start">
+                <CreditCard className="h-4 w-4 mr-2" />
+                Paiement
+              </Button>
+              <Button variant="ghost" size="sm" className="justify-start">
+                <LifeBuoy className="h-4 w-4 mr-2" />
+                Véhicule
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -1,9 +1,7 @@
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Car, Trophy, Calendar, Banknote, CheckCircle, Clock, Target, ChevronRight, Sparkles } from 'lucide-react';
+import { Car, Trophy, Calendar, Banknote, CheckCircle, Clock, Target, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatCurrency } from '@/lib/format';
 import { useDriverRentToOwnContract, useContractMilestones, useContractPayments } from '@/hooks/useRentToOwn';
@@ -14,6 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { FeatureFlag } from '@/components/FeatureFlag';
 import { StatusBadge } from '@/lib/statusBadges';
+import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
 
 function ProgressRing({ percentage, size = 160, strokeWidth = 14 }: { percentage: number; size?: number; strokeWidth?: number }) {
   const radius = (size - strokeWidth) / 2;
@@ -85,7 +84,11 @@ export default function DriverOwnership() {
   if (!contract) {
     return (
       <DriverLayout>
-        <PageHeader title="Mon Véhicule" subtitle="Progression vers la propriété" />
+        <PageHeader
+          title="Mon Véhicule"
+          subtitle="Progression vers la propriété"
+          action={<KiraVoiceButton text="Aucun contrat de propriete actif pour le moment. Contactez votre gestionnaire pour demarrer le parcours." compact />}
+        />
         <div className="px-4 py-12 text-center">
           <Car className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold">Aucun contrat Rent-to-Own</h3>
@@ -100,10 +103,15 @@ export default function DriverOwnership() {
   const weeksRemaining = Math.max(0, contract.contract_duration_weeks - contract.weeks_completed);
   const remaining = contract.total_price - contract.total_paid;
   const recentPayments = payments.slice(0, 10);
+  const voiceSummary = `Votre progression vers la propriete est de ${Math.round(contract.ownership_percentage)} pour cent. Il reste ${formatCurrency(remaining)} et ${weeksRemaining} semaines environ.`;
 
   return (
     <DriverLayout>
-      <PageHeader title="Mon Véhicule" subtitle={contract.vehicle?.model_name || 'Rent-to-Own'} />
+      <PageHeader
+        title="Mon Véhicule"
+        subtitle={contract.vehicle?.model_name || 'Rent-to-Own'}
+        action={<KiraVoiceButton text={voiceSummary} compact />}
+      />
 
       <div className="px-4 space-y-6 pb-24">
         {/* Hero progress ring */}

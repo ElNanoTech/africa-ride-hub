@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { DriverLayout } from '@/components/DriverLayout';
+import { useEffect, useMemo, useState } from 'react';
+import { DriverLayout, PageHeader } from '@/components/DriverLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -11,14 +11,47 @@ import { Wallet, ArrowDownCircle, ArrowUpCircle, FileText, PlusCircle } from 'lu
 import { Link, useSearchParams } from 'react-router-dom';
 import { LoadingState } from '@/components/LoadingState';
 import { TopUpSheet } from '@/components/driver/TopUpSheet';
+import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
 import { toast } from 'sonner';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
 import { formatCurrency as fmt } from '@/lib/format';
+import { getInvoiceRemainingDue } from '@/lib/financeAmounts';
 
 interface TxnLabel {
   title: string;
   source: string;
 }
+
+type WalletTxn = {
+  id: string;
+  type: string;
+  direction?: string | null;
+  amount: number;
+  balance_after?: number | null;
+  created_at: string;
+  note: string | null;
+  invoice_id?: string | null;
+  payment_id?: string | null;
+  method?: string | null;
+};
+
+type WalletOpenInvoice = {
+  id: string;
+  invoice_number: string | null;
+  total_ttc: number;
+  amount_paid: number;
+  remaining_due: number | null;
+  status: string;
+  issued_at: string | null;
+  period_start: string | null;
+  period_end: string | null;
+};
+
+type AutoPayPlanItem = WalletOpenInvoice & {
+  due: number;
+  applied: number;
+  leftover: number;
+};
 
 function describeTxn(t: {
   type: string;
@@ -59,6 +92,7 @@ function describeTxn(t: {
         title: 'Facture réglée automatiquement par crédit DAM',
         source: 'Application automatique',
       };
+    case 'invoice_cancellation_refund':
     case 'cancellation_refund':
     case 'refund':
     case 'refund_or_credit':
@@ -98,7 +132,7 @@ export default function DriverWallet() {
       const [walletRes, txnsRes] = await Promise.all([
         supabase.from('driver_wallets').select('*').eq('driver_id', driverId!).maybeSingle(),
         supabase.from('driver_wallet_transactions')
-          .select('id, type, direction, amount, balance_after, created_at, note, invoice_id, payment_id')
+          .select('id, type, direction, amount, balance_after, created_at, note, invoice_id, payment_id, method')
           .eq('driver_id', driverId!)
           .order('created_at', { ascending: false })
           .limit(50),
@@ -114,7 +148,7 @@ export default function DriverWallet() {
     const status = searchParams.get('topup');
     if (!status) return;
     if (status === 'success') {
-      toast.success('Paiement reçu. Mise à jour du solde…');
+      toast.success('Recharge confirmée. Mise à jour du solde…');
       const refetch = () => queryClient.invalidateQueries({ queryKey: ['driver-wallet-self'] });
       refetch();
       const t1 = setTimeout(refetch, 3000);
@@ -151,8 +185,8 @@ export default function DriverWallet() {
     },
   });
 
-  const balance = data?.wallet?.balance ?? 0;
-  const txns = data?.transactions ?? [];
+  const balance = Number(data?.wallet?.balance ?? 0);
+  const txns = useMemo(() => (data?.transactions ?? []) as WalletTxn[], [data?.transactions]);
 
   // Open invoices that wallet credit will auto-apply to (oldest first).
   const { data: openInvoices = [] } = useQuery({
@@ -169,33 +203,61 @@ export default function DriverWallet() {
         .order('issued_at', { ascending: true })
         .limit(20);
       if (error) throw error;
-      return data ?? [];
+      return (data ?? []) as WalletOpenInvoice[];
     },
   });
 
   // Compute how much of the balance is "reserved" against each invoice in order.
   let remainingBalance = balance;
-  const autoPayPlan = openInvoices.map((inv: any) => {
-    const due = Number(inv.remaining_due ?? 0);
+  const autoPayPlan: AutoPayPlanItem[] = openInvoices.map((inv) => {
+    const due = getInvoiceRemainingDue(inv);
     const applied = Math.max(0, Math.min(remainingBalance, due));
     remainingBalance -= applied;
-    return { ...inv, applied, leftover: due - applied };
+    return { ...inv, due, applied, leftover: due - applied };
   });
   const reserved = balance - remainingBalance;
   const available = remainingBalance;
+  const currentMonth = useMemo(() => {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    return txns.filter((txn) => new Date(txn.created_at) >= start);
+  }, [txns]);
+  const monthlyCredits = currentMonth
+    .filter((txn) => (txn.direction ?? (txn.amount > 0 ? 'credit' : 'debit')) === 'credit')
+    .reduce((sum, txn) => sum + Math.abs(Number(txn.amount ?? 0)), 0);
+  const monthlyDebits = currentMonth
+    .filter((txn) => (txn.direction ?? (txn.amount > 0 ? 'credit' : 'debit')) === 'debit')
+    .reduce((sum, txn) => sum + Math.abs(Number(txn.amount ?? 0)), 0);
+  const monthlyRecharges = currentMonth
+    .filter((txn) => ['upfront_deposit', 'prepayment'].includes(txn.type))
+    .reduce((sum, txn) => sum + Math.abs(Number(txn.amount ?? 0)), 0);
+  const nextAutoApplied = autoPayPlan.find((inv) => inv.applied > 0);
+  const voiceSummary = nextAutoApplied
+    ? `Votre portefeuille KiraPay contient ${formatCurrency(balance)}. ${formatCurrency(available)} reste disponible. ${formatCurrency(nextAutoApplied.applied)} est prevu pour ${nextAutoApplied.invoice_number ?? 'une facture ouverte'}.`
+    : `Votre portefeuille KiraPay contient ${formatCurrency(balance)}. ${formatCurrency(available)} est disponible. Aucune facture ouverte ne reserve votre credit.`;
 
   return (
     <DriverLayout>
+      <PageHeader
+        title="Portefeuille"
+        subtitle="KiraPay, recharges et historique"
+        action={<KiraVoiceButton text={voiceSummary} compact />}
+      />
       <div className="space-y-4 pb-24">
         {/* Hero balance card */}
         <Card className="border-0 bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 text-sm opacity-90">
               <Wallet className="h-4 w-4" />
-              Mon portefeuille DAM
+              Mon portefeuille KiraPay
             </div>
-            <p className="mt-2 text-4xl font-bold">{formatCurrency(balance)}</p>
-            <p className="mt-1 text-sm opacity-80">Crédit disponible</p>
+            <p className="mt-2 text-4xl font-bold">{formatCurrency(available)}</p>
+            <p className="mt-1 text-sm opacity-80">
+              Disponible maintenant
+              {reserved > 0 ? ` · ${formatCurrency(reserved)} reserve` : ''}
+            </p>
+            <p className="mt-2 text-xs opacity-80">Solde total : {formatCurrency(balance)}</p>
 
             <Button
               onClick={() => setTopUpOpen(true)}
@@ -216,6 +278,27 @@ export default function DriverWallet() {
         </Card>
 
         <TopUpSheet open={topUpOpen} onOpenChange={setTopUpOpen} />
+
+        <div className="grid grid-cols-3 gap-2 px-1">
+          <Card>
+            <CardContent className="p-3">
+              <p className="text-[11px] text-muted-foreground">Credits mois</p>
+              <p className="font-bold text-success">{formatCurrency(monthlyCredits)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3">
+              <p className="text-[11px] text-muted-foreground">Debits mois</p>
+              <p className="font-bold text-destructive">{formatCurrency(monthlyDebits)}</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3">
+              <p className="text-[11px] text-muted-foreground">Recharges</p>
+              <p className="font-bold">{formatCurrency(monthlyRecharges)}</p>
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Balance breakdown: Available vs Reserved + auto-pay plan */}
         <Card>
@@ -244,8 +327,8 @@ export default function DriverWallet() {
                 </p>
               ) : (
                 <ul className="divide-y">
-                  {autoPayPlan.map((inv: any) => {
-                    const due = Number(inv.remaining_due ?? 0);
+                  {autoPayPlan.map((inv) => {
+                    const due = inv.due;
                     const fullyCovered = inv.applied >= due && due > 0;
                     return (
                       <li key={inv.id} className="py-2 flex items-start justify-between gap-3">
@@ -301,7 +384,7 @@ export default function DriverWallet() {
               </p>
             ) : (
               <ul className="divide-y">
-                {txns.map((t: any) => {
+                {txns.map((t) => {
                   const isCredit = (t.direction ?? (t.amount > 0 ? 'credit' : 'debit')) === 'credit';
                   const Icon = isCredit ? ArrowDownCircle : ArrowUpCircle;
                   const { title, source } = describeTxn(t);

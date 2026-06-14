@@ -13,7 +13,7 @@ export function useDriverFullProfile() {
       const { data: driver, error: driverError } = await supabase
         .from('drivers')
         .select('*')
-        .eq('user_id', user.id)
+        .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id}`)
         .maybeSingle();
 
       if (driverError) throw driverError;
@@ -63,7 +63,7 @@ export function useUpdateDriverProfile() {
         const { error: driverError } = await supabase
           .from('drivers')
           .update(driverUpdates)
-          .eq('user_id', user.id);
+          .or(`user_id.eq.${user.id},auth_user_id.eq.${user.id}`);
 
         if (driverError) throw driverError;
       }

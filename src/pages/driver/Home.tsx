@@ -29,6 +29,7 @@ import {
 import { formatCurrency as fmtCurrency, formatNumber } from '@/lib/format';
 import { useDriverDashboardRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
+import { useDriverInvoices } from '@/hooks/useBilling';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 
@@ -38,6 +39,8 @@ import { AIIncomeInsights } from '@/components/AIIncomeInsights';
 import { OwnershipProgressCard } from '@/components/OwnershipProgressCard';
 import { DriverAdBanner } from '@/components/DriverAdBanner';
 import { MVP_HIDE_DRIVER_KYC } from '@/lib/mvpFlags';
+import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
+import { DRIVER_DOCUMENT_STATUS_LABEL, deriveDriverDocumentStatus } from '@/lib/driverOps';
 
 
 // Hook to fetch driver profile.
@@ -72,6 +75,14 @@ interface DriverData {
   kycStatus: 'pending' | 'verified' | 'rejected' | 'not_submitted';
   paymentStreak: number;
   unreadNotifications: number;
+}
+
+interface HomeDriverDocument {
+  id: string;
+  document_type: string;
+  status: string | null;
+  expiry_date: string | null;
+  rejection_reason: string | null;
 }
 
 // Calculate payment streak from payments (paid + overpaid both count)
@@ -348,6 +359,180 @@ function FleetControlCard() {
       </Link>
     </div>
   );
+}
+
+function CommandCenterCard({
+  driverName,
+  driverStatus,
+  activeRental,
+  nextPayment,
+  walletBalance,
+  activeInspection,
+  score,
+}: {
+  driverName: string;
+  driverStatus?: string | null;
+  activeRental: any;
+  nextPayment: any;
+  walletBalance: number;
+  activeInspection: any;
+  score: number;
+}) {
+  const paymentDue = nextPayment ? getOutstandingAmount(nextPayment) : 0;
+  const paymentDate = nextPayment?.due_date ? new Date(nextPayment.due_date) : null;
+  const isPaymentLate = nextPayment?.status === 'overdue' || (paymentDate ? paymentDate.getTime() < Date.now() && nextPayment?.status !== 'paid' : false);
+  const controlStatus = activeInspection?.effective_status ?? activeInspection?.status;
+  const controlNeedsAction = ['pending', 'rejected', 'overdue', 'blocked'].includes(controlStatus);
+
+  let status: {
+    title: string;
+    description: string;
+    icon: typeof CheckCircle;
+    tone: 'success' | 'warning' | 'danger';
+  } = {
+    title: 'Vous pouvez travailler',
+    description: activeRental
+      ? 'Vehicule actif et aucun blocage urgent.'
+      : 'Aucun vehicule actif pour commencer la journee.',
+    icon: CheckCircle,
+    tone: 'success',
+  };
+
+  if (driverStatus === 'suspended' || driverStatus === 'inactive') {
+    status = {
+      title: 'Compte bloque',
+      description: 'Contactez votre gestionnaire avant de travailler.',
+      icon: Ban,
+      tone: 'danger',
+    };
+  } else if (!activeRental) {
+    status = {
+      title: 'Aucun vehicule assigne',
+      description: 'Demandez un vehicule disponible pour reprendre le travail.',
+      icon: Car,
+      tone: 'warning',
+    };
+  } else if (controlStatus === 'blocked' || isPaymentLate) {
+    status = {
+      title: 'Action urgente',
+      description: isPaymentLate ? 'Paiement en retard a regler.' : 'Controle bloque a corriger.',
+      icon: AlertTriangle,
+      tone: 'danger',
+    };
+  } else if (controlNeedsAction || nextPayment) {
+    status = {
+      title: 'Action a faire',
+      description: controlNeedsAction ? 'Controle vehicule a terminer.' : 'Paiement a preparer.',
+      icon: Target,
+      tone: 'warning',
+    };
+  }
+
+  const StatusIcon = status.icon;
+  const pointsToOwnership = Math.max(0, 850 - score);
+  const ownershipProgress = Math.max(0, Math.min(100, Math.round((score / 850) * 100)));
+  const nextAction = controlNeedsAction
+    ? { label: 'Faire le controle', to: '/driver/fleet-control', icon: ClipboardCheck }
+    : nextPayment
+    ? { label: 'Voir le paiement', to: '/driver/finance', icon: CreditCard }
+    : activeRental
+    ? { label: 'Voir le vehicule', to: '/driver/vehicles', icon: Car }
+    : { label: 'Demander un vehicule', to: '/driver/vehicles', icon: Car };
+  const NextActionIcon = nextAction.icon;
+
+  const voiceText = `${driverName}. ${status.title}. ${
+    nextPayment
+      ? `Vous devez payer ${formatCurrency(paymentDue)}.`
+      : 'Aucune facture urgente detectee.'
+  } Votre portefeuille DAM contient ${formatCurrency(walletBalance)}. ${
+    controlNeedsAction ? 'Un controle vehicule demande votre attention.' : 'Controle vehicule sans action urgente.'
+  } Il vous reste ${pointsToOwnership} points pour viser le financement vehicule.`;
+
+  return (
+    <div className="px-4 -mt-20 relative z-10">
+      <Card className="overflow-hidden border-0 shadow-xl">
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className={cn(
+                'h-12 w-12 rounded-2xl flex items-center justify-center shrink-0',
+                status.tone === 'success' && 'bg-emerald-500/15 text-emerald-600',
+                status.tone === 'warning' && 'bg-warning/15 text-warning',
+                status.tone === 'danger' && 'bg-destructive/15 text-destructive',
+              )}>
+                <StatusIcon className="h-6 w-6" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Aujourd'hui</p>
+                <h2 className="text-xl font-bold leading-tight">{status.title}</h2>
+                <p className="text-sm text-muted-foreground mt-1">{status.description}</p>
+              </div>
+            </div>
+            <KiraVoiceButton text={voiceText} compact className="shrink-0" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div className="rounded-xl bg-muted/50 p-3">
+              <p className="text-[11px] text-muted-foreground">A payer</p>
+              <p className={cn('text-lg font-bold', isPaymentLate && 'text-destructive')}>
+                {nextPayment ? formatCurrency(paymentDue) : '0 FCFA'}
+              </p>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {nextPayment?.invoice_number
+                  ? nextPayment.invoice_number
+                  : nextPayment?.due_date
+                  ? formatDateShort(new Date(nextPayment.due_date))
+                  : 'Aucune facture en attente'}
+              </p>
+            </div>
+            <div className="rounded-xl bg-muted/50 p-3">
+              <p className="text-[11px] text-muted-foreground">Portefeuille</p>
+              <p className="text-lg font-bold text-emerald-600">{formatCurrency(walletBalance)}</p>
+              <p className="text-[11px] text-muted-foreground truncate">Credit DAM disponible</p>
+            </div>
+          </div>
+
+          <div className="rounded-xl border bg-background p-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] text-muted-foreground">Objectif proprietaire</p>
+                <p className="text-sm font-semibold">
+                  {pointsToOwnership > 0 ? `${pointsToOwnership} points restants` : 'Objectif atteint'}
+                </p>
+              </div>
+              <p className="text-sm font-bold">{score} / 850</p>
+            </div>
+            <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-primary" style={{ width: `${ownershipProgress}%` }} />
+            </div>
+          </div>
+
+          <Button asChild className="w-full min-h-12">
+            <Link to={nextAction.to}>
+              <NextActionIcon className="h-4 w-4" />
+              {nextAction.label}
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function getOutstandingAmount(item: any) {
+  if (!item) return 0;
+  if (item.remaining_due != null) return Math.max(0, Number(item.remaining_due));
+  const total = Number(item.amount ?? item.total_ttc ?? 0);
+  const paid = Number(item.amount_paid ?? 0);
+  return Math.max(0, total - paid);
+}
+
+function getDueDateLabel(item: any) {
+  const rawDate = item?.due_date ?? item?.issued_at ?? item?.created_at;
+  if (!rawDate) return 'A payer';
+  const date = new Date(rawDate);
+  return Number.isNaN(date.getTime()) ? 'A payer' : formatDateShort(date);
 }
 
 function DailyStreakBadge() {
@@ -836,9 +1021,45 @@ export default function DriverHome() {
   const { data: notifications = [], isLoading: isNotificationsLoading } = useDriverNotifications();
   const { data: loans = [], isLoading: isLoansLoading } = useDriverLoans();
   const { data: payments = [], isLoading: isPaymentsLoading } = useDriverPayments();
+  const { data: invoices = [] } = useDriverInvoices(driverId);
+  const { data: activeInspection } = useDriverActiveInspection();
   useFinancialRealtime({ scope: 'driver', driverId: driverId ?? null });
   const { data: isChatbotEnabled } = useIsFeatureEnabled('ai_driver_chatbot');
   const { data: isIncomeInsightsEnabled } = useIsFeatureEnabled('ai_income_insights');
+
+  const { data: walletSummary } = useQuery({
+    queryKey: ['driver-home-wallet', driverId],
+    enabled: !!driverId,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('driver_wallets')
+        .select('balance')
+        .eq('driver_id', driverId!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: driverDocuments = [] } = useQuery({
+    queryKey: ['driver-home-documents', driverId],
+    enabled: !!driverId,
+    retry: false,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('driver_documents')
+        .select('id, document_type, status, expiry_date, rejection_reason')
+        .eq('driver_id', driverId!)
+        .order('uploaded_at', { ascending: false });
+      if (error) {
+        console.warn('Driver home documents query failed:', error);
+        return [];
+      }
+      return (data ?? []) as HomeDriverDocument[];
+    },
+  });
   
   // Fetch latest KYC submission for rejection reason
   const { data: kycSubmission } = useQuery({
@@ -901,6 +1122,15 @@ export default function DriverHome() {
   } : null;
 
   const nextAction = getNextBestAction(driverData, !!activeRental);
+  const documentWarnings = useMemo(() => {
+    return (driverDocuments as HomeDriverDocument[])
+      .map((doc) => ({
+        ...doc,
+        derivedStatus: deriveDriverDocumentStatus(doc.status, doc.expiry_date),
+      }))
+      .filter((doc) => ['rejected', 'expired', 'expiring_soon'].includes(doc.derivedStatus))
+      .slice(0, 3);
+  }, [driverDocuments]);
 
   // Welcome back logic - detect returning users
   const welcomeMessage = useMemo(() => {
@@ -930,11 +1160,21 @@ export default function DriverHome() {
       isReturning,
     };
   }, []);
-  // Get next payment for active rental
-  const nextPayment = activeRental ? (payments as any[])
-    .filter(p => p.rental_id === activeRental.id && p.status !== 'paid')
+  // Get next amount due. Open invoices are authoritative; fall back to raw
+  // rental payments only when no invoice has been issued yet.
+  const nextRentalPayment = activeRental ? (payments as any[])
+    .filter(p => p.rental_id === activeRental.id && p.status !== 'paid' && p.status !== 'overpaid')
     .sort((a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime())[0]
     : null;
+  const nextOpenInvoice = (invoices as any[])
+    .filter((invoice) => ['issued', 'partial', 'overdue'].includes(invoice.status) && getOutstandingAmount(invoice) > 0)
+    .sort((a, b) => {
+      const aDate = new Date(a.issued_at ?? a.created_at ?? 0).getTime();
+      const bDate = new Date(b.issued_at ?? b.created_at ?? 0).getTime();
+      return aDate - bDate;
+    })[0] ?? null;
+  const nextPayment = nextOpenInvoice ?? nextRentalPayment;
+  const walletBalance = Number(walletSummary?.balance ?? 0);
 
   // Calculate days remaining for active rental
   const daysRemaining = activeRental?.end_date 
@@ -1021,8 +1261,18 @@ export default function DriverHome() {
         </div>
       </div>
 
-      {/* Score Card - overlapping header */}
-      <div className="px-4 -mt-20 relative z-10">
+      <CommandCenterCard
+        driverName={driverData?.full_name || 'Conducteur'}
+        driverStatus={driverProfile?.driver_status}
+        activeRental={activeRental}
+        nextPayment={nextPayment}
+        walletBalance={walletBalance}
+        activeInspection={activeInspection}
+        score={displayedScore}
+      />
+
+      {/* Score Card */}
+      <div className="px-4 mt-4 relative z-10">
         <Card className="overflow-hidden" data-tour="score-card">
           <CardContent className="p-6">
             {driverData ? (
@@ -1075,6 +1325,36 @@ export default function DriverHome() {
             status={driverData.kycStatus} 
             rejectionReason={kycSubmission?.rejection_reason}
           />
+        </div>
+      )}
+
+      {documentWarnings.length > 0 && (
+        <div className="px-4 mt-4">
+          <Link to="/driver/profile/kyc">
+            <Card className="border-amber-200 bg-amber-50">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-amber-100 p-2 text-amber-700">
+                    <AlertTriangle className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-amber-950">Documents à vérifier</p>
+                    <div className="mt-2 space-y-1">
+                      {documentWarnings.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between gap-2 text-sm">
+                          <span className="truncate capitalize">{doc.document_type.replace(/_/g, ' ')}</span>
+                          <Badge variant="outline" className="border-amber-300 bg-white text-[10px] text-amber-900">
+                            {DRIVER_DOCUMENT_STATUS_LABEL[doc.derivedStatus]}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-amber-700" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
       )}
 
@@ -1235,7 +1515,7 @@ export default function DriverHome() {
                   {nextPayment && (
                     <div className="flex items-center gap-2 mt-2">
                       <Badge variant="outline" className="text-xs">
-                        {formatCurrency(nextPayment.amount)} · {formatDateShort(new Date(nextPayment.due_date))}
+                        {formatCurrency(getOutstandingAmount(nextPayment))} · {getDueDateLabel(nextPayment)}
                       </Badge>
                     </div>
                   )}

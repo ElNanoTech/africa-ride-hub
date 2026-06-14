@@ -57,6 +57,7 @@ const DriverHome = lazy(() => import("./pages/driver/Home"));
 const DriverVehicles = lazy(() => import("./pages/driver/Vehicles"));
 const DriverScore = lazy(() => import("./pages/driver/Score"));
 const DriverLoans = lazy(() => import("./pages/driver/Loans"));
+const DriverCredit = lazy(() => import("./pages/driver/Credit"));
 const DriverRental = lazy(() => import("./pages/driver/Rental"));
 const DriverProfile = lazy(() => import("./pages/driver/Profile"));
 const DriverKYC = lazy(() => import("./pages/driver/KYC"));
@@ -66,6 +67,7 @@ const DriverSupport = lazy(() => import("./pages/driver/Support"));
 const DriverOnboarding = lazy(() => import("./pages/driver/Onboarding"));
 const DriverProfileRequired = lazy(() => import("./pages/driver/ProfileRequired"));
 const DriverIncomeReport = lazy(() => import("./pages/driver/IncomeReport"));
+const DriverFinance = lazy(() => import("./pages/driver/Finance"));
 const DriverLeaderboard = lazy(() => import("./pages/driver/Leaderboard"));
 const DriverSettings = lazy(() => import("./pages/driver/Settings"));
 
@@ -191,21 +193,25 @@ const App = () => {
                   <Route element={<DriverRouteGuard />}>
                     <Route path="/driver-dashboard" element={<DriverHome />} />
                     <Route path="/driver" element={<DriverHome />} />
-                    <Route path="/vehicles" element={<DriverVehicles />} />
-                    <Route path="/driver/vehicles" element={<DriverVehicles />} />
+	                    <Route path="/vehicles" element={<DriverVehicles />} />
+	                    <Route path="/driver/vehicles" element={<DriverVehicles />} />
+	                    <Route path="/driver/vehicle" element={<DriverVehicles />} />
                     <Route path="/rentals" element={<DriverRental />} />
                     <Route path="/driver/rental" element={<DriverRental />} />
                     <Route path="/score" element={<DriverScore />} />
                     <Route path="/driver/score" element={<DriverScore />} />
                     <Route path="/loans" element={<DriverLoans />} />
                     <Route path="/driver/loans" element={<DriverLoans />} />
+                    <Route path="/driver/credit" element={<DriverCredit />} />
                     <Route path="/profile" element={<DriverProfile />} />
-                    <Route path="/driver/profile" element={<DriverProfile />} />
-                    <Route path="/driver/kyc" element={<DriverKYC />} />
+	                    <Route path="/driver/profile" element={<DriverProfile />} />
+	                    <Route path="/driver/kyc" element={<DriverKYC />} />
+	                    <Route path="/driver/profile/kyc" element={<DriverKYC />} />
                     <Route path="/notifications" element={<DriverNotifications />} />
                     <Route path="/driver/notifications" element={<DriverNotifications />} />
                     <Route path="/driver/notifications/settings" element={<DriverNotificationSettings />} />
                     <Route path="/driver/support" element={<DriverSupport />} />
+                    <Route path="/driver/finance" element={<DriverFinance />} />
                     <Route path="/driver/income" element={<DriverIncomeReport />} />
                     <Route path="/driver/onboarding" element={<DriverOnboarding />} />
                     <Route path="/driver-onboarding" element={<DriverOnboarding />} />
@@ -215,6 +221,7 @@ const App = () => {
                     <Route path="/driver/factures" element={<DriverFactures />} />
                     <Route path="/driver/factures/:id" element={<DriverFactureDetail />} />
                     <Route path="/driver/portefeuille" element={<DriverWallet />} />
+                    <Route path="/driver/wallet" element={<DriverWallet />} />
                     <Route path="/driver/ownership" element={<DriverOwnership />} />
                     <Route path="/driver/sinistres" element={<DriverSinistresHome />} />
                     <Route path="/driver/sinistres/report/:id/type" element={<DriverSinistreType />} />
@@ -227,9 +234,10 @@ const App = () => {
                     <Route path="/driver/fleet-control" element={<DriverVehicleInspection />} />
                     <Route path="/driver/fleet-control/history" element={<DriverFleetControlHistory />} />
                     <Route path="/driver/fleet-control/:id" element={<DriverFleetControlDetail />} />
-                    <Route path="/driver/formation" element={<DriverFormation />} />
-                    <Route path="/driver/alertes" element={<DriverAlertes />} />
-                    <Route path="/driver/contraventions" element={<DriverContraventions />} />
+	                    <Route path="/driver/formation" element={<DriverFormation />} />
+	                    <Route path="/driver/alertes" element={<DriverAlertes />} />
+	                    <Route path="/driver/alerts" element={<DriverAlertes />} />
+	                    <Route path="/driver/contraventions" element={<DriverContraventions />} />
                   </Route>
                   
                   {/* Admin Login — redirect to dashboard if already logged in (B2) */}

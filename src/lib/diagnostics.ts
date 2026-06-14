@@ -21,7 +21,9 @@ export type DiagnosticCategory =
   | "admin_user_null_customer"
   | "admin_user_auth_not_ready"
   | "billing_profile_unavailable"
-  | "billing_recovery_retry";
+  | "billing_recovery_retry"
+  | "driver_upload_failure"
+  | "realtime_connection_unhealthy";
 
 export interface DiagnosticContext {
   userId?: string | null;

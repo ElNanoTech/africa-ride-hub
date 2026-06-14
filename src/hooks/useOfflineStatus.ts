@@ -1,28 +1,43 @@
 import { useState, useEffect, useCallback } from 'react';
+import {
+  deriveNetworkQuality,
+  getBrowserConnection,
+  readBrowserNetworkInfo,
+  type NetworkQuality,
+} from '@/lib/networkQuality';
 
 interface OfflineState {
   isOnline: boolean;
   wasOffline: boolean;
+  quality: NetworkQuality;
+  effectiveType?: string;
+  downlink?: number;
+  rtt?: number;
+  saveData?: boolean;
+}
+
+function readOfflineState(previous?: OfflineState): OfflineState {
+  const info = readBrowserNetworkInfo();
+  const quality = deriveNetworkQuality(info);
+  const isOnline = quality !== 'offline';
+  const cameBackOnline = previous ? !previous.isOnline && isOnline : false;
+
+  return {
+    isOnline,
+    wasOffline: cameBackOnline ? true : previous?.wasOffline ?? false,
+    quality,
+    effectiveType: info.effectiveType,
+    downlink: info.downlink,
+    rtt: info.rtt,
+    saveData: info.saveData,
+  };
 }
 
 export function useOfflineStatus() {
-  const [state, setState] = useState<OfflineState>({
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    wasOffline: false,
-  });
+  const [state, setState] = useState<OfflineState>(() => readOfflineState());
 
-  const handleOnline = useCallback(() => {
-    setState(prev => ({
-      isOnline: true,
-      wasOffline: !prev.isOnline ? true : prev.wasOffline,
-    }));
-  }, []);
-
-  const handleOffline = useCallback(() => {
-    setState({
-      isOnline: false,
-      wasOffline: true,
-    });
+  const refreshNetworkState = useCallback(() => {
+    setState(prev => readOfflineState(prev));
   }, []);
 
   const clearWasOffline = useCallback(() => {
@@ -30,14 +45,20 @@ export function useOfflineStatus() {
   }, []);
 
   useEffect(() => {
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
+    if (typeof window === 'undefined') return;
+    const connection = getBrowserConnection();
+
+    refreshNetworkState();
+    window.addEventListener('online', refreshNetworkState);
+    window.addEventListener('offline', refreshNetworkState);
+    connection?.addEventListener?.('change', refreshNetworkState);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', refreshNetworkState);
+      window.removeEventListener('offline', refreshNetworkState);
+      connection?.removeEventListener?.('change', refreshNetworkState);
     };
-  }, [handleOnline, handleOffline]);
+  }, [refreshNetworkState]);
 
   return {
     ...state,

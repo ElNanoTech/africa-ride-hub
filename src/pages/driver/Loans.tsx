@@ -14,12 +14,13 @@ import { Label } from '@/components/ui/label';
 import { formatCurrency, formatDateShort } from '@/lib/format';
 import { LOAN, UI } from '@/lib/i18n';
 import { getScoreLevel } from '@/lib/scoreLevel';
-import { Car, Bike, Tv, Lock, Unlock, ChevronRight, AlertCircle, Wallet } from 'lucide-react';
+import { Car, Bike, Tv, Smartphone, Lock, ChevronRight, AlertCircle, Wallet, Target, Sparkles } from 'lucide-react';
 import { useDriverCurrentScore, useDriverLoans, useDriverCreditScores, useDriverId } from '@/hooks/useDriverData';
 import { useLoansRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { toast } from 'sonner';
+import { KiraVoiceButton } from '@/components/driver/KiraVoiceButton';
 
 const loanTypes = [
   {
@@ -27,26 +28,60 @@ const loanTypes = [
     label: LOAN.CAR_LOAN,
     icon: Car,
     requiredTier: 'A',
+    requiredScore: 850,
+    requiredWeeks: 26,
     minAmount: 500000,
     maxAmount: 5000000,
+    downPayment: 500000,
+    monthlyPayment: 175000,
+    termMonths: 36,
+    conditions: ['Score 850+', '26 semaines d historique', 'Paiements a jour'],
   },
   {
     type: 'bike_loan',
     label: LOAN.BIKE_LOAN,
     icon: Bike,
     requiredTier: 'B',
+    requiredScore: 720,
+    requiredWeeks: 12,
     minAmount: 100000,
     maxAmount: 1000000,
+    downPayment: 100000,
+    monthlyPayment: 45000,
+    termMonths: 24,
+    conditions: ['Score 720+', '12 semaines d historique', 'Aucune facture en retard'],
   },
   {
     type: 'tv_loan',
     label: LOAN.TV_LOAN,
     icon: Tv,
     requiredTier: 'C',
+    requiredScore: 650,
+    requiredWeeks: 3,
     minAmount: 50000,
     maxAmount: 300000,
+    downPayment: 25000,
+    monthlyPayment: 18000,
+    termMonths: 12,
+    conditions: ['Score 650+', '3 semaines d historique', 'KYC valide'],
   },
-];
+  {
+    type: 'phone_loan',
+    label: 'Téléphone',
+    icon: Smartphone,
+    requiredTier: 'C',
+    requiredScore: 600,
+    requiredWeeks: 3,
+    minAmount: 50000,
+    maxAmount: 250000,
+    downPayment: 20000,
+    monthlyPayment: 15000,
+    termMonths: 12,
+    conditions: ['Score 600+', '3 semaines d historique', 'KYC valide'],
+  },
+] as const;
+
+type LoanTypeOption = typeof loanTypes[number];
 
 function getTierOrder(tier: string): number {
   const order: Record<string, number> = { A: 1, B: 2, C: 3, D: 4, E: 5 };
@@ -55,6 +90,12 @@ function getTierOrder(tier: string): number {
 
 function isLoanUnlocked(requiredTier: string, driverTier: string): boolean {
   return getTierOrder(driverTier) <= getTierOrder(requiredTier);
+}
+
+function isCreditOfferUnlocked(loan: LoanTypeOption, driverTier: string, score: number, weeksHistory: number) {
+  return isLoanUnlocked(loan.requiredTier, driverTier)
+    && score >= loan.requiredScore
+    && weeksHistory >= loan.requiredWeeks;
 }
 
 function getStatusBadge(status: string) {
@@ -110,9 +151,9 @@ function ApplyLoanDialog({
   loanType, 
   isOpen, 
   onClose 
-}: { 
-  loanType: typeof loanTypes[0]; 
-  isOpen: boolean; 
+}: {
+  loanType: LoanTypeOption;
+  isOpen: boolean;
   onClose: () => void;
 }) {
   const [amount, setAmount] = useState('');
@@ -140,10 +181,36 @@ function ApplyLoanDialog({
             {loanType.label}
           </DialogTitle>
           <DialogDescription>
-            Montant: {formatCurrency(loanType.minAmount)} - {formatCurrency(loanType.maxAmount)}
+            Offre vérifiée selon votre score et votre historique.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">Prix</p>
+              <p className="font-semibold">{formatCurrency(loanType.minAmount)} - {formatCurrency(loanType.maxAmount)}</p>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">Apport</p>
+              <p className="font-semibold">{formatCurrency(loanType.downPayment)}</p>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">Paiement</p>
+              <p className="font-semibold">{formatCurrency(loanType.monthlyPayment)}/mois</p>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <p className="text-xs text-muted-foreground">Durée</p>
+              <p className="font-semibold">{loanType.termMonths} mois</p>
+            </div>
+          </div>
+          <div className="rounded-lg border p-3">
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Conditions</p>
+            <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+              {loanType.conditions.map((condition) => (
+                <li key={condition}>{condition}</li>
+              ))}
+            </ul>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="amount">Montant demandé (FCFA)</Label>
             <Input
@@ -223,30 +290,42 @@ export default function Loans() {
   const { data: loans = [], isLoading: isLoansLoading } = useDriverLoans();
   const { data: creditScores = [], isLoading: isScoresLoading } = useDriverCreditScores();
   const { data: currentScore, isLoading: isCurrentScoreLoading } = useDriverCurrentScore();
-  const [selectedLoanType, setSelectedLoanType] = useState<typeof loanTypes[0] | null>(null);
+  const [selectedLoanType, setSelectedLoanType] = useState<LoanTypeOption | null>(null);
 
   // Enable real-time updates
   useLoansRealtime();
 
   const isLoading = isDriverIdLoading || isLoansLoading || isScoresLoading || isCurrentScoreLoading;
-  const hasDriverProfile = !!driverId;
 
   // Get latest score and tier
   const latestScore = creditScores[0];
   const rollingAverage = currentScore ?? latestScore?.score ?? 0;
   const driverTier = getScoreLevel(rollingAverage).level;
   const weeksHistory = creditScores.length;
-
-  // Filter active loans (pending, approved, repaying)
-  const activeLoans = loans.filter((loan) => 
-    ['pending', 'approved', 'repaying'].includes(loan.status)
-  );
+  const availableLoanTypes = loanTypes.filter((loan) => isCreditOfferUnlocked(loan, driverTier, rollingAverage, weeksHistory));
+  const nextBlockedLoan = loanTypes
+    .filter((loan) => !isCreditOfferUnlocked(loan, driverTier, rollingAverage, weeksHistory))
+    .sort((a, b) => (a.requiredScore - rollingAverage) - (b.requiredScore - rollingAverage))[0] ?? null;
+  const requiredScore = nextBlockedLoan?.requiredScore ?? loanTypes[0].requiredScore;
+  const requiredWeeks = nextBlockedLoan?.requiredWeeks ?? loanTypes[0].requiredWeeks;
+  const missingScore = Math.max(0, requiredScore - rollingAverage);
+  const missingWeeks = Math.max(0, requiredWeeks - weeksHistory);
+  const ownershipMissingScore = Math.max(0, loanTypes[0].requiredScore - rollingAverage);
+  const ownershipMissingWeeks = Math.max(0, loanTypes[0].requiredWeeks - weeksHistory);
+  const voiceSummary = availableLoanTypes.length > 0
+    ? `Vous avez ${availableLoanTypes.length} offre credit disponible. Votre score est ${rollingAverage} points.`
+    : `Aucune offre credit disponible pour le moment. Il manque ${missingScore} points et ${missingWeeks} semaines d historique pour le prochain palier.`;
 
   return (
     <DriverLayout>
       <DriverBreadcrumb items={[{ label: LOAN.TITLE }]} />
-      <PageHeader title={LOAN.TITLE} />
+      <PageHeader
+        title="Crédit KIRA"
+        subtitle="Offres réelles selon votre score"
+        action={<KiraVoiceButton text={voiceSummary} compact />}
+      />
       <KycGate>
+      <div className="pb-24">
 
       {isDriverIdSuccess && driverId === null ? (
         <NoDriverProfileAlert />
@@ -265,8 +344,54 @@ export default function Loans() {
                   </div>
                   <TierBadge tier={driverTier} size="lg" />
                 </div>
-                <div className="flex items-center gap-2 text-sm text-white/70">
-                  <span>{weeksHistory} {LOAN.WEEKS_HISTORY}</span>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-xl bg-white/10 p-3">
+                    <p className="text-white/70">Historique</p>
+                    <p className="font-bold">{weeksHistory} semaines</p>
+                  </div>
+                  <div className="rounded-xl bg-white/10 p-3">
+                    <p className="text-white/70">Offres ouvertes</p>
+                    <p className="font-bold">{availableLoanTypes.length}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="px-4 mb-6">
+            <Card>
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-11 w-11 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Target className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="font-semibold">Éligibilité expliquée</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Les offres ci-dessous apparaissent seulement quand les conditions sont remplies.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <p className="text-xs text-muted-foreground">Score requis</p>
+                    <p className="font-semibold">{requiredScore} pts</p>
+                    <p className="text-xs text-muted-foreground">Manque : {missingScore} pts</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-3">
+                    <p className="text-xs text-muted-foreground">Ancienneté requise</p>
+                    <p className="font-semibold">{requiredWeeks} semaines</p>
+                    <p className="text-xs text-muted-foreground">Manque : {missingWeeks} sem.</p>
+                  </div>
+                </div>
+                <div className="rounded-lg border bg-primary/5 p-3 text-sm">
+                  <p className="font-semibold flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-primary" />
+                    Devenir propriétaire
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Objectif voiture : 850 pts et 26 semaines. Il reste {ownershipMissingScore} pts et {ownershipMissingWeeks} sem.
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -275,71 +400,72 @@ export default function Loans() {
           {/* Loan Options */}
           <div className="px-4 mb-6">
             <h2 className="text-sm font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
-              Options de prêt
+              Offres disponibles
             </h2>
-            <div className="space-y-4">
-              {loanTypes.map((loan) => {
-                const unlocked = isLoanUnlocked(loan.requiredTier, driverTier);
-                
-                return (
-                  <Card 
-                    key={loan.type}
-                    className={!unlocked ? 'opacity-60' : ''}
-                  >
+            {availableLoanTypes.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="p-6 text-center">
+                  <Lock className="h-10 w-10 mx-auto text-muted-foreground mb-3" />
+                  <p className="font-semibold">Aucune offre disponible actuellement.</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Continuez les paiements à temps et les contrôles véhicule pour débloquer le prochain palier.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {availableLoanTypes.map((loan) => (
+                  <Card key={loan.type}>
                     <CardContent className="p-5">
                       <div className="flex items-start gap-4">
-                        <div className={`w-14 h-14 rounded-xl flex items-center justify-center ${
-                          unlocked ? 'bg-primary/10' : 'bg-muted'
-                        }`}>
-                          <loan.icon className={`h-7 w-7 ${unlocked ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <div className="w-14 h-14 rounded-xl flex items-center justify-center bg-primary/10">
+                          <loan.icon className="h-7 w-7 text-primary" />
                         </div>
                         
                         <div className="flex-1">
                           <div className="flex items-center justify-between mb-1">
                             <h3 className="font-semibold text-lg">{loan.label}</h3>
-                            {unlocked ? (
-                              <Unlock className="h-5 w-5 text-primary" />
-                            ) : (
-                              <Lock className="h-5 w-5 text-muted-foreground" />
-                            )}
+                            <Badge variant="verified">{LOAN.UNLOCKED}</Badge>
                           </div>
                           
-                          <div className="flex items-center gap-2 mb-3">
-                            <Badge variant={unlocked ? 'verified' : 'pending'}>
-                              {unlocked ? LOAN.UNLOCKED : LOAN.LOCKED}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {LOAN.REQUIRED_TIER}: Niveau {loan.requiredTier}
-                            </span>
+                          <div className="grid grid-cols-2 gap-2 my-3 text-xs">
+                            <div className="rounded-lg bg-muted/40 p-2">
+                              <p className="text-muted-foreground">Prix</p>
+                              <p className="font-semibold">{formatCurrency(loan.minAmount)} - {formatCurrency(loan.maxAmount)}</p>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 p-2">
+                              <p className="text-muted-foreground">Apport</p>
+                              <p className="font-semibold">{formatCurrency(loan.downPayment)}</p>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 p-2">
+                              <p className="text-muted-foreground">Paiement</p>
+                              <p className="font-semibold">{formatCurrency(loan.monthlyPayment)}/mois</p>
+                            </div>
+                            <div className="rounded-lg bg-muted/40 p-2">
+                              <p className="text-muted-foreground">Durée</p>
+                              <p className="font-semibold">{loan.termMonths} mois</p>
+                            </div>
                           </div>
                           
                           <p className="text-sm text-muted-foreground mb-4">
-                            {formatCurrency(loan.minAmount)} - {formatCurrency(loan.maxAmount)}
+                            Conditions : {loan.conditions.join(' · ')}
                           </p>
                           
                           <HapticButton 
                             className="w-full" 
-                            variant={unlocked ? 'default' : 'outline'}
-                            disabled={!unlocked}
-                            onClick={() => unlocked && setSelectedLoanType(loan)}
-                            hapticType={unlocked ? 'medium' : 'light'}
+                            onClick={() => setSelectedLoanType(loan)}
+                            hapticType="medium"
                           >
-                            {unlocked ? (
-                              <>
-                                {LOAN.APPLY_BUTTON}
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                              </>
-                            ) : (
-                              `Niveau ${loan.requiredTier} requis`
-                            )}
+                            {LOAN.APPLY_BUTTON}
+                            <ChevronRight className="h-4 w-4 ml-1" />
                           </HapticButton>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Active/Past Loans */}
@@ -416,6 +542,7 @@ export default function Loans() {
         </>
       )}
 
+      </div>
       </KycGate>
 
       {/* Apply Loan Dialog */}

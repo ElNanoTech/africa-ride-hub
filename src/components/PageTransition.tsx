@@ -12,6 +12,9 @@ const ROUTE_ORDER = [
 ];
 
 function getRouteIndex(pathname: string): number {
+  if (pathname === '/driver/vehicle' || pathname.startsWith('/driver/vehicle/')) {
+    return ROUTE_ORDER.indexOf('/driver/vehicles');
+  }
   // Check for exact match first
   const exactIndex = ROUTE_ORDER.indexOf(pathname);
   if (exactIndex !== -1) return exactIndex;
