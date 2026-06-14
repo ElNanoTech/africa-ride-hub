@@ -5680,9 +5680,30 @@ export type Database = {
       }
       driver_reactivate: { Args: { p_driver: string }; Returns: undefined }
       driver_revoke_access: { Args: { p_driver: string }; Returns: undefined }
+      driver_risk: { Args: { p_driver: string }; Returns: Json }
+      driver_risk_from_factors: {
+        Args: {
+          p_control_late: boolean
+          p_kyc_verified: boolean
+          p_open_accidents: number
+          p_overdue_invoices: number
+          p_score: number
+          p_unpaid_violations: number
+        }
+        Returns: Json
+      }
       driver_suspend: {
         Args: { p_driver: string; p_reason: string }
         Returns: undefined
+      }
+      drivers_risk_summary: {
+        Args: never
+        Returns: {
+          driver_id: string
+          level: string
+          overdue_payments: number
+          reasons: string[]
+        }[]
       }
       fc_require_admin: { Args: { p_customer: string }; Returns: undefined }
       fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
