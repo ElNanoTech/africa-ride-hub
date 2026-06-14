@@ -47,10 +47,10 @@ interface ImproveTip {
  */
 export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSpeechLoading, setIsSpeechLoading] = useState(false);
   const controllerRef = useRef<SpeechController | null>(null);
 
-  const { data: events = [], isLoading } = useQuery({
+  const { data: events = [], isSpeechLoading } = useQuery({
     queryKey: ['score-breakdown-events', driverId],
     enabled: !!driverId,
     queryFn: async (): Promise<ScoreEventRow[]> => {
@@ -156,17 +156,17 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
       setIsSpeaking(false);
       return;
     }
-    setIsLoading(true);
+    setIsSpeechLoading(true);
     try {
       const ctrl = await speakNatural(speechText);
       controllerRef.current = ctrl;
       setIsSpeaking(true);
-      setIsLoading(false);
+      setIsSpeechLoading(false);
       await ctrl.done;
       setIsSpeaking(false);
     } catch (err) {
       console.error('Score explainer speech failed', err);
-      setIsLoading(false);
+      setIsSpeechLoading(false);
       setIsSpeaking(false);
     }
   };
@@ -190,13 +190,13 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
                 size="sm"
                 variant={isSpeaking ? 'destructive' : 'outline'}
                 onClick={handleToggleSpeech}
-                disabled={isLoading}
+                disabled={isSpeechLoading}
                 className="gap-2 h-8"
                 aria-label={
                   isSpeaking ? 'Arrêter la lecture' : 'Écouter l’explication'
                 }
               >
-                {isLoading ? (
+                {isSpeechLoading ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     <span className="text-xs font-medium">Chargement…</span>
@@ -218,7 +218,7 @@ export function ScoreBreakdownExplainer({ driverId, currentScore }: Props) {
         </CardHeader>
 
         <CardContent className="pt-0 space-y-4">
-          {isLoading ? (
+          {isSpeechLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
