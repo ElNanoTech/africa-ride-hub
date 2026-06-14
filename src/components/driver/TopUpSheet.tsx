@@ -20,6 +20,7 @@ interface Props {
 export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeuille' }: Props) {
   const [amount, setAmount] = useState<number | ''>(5000);
   const [loading, setLoading] = useState(false);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
 
   const handlePay = async () => {
     const value = Number(amount);
@@ -28,6 +29,7 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
       return;
     }
     setLoading(true);
+    setFallbackUrl(null);
     try {
       const { data, error } = await supabase.functions.invoke('wallet-topup-checkout', {
         body: {
@@ -36,13 +38,37 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
           errorUrl: `${window.location.origin}${returnPath}${returnPath.includes('?') ? '&' : '?'}topup=error`,
         },
       });
+      console.log('[TopUpSheet] wallet-topup-checkout response:', { data, error });
       if (error) throw new Error(data?.error || error.message);
       if (!data?.success || !data?.checkout_url) {
         throw new Error(data?.error || 'Erreur Wave');
       }
-      // Open Wave checkout
-      window.location.href = data.checkout_url;
+      const url: string = data.checkout_url;
+      console.log('[TopUpSheet] Redirecting to Wave:', url);
+      // Strategy 1: open in a new tab (works even when the page is in a
+      // sandboxed iframe or a service worker swallows top-level navigations).
+      const popup = window.open(url, '_blank', 'noopener,noreferrer');
+      // Strategy 2: also try top-level navigation as a fallback.
+      try {
+        if (window.top && window.top !== window.self) {
+          (window.top as Window).location.href = url;
+        } else {
+          window.location.assign(url);
+        }
+      } catch {
+        window.location.href = url;
+      }
+      // Strategy 3: if after 1.5s we're still on the same page (popup blocked,
+      // navigation refused), surface a manual link the driver can tap.
+      setTimeout(() => {
+        if (!popup || popup.closed) {
+          setFallbackUrl(url);
+          setLoading(false);
+          toast.message('Appuyez sur « Continuer vers Wave » pour finaliser.');
+        }
+      }, 1500);
     } catch (e: any) {
+      console.error('[TopUpSheet] checkout failed:', e);
       toast.error(e?.message || 'Impossible de démarrer la recharge.');
       setLoading(false);
     }
@@ -111,6 +137,17 @@ export function TopUpSheet({ open, onOpenChange, returnPath = '/driver/portefeui
               <>Payer {formatCurrency(Number(amount) || 0)} avec Wave</>
             )}
           </Button>
+
+          {fallbackUrl && (
+            <a
+              href={fallbackUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full text-center h-14 leading-[3.5rem] rounded-md bg-primary text-primary-foreground font-semibold"
+            >
+              Continuer vers Wave →
+            </a>
+          )}
 
           <p className="text-[11px] text-center text-muted-foreground">
             Vous serez redirigé vers Wave pour finaliser le paiement en toute sécurité.
