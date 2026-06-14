@@ -47,21 +47,42 @@ const getRoleBadgeConfig = (roleKey: string) => {
 // Route order for determining animation direction
 const ADMIN_ROUTE_ORDER = [
   '/admin',
+  '/admin/alertes',
+  '/admin/support',
   '/admin/drivers',
+  '/admin/communication',
   '/admin/vehicles',
   '/admin/vehicles/gps-mapping',
   '/admin/tracking',
-  '/admin/driving-behavior',
-  '/admin/platform-sync',
   '/admin/rentals',
-  '/admin/loans',
+  '/admin/fleet-control',
+  '/admin/maintenance',
   '/admin/payments',
-  '/admin/support',
+  '/admin/finance',
+  '/admin/billing',
+  '/admin/billing/settings',
+  '/admin/billing/unresolved',
+  '/admin/billing/audit',
+  '/admin/billing/wallets',
+  '/admin/income-entry',
+  '/admin/income-approvals',
+  '/admin/pricing',
+  '/admin/contracts',
   '/admin/scoring',
-  '/admin/analytics',
+  '/admin/driving-behavior',
+  '/admin/contraventions',
+  '/admin/sinistres',
+  '/admin/sinistres/analytics',
   '/admin/audit',
+  '/admin/loans',
+  '/admin/kira',
+  '/admin/analytics',
+  '/admin/ai-usage',
   '/admin/users',
   '/admin/settings',
+  '/admin/feature-flags',
+  '/admin/customers',
+  '/admin/platform-sync',
 ];
 
 function getAdminRouteIndex(pathname: string): number {
@@ -93,6 +114,14 @@ interface AdminUser {
 }
 
 type AppRole = 'super_admin' | 'manager' | 'agent_pret' | 'agent_support';
+type AdminSidebarSection =
+  | 'attention'
+  | 'driver_ops'
+  | 'vehicle_ops'
+  | 'financial_ops'
+  | 'trust_risk'
+  | 'growth_ownership'
+  | 'system';
 
 interface SidebarItem {
   to: string;
@@ -101,18 +130,28 @@ interface SidebarItem {
   exact?: boolean;
   allowedRoles: AppRole[];
   badgeKey?: 'pendingKyc'; // Key to get badge count
-  section?: 'operations' | 'gestion' | 'analyse' | 'systeme';
+  section?: AdminSidebarSection;
 }
+
+const ADMIN_SECTION_LABELS: Record<AdminSidebarSection, string> = {
+  attention: 'Centre d’attention',
+  driver_ops: 'Conducteurs',
+  vehicle_ops: 'Véhicules',
+  financial_ops: 'Finance',
+  trust_risk: 'Confiance & Risque',
+  growth_ownership: 'Croissance',
+  system: 'Système',
+};
 
 // Role-based menu configuration
 const sidebarItems: SidebarItem[] = [
   { 
     to: '/admin', 
     icon: LayoutDashboard, 
-    label: ADMIN.DASHBOARD.TITLE, 
+    label: 'Attention',
     exact: true,
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'attention',
   },
   { 
     to: '/admin/drivers', 
@@ -120,7 +159,7 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.DRIVERS,
     allowedRoles: ['super_admin', 'manager'],
     badgeKey: 'pendingKyc', // Show pending KYC count
-    section: 'operations',
+    section: 'driver_ops',
   },
   { 
     to: '/admin/vehicles', 
@@ -128,189 +167,189 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.VEHICLES,
     allowedRoles: ['super_admin', 'manager'],
     exact: true,
-    section: 'operations',
+    section: 'vehicle_ops',
   },
   { 
     to: '/admin/vehicles/gps-mapping', 
     icon: MapPin, 
     label: 'Mapping GPS',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'vehicle_ops',
   },
   { 
     to: '/admin/tracking', 
     icon: MapPin, 
     label: 'Suivi GPS',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'vehicle_ops',
   },
   { 
     to: '/admin/driving-behavior', 
     icon: Activity, 
     label: 'Conduite',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'trust_risk',
   },
   {
     to: '/admin/platform-sync', 
     icon: RefreshCw, 
     label: 'Sync Plateformes',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'system',
   },
   {
     to: '/admin/fleet-control',
     icon: ShieldCheck,
     label: 'Fleet Control',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'vehicle_ops',
   },
   { 
     to: '/admin/rentals', 
     icon: FileText, 
     label: NAV.RENTALS,
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'vehicle_ops',
   },
   {
     to: '/admin/maintenance',
     icon: Wrench,
     label: 'Maintenance',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'vehicle_ops',
   },
   {
     to: '/admin/contraventions',
     icon: Flag,
     label: 'Contraventions',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'trust_risk',
   },
   {
     to: '/admin/alertes',
     icon: Bell,
     label: 'Alertes',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'operations',
+    section: 'attention',
   },
   {
     to: '/admin/communication',
     icon: MessageSquare,
     label: 'Communication',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'driver_ops',
   },
   { 
     to: '/admin/loans', 
     icon: Wallet, 
     label: NAV.LOANS,
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
-    section: 'gestion',
+    section: 'growth_ownership',
   },
   { 
     to: '/admin/payments', 
     icon: CreditCard, 
     label: NAV.PAYMENTS,
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'financial_ops',
   },
   {
     to: '/admin/finance',
     icon: Banknote,
     label: 'Finance',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'financial_ops',
   },
   {
     to: '/admin/billing',
     icon: FileText,
     label: 'Facturation',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'financial_ops',
   },
   {
     to: '/admin/billing/wallets',
     icon: Wallet,
     label: 'Portefeuilles',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'financial_ops',
   },
   { 
     to: '/admin/support', 
     icon: MessageSquare, 
     label: NAV.SUPPORT,
     allowedRoles: ['super_admin', 'manager', 'agent_support'],
-    section: 'gestion',
+    section: 'attention',
   },
   { 
     to: '/admin/scoring', 
     icon: BarChart3, 
     label: ADMIN.SCORING.TITLE,
     allowedRoles: ['super_admin', 'manager'],
-    section: 'analyse',
+    section: 'trust_risk',
   },
   { 
     to: '/admin/kira', 
     icon: TrendingUp, 
     label: 'KIRA Analytics',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'analyse',
+    section: 'growth_ownership',
   },
   { 
     to: '/admin/audit', 
     icon: Shield, 
     label: NAV.AUDIT,
     allowedRoles: ['super_admin'],
-    section: 'systeme',
+    section: 'trust_risk',
   },
   { 
     to: '/admin/users', 
     icon: UserCog, 
     label: 'Administrateurs',
     allowedRoles: ['super_admin'],
-    section: 'systeme',
+    section: 'system',
   },
   { 
     to: '/admin/settings', 
     icon: Settings, 
     label: NAV.SETTINGS,
     allowedRoles: ['super_admin'],
-    section: 'systeme',
+    section: 'system',
   },
   { 
     to: '/admin/feature-flags', 
     icon: Flag, 
     label: 'Feature Flags',
     allowedRoles: ['super_admin'],
-    section: 'systeme',
+    section: 'system',
   },
   { 
     to: '/admin/customers', 
     icon: Building2, 
     label: 'Clients',
     allowedRoles: ['super_admin'], // Platform owners only, checked via RLS
-    section: 'systeme',
+    section: 'system',
   },
   { 
     to: '/admin/income-entry', 
     icon: Banknote, 
     label: 'Saisie revenus',
     allowedRoles: ['super_admin', 'manager'], // For Yango-independence fallback
-    section: 'gestion',
+    section: 'financial_ops',
   },
   { 
     to: '/admin/income-approvals', 
     icon: FileText, 
     label: 'Approbations',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'financial_ops',
   },
   {
     to: '/admin/sinistres',
     icon: ShieldAlert,
     label: 'Sinistres',
     allowedRoles: ['super_admin', 'manager'],
-    section: 'gestion',
+    section: 'trust_risk',
   },
 
 ];
@@ -319,6 +358,16 @@ const sidebarItems: SidebarItem[] = [
 const hasAccess = (userRoleKey: string, allowedRoles: AppRole[]): boolean => {
   return allowedRoles.includes(userRoleKey as AppRole);
 };
+
+const matchesSidebarItem = (item: SidebarItem, pathname: string) => {
+  if (item.exact) return pathname === item.to;
+  return pathname === item.to || pathname.startsWith(`${item.to}/`);
+};
+
+const findSidebarMatch = (pathname: string) =>
+  sidebarItems
+    .filter((item) => matchesSidebarItem(item, pathname))
+    .sort((a, b) => b.to.length - a.to.length)[0];
 
 export function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -493,23 +542,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
   }, [navigate]);
 
-  const isActive = (path: string, exact?: boolean) => {
-    if (exact) return location.pathname === path;
-    return location.pathname.startsWith(path);
-  };
+  const activeSidebarItem = useMemo(() => findSidebarMatch(location.pathname), [location.pathname]);
+  const isActive = (item: SidebarItem) => activeSidebarItem?.to === item.to;
 
   // Derive a Section › Page breadcrumb from the current route.
   const breadcrumb = useMemo(() => {
-    const match = sidebarItems.find((item) =>
-      item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to),
-    );
+    const match = findSidebarMatch(location.pathname);
     if (!match) return { section: '', page: '' };
-    const sectionLabel = match.section ? {
-      operations: 'Opérations',
-      gestion: 'Gestion',
-      analyse: 'Analyse',
-      systeme: 'Système',
-    }[match.section] : '';
+    const sectionLabel = match.section ? ADMIN_SECTION_LABELS[match.section] : '';
     return { section: sectionLabel || '', page: match.label };
   }, [location.pathname]);
 
@@ -521,25 +561,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
   // Group filtered items by section for the new KIRA-style sidebar layout.
   const groupedSidebarItems = useMemo(() => {
-    const groups: Record<'operations' | 'gestion' | 'analyse' | 'systeme', SidebarItem[]> = {
-      operations: [],
-      gestion: [],
-      analyse: [],
-      systeme: [],
+    const groups: Record<AdminSidebarSection, SidebarItem[]> = {
+      attention: [],
+      driver_ops: [],
+      vehicle_ops: [],
+      financial_ops: [],
+      trust_risk: [],
+      growth_ownership: [],
+      system: [],
     };
     for (const item of filteredSidebarItems) {
-      const key = (item.section ?? 'operations') as keyof typeof groups;
+      const key = item.section ?? 'attention';
       groups[key].push(item);
     }
     return groups;
   }, [filteredSidebarItems]);
-
-  const SECTION_LABELS: Record<keyof typeof groupedSidebarItems, string> = {
-    operations: 'Opérations',
-    gestion: 'Gestion',
-    analyse: 'Analyse',
-    systeme: 'Système',
-  };
 
   const handleLogout = async () => {
     try {
@@ -630,7 +666,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 <div key={sectionKey}>
                   {(!collapsed || isMobile) && (
                     <p className="px-4 mb-2 text-[10px] font-semibold tracking-[0.12em] uppercase text-sidebar-foreground/40">
-                      {SECTION_LABELS[sectionKey]}
+                      {ADMIN_SECTION_LABELS[sectionKey]}
                     </p>
                   )}
                   <ul className="space-y-1">
@@ -642,14 +678,14 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                           className={cn(
                             'flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 relative',
                             'active:scale-[0.98] touch-manipulation',
-                            isActive(item.to, item.exact)
+                            isActive(item)
                               ? 'bg-sidebar-accent text-sidebar-primary-foreground shadow-inner ring-1 ring-sidebar-primary/30 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-sidebar-primary'
                               : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:bg-sidebar-accent'
                           )}
                         >
                           <item.icon className={cn(
                             'h-[18px] w-[18px] flex-shrink-0',
-                            isActive(item.to, item.exact) && 'text-sidebar-primary'
+                            isActive(item) && 'text-sidebar-primary'
                           )} />
                           {(!collapsed || isMobile) && (
                             <span className="text-[14px] font-medium flex-1">{item.label}</span>

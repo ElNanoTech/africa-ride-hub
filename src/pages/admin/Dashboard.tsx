@@ -170,9 +170,9 @@ export default function AdminDashboard() {
   return (
     <AdminLayout>
       <HeroCard
-        eyebrow="Vue d'ensemble"
-        title={ADMIN.DASHBOARD.TITLE}
-        subtitle="Vue d'ensemble de la plateforme DAM Flotte"
+        eyebrow="Centre d’attention"
+        title="Ce qui demande votre attention"
+        subtitle="Files d’attente, paiements, locations et signaux opérationnels à traiter aujourd’hui."
         pills={
           <>
             <StatusPill label="Temps réel" tone="success" pulse />
@@ -187,13 +187,13 @@ export default function AdminDashboard() {
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm" className="gap-1.5 sm:gap-2 text-xs sm:text-sm bg-white text-foreground hover:bg-white/90">
                   <Zap className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  <span className="hidden xs:inline">Actions rapides</span>
+                  <span className="hidden xs:inline">Traiter maintenant</span>
                   <span className="xs:hidden">Actions</span>
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-64 bg-popover z-50">
-                <DropdownMenuLabel>Actions rapides</DropdownMenuLabel>
+                <DropdownMenuLabel>Actions à traiter</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {quickActions.map((action) => (
                   <DropdownMenuItem 
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
         {/* Pending Queues */}
         <Card>
           <CardHeader className="flex-row items-center justify-between pb-2 sm:pb-4">
-            <CardTitle className="text-sm sm:text-base">{ADMIN.DASHBOARD.PENDING_QUEUES}</CardTitle>
+            <CardTitle className="text-sm sm:text-base">À traiter</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 sm:space-y-3">
             {pendingQueues.map((queue) => (
