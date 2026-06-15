@@ -87,6 +87,7 @@ const AdminVehicleDetail = lazy(() => import("./pages/admin/VehicleDetail"));
 const AdminGpsMapping = lazy(() => import("./pages/admin/GpsMapping"));
 const AdminRentals = lazy(() => import("./pages/admin/Rentals"));
 const AdminLoans = lazy(() => import("./pages/admin/Loans"));
+const AdminGrowthOwnership = lazy(() => import("./pages/admin/GrowthOwnership"));
 const AdminPayments = lazy(() => import("./pages/admin/Payments"));
 const AdminSupport = lazy(() => import("./pages/admin/Support"));
 const AdminScoringConfig = lazy(() => import("./pages/admin/ScoringConfig"));
@@ -265,6 +266,8 @@ const App = () => {
                     <Route path="/admin/vehicles/:id" element={<AdminVehicleDetail />} />
                     <Route path="/admin/gps-mapping" element={<AdminGpsMapping />} />
                     <Route path="/admin/rentals" element={<AdminRentals />} />
+                    <Route path="/admin/growth" element={<AdminGrowthOwnership />} />
+                    <Route path="/admin/growth-ownership" element={<AdminGrowthOwnership />} />
                     <Route path="/admin/loans" element={<AdminLoans />} />
                     <Route path="/admin/payments" element={<AdminPayments />} />
                     <Route path="/admin/finance" element={<AdminFinancialOperations />} />

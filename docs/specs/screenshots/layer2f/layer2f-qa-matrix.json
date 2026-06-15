@@ -1,0 +1,350 @@
+{
+  "checks": [
+    {
+      "name": "primary route title",
+      "passed": true,
+      "detail": "Growth & Ownership"
+    },
+    {
+      "name": "eligible drivers metric",
+      "passed": true,
+      "detail": "Eligible Drivers"
+    },
+    {
+      "name": "close to eligibility metric",
+      "passed": true,
+      "detail": "Close To Eligibility"
+    },
+    {
+      "name": "blocked drivers metric",
+      "passed": true,
+      "detail": "Blocked Drivers"
+    },
+    {
+      "name": "ownership path metric",
+      "passed": true,
+      "detail": "Ownership Path"
+    },
+    {
+      "name": "active offers metric",
+      "passed": true,
+      "detail": "Active Offers"
+    },
+    {
+      "name": "active offers part 1 zero explanation",
+      "passed": true,
+      "detail": "Zero in Part 1"
+    },
+    {
+      "name": "growth funnel",
+      "passed": true,
+      "detail": "Growth Conversion Funnel"
+    },
+    {
+      "name": "attention queue",
+      "passed": true,
+      "detail": "Growth Attention Queue"
+    },
+    {
+      "name": "guardrails",
+      "passed": true,
+      "detail": "Phase 1 Guardrails"
+    },
+    {
+      "name": "publishing disabled guardrail",
+      "passed": true,
+      "detail": "Publishing disabled"
+    },
+    {
+      "name": "no guaranteed ownership copy",
+      "passed": true,
+      "detail": "absent: Guaranteed ownership"
+    },
+    {
+      "name": "no instant financing copy",
+      "passed": true,
+      "detail": "absent: Instant financing"
+    },
+    {
+      "name": "no driver owns vehicle claim",
+      "passed": true,
+      "detail": "absent: You own this vehicle"
+    },
+    {
+      "name": "no fake underwriting copy",
+      "passed": true,
+      "detail": "absent: AI underwriting"
+    },
+    {
+      "name": "tab trigger Overview",
+      "passed": true,
+      "detail": "Overview"
+    },
+    {
+      "name": "tab trigger Pipeline",
+      "passed": true,
+      "detail": "Pipeline"
+    },
+    {
+      "name": "tab trigger Driver Profiles",
+      "passed": true,
+      "detail": "Driver Profiles"
+    },
+    {
+      "name": "tab trigger Offers",
+      "passed": true,
+      "detail": "Offers"
+    },
+    {
+      "name": "tab trigger Rules",
+      "passed": true,
+      "detail": "Rules"
+    },
+    {
+      "name": "tab trigger Audit",
+      "passed": true,
+      "detail": "Audit"
+    },
+    {
+      "name": "pipeline tab",
+      "passed": true,
+      "detail": "Eligibility Pipeline"
+    },
+    {
+      "name": "all filter",
+      "passed": true,
+      "detail": "All"
+    },
+    {
+      "name": "eligible filter",
+      "passed": true,
+      "detail": "Eligible"
+    },
+    {
+      "name": "blocked filter",
+      "passed": true,
+      "detail": "Blocked"
+    },
+    {
+      "name": "driver 360 handoff",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "driver profile sheet opens",
+      "passed": true,
+      "detail": "Growth profile"
+    },
+    {
+      "name": "operating signals visible",
+      "passed": true,
+      "detail": "Operating Signals"
+    },
+    {
+      "name": "eligibility blockers visible",
+      "passed": true,
+      "detail": "Eligibility Blockers"
+    },
+    {
+      "name": "offer readiness visible",
+      "passed": true,
+      "detail": "Offer Readiness"
+    },
+    {
+      "name": "publish disabled reason visible",
+      "passed": true,
+      "detail": "Publish disabled"
+    },
+    {
+      "name": "publish offer disabled",
+      "passed": true,
+      "detail": "Part 1 read-only"
+    },
+    {
+      "name": "driver profiles tab",
+      "passed": true,
+      "detail": "Driver Profiles"
+    },
+    {
+      "name": "driver profile card has score",
+      "passed": true,
+      "detail": "Score"
+    },
+    {
+      "name": "driver profile card has wallet",
+      "passed": true,
+      "detail": "Wallet"
+    },
+    {
+      "name": "offer readiness templates",
+      "passed": true,
+      "detail": "Offer Readiness Templates"
+    },
+    {
+      "name": "draft status visible",
+      "passed": true,
+      "detail": "DRAFT"
+    },
+    {
+      "name": "not visible state visible",
+      "passed": true,
+      "detail": "NOT VISIBLE"
+    },
+    {
+      "name": "driver offer readiness panel",
+      "passed": true,
+      "detail": "Driver Offer Readiness"
+    },
+    {
+      "name": "per driver evaluation copy",
+      "passed": true,
+      "detail": "without publishing"
+    },
+    {
+      "name": "template publish buttons disabled",
+      "passed": true,
+      "detail": "4 disabled publish button(s)"
+    },
+    {
+      "name": "rules tab",
+      "passed": true,
+      "detail": "Eligibility Rules Display"
+    },
+    {
+      "name": "minimum score rule",
+      "passed": true,
+      "detail": "Minimum KIRA Score"
+    },
+    {
+      "name": "on-time payment rule",
+      "passed": true,
+      "detail": "On-time payment rate"
+    },
+    {
+      "name": "required documents implicit via governance",
+      "passed": true,
+      "detail": "Governance"
+    },
+    {
+      "name": "view roles",
+      "passed": true,
+      "detail": "super_admin, manager, agent_pret"
+    },
+    {
+      "name": "growth audit tab",
+      "passed": true,
+      "detail": "Growth Audit"
+    },
+    {
+      "name": "no silent override",
+      "passed": true,
+      "detail": "No silent eligibility override"
+    },
+    {
+      "name": "safe actions",
+      "passed": true,
+      "detail": "Safe Actions"
+    },
+    {
+      "name": "loan handoff link",
+      "passed": true,
+      "detail": "/admin/loans"
+    },
+    {
+      "name": "contracts handoff link",
+      "passed": true,
+      "detail": "/admin/contracts"
+    },
+    {
+      "name": "trust risk handoff link",
+      "passed": true,
+      "detail": "/admin/trust-risk"
+    },
+    {
+      "name": "finance handoff link",
+      "passed": true,
+      "detail": "/admin/financial-operations"
+    },
+    {
+      "name": "wallet handoff link",
+      "passed": true,
+      "detail": "/admin/billing/wallets"
+    },
+    {
+      "name": "/admin/growth loads",
+      "passed": true,
+      "detail": "Growth & Ownership"
+    },
+    {
+      "name": "/admin/growth-ownership loads",
+      "passed": true,
+      "detail": "Growth & Ownership"
+    },
+    {
+      "name": "/admin/drivers/6a0b816e-f0b4-41fe-8079-d61aa9d1efa4?tab=growth loads",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "/admin/drivers/6a0b816e-f0b4-41fe-8079-d61aa9d1efa4?tab=loans loads",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "/admin/loans loads",
+      "passed": true,
+      "detail": "Gestion des Prêts"
+    },
+    {
+      "name": "/admin/contracts loads",
+      "passed": true,
+      "detail": "Contrats Rent-to-Own"
+    },
+    {
+      "name": "/admin/financial-operations loads",
+      "passed": true,
+      "detail": "Financial Operations"
+    },
+    {
+      "name": "/admin/billing/wallets loads",
+      "passed": true,
+      "detail": "Portefeuilles"
+    },
+    {
+      "name": "/admin/trust-risk loads",
+      "passed": true,
+      "detail": "Trust & Risk"
+    },
+    {
+      "name": "/admin/vehicles/d7ea6fd5-892d-441d-a289-cd23fdecfeb8 loads",
+      "passed": true,
+      "detail": "QA-E2E-100"
+    },
+    {
+      "name": "mobile growth route",
+      "passed": true,
+      "detail": "Growth & Ownership"
+    },
+    {
+      "name": "mobile kpis visible",
+      "passed": true,
+      "detail": "Eligible Drivers"
+    },
+    {
+      "name": "/driver/credit loads",
+      "passed": true,
+      "detail": "Crédit & Propriété"
+    },
+    {
+      "name": "driver-facing offer publishing remains out of scope",
+      "passed": true,
+      "detail": "Part 1 admin-only visibility"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}

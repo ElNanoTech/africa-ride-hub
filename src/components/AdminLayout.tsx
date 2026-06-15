@@ -81,6 +81,8 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/sinistres',
   '/admin/sinistres/analytics',
   '/admin/audit',
+  '/admin/growth-ownership',
+  '/admin/growth',
   '/admin/loans',
   '/admin/kira',
   '/admin/analytics',
@@ -263,6 +265,14 @@ const sidebarItems: SidebarItem[] = [
     label: 'Communication',
     allowedRoles: ['super_admin', 'manager'],
     section: 'driver_ops',
+  },
+  {
+    to: '/admin/growth-ownership',
+    icon: TrendingUp,
+    label: 'Growth & Ownership',
+    aliases: ['/admin/growth'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'growth_ownership',
   },
   { 
     to: '/admin/loans', 

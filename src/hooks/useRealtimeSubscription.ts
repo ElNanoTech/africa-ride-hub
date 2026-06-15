@@ -9,9 +9,12 @@ export type RealtimeTableName =
   | 'rentals'
   | 'loans'
   | 'payments'
+  | 'invoice'
   | 'credit_scores'
   | 'driver_scores'
   | 'driver_score_events'
+  | 'driver_wallets'
+  | 'driver_wallet_transactions'
   | 'support_tickets'
   | 'kyc_submissions'
   | 'maintenance_orders'
@@ -19,6 +22,7 @@ export type RealtimeTableName =
   | 'vehicle_positions'
   | 'accidents'
   | 'traffic_violations'
+  | 'rent_to_own_contracts'
   | 'other_charges';
 
 interface RealtimeConfig {
@@ -28,21 +32,25 @@ interface RealtimeConfig {
 }
 
 const tableToQueryKeyMap: Record<RealtimeTableName, string[]> = {
-  drivers: ['admin-drivers', 'admin-stats', 'vehicle-operations', 'trust-risk'],
-  vehicles: ['admin-vehicles', 'admin-stats', 'vehicle-operations'],
-  rentals: ['admin-rentals', 'admin-stats', 'vehicle-operations'],
-  loans: ['admin-loans', 'admin-stats'],
-  payments: ['admin-payments', 'admin-stats', 'trust-risk'],
-  credit_scores: ['admin-score-distribution', 'admin-score-trends', 'trust-risk'],
-  driver_scores: ['trust-risk'],
-  driver_score_events: ['driver-score-events', 'trust-risk'],
+  drivers: ['admin-drivers', 'admin-stats', 'vehicle-operations', 'trust-risk', 'growth-ownership'],
+  vehicles: ['admin-vehicles', 'admin-stats', 'vehicle-operations', 'growth-ownership'],
+  rentals: ['admin-rentals', 'admin-stats', 'vehicle-operations', 'growth-ownership'],
+  loans: ['admin-loans', 'admin-stats', 'growth-ownership'],
+  payments: ['admin-payments', 'admin-stats', 'trust-risk', 'growth-ownership'],
+  invoice: ['billing', 'financial-operations', 'growth-ownership'],
+  credit_scores: ['admin-score-distribution', 'admin-score-trends', 'trust-risk', 'growth-ownership'],
+  driver_scores: ['trust-risk', 'growth-ownership'],
+  driver_score_events: ['driver-score-events', 'trust-risk', 'growth-ownership'],
+  driver_wallets: ['wallets', 'financial-operations', 'growth-ownership'],
+  driver_wallet_transactions: ['wallets', 'financial-operations', 'growth-ownership'],
   support_tickets: ['admin-tickets', 'admin-stats'],
-  kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats', 'trust-risk'],
+  kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats', 'trust-risk', 'growth-ownership'],
   maintenance_orders: ['maintenance', 'vehicle-operations'],
-  vehicle_inspections: ['fleet-control', 'vehicle-operations', 'trust-risk'],
+  vehicle_inspections: ['fleet-control', 'vehicle-operations', 'trust-risk', 'growth-ownership'],
   vehicle_positions: ['vehicle-positions', 'vehicle-operations'],
-  accidents: ['admin-accidents', 'vehicle-operations', 'trust-risk'],
-  traffic_violations: ['contraventions', 'vehicle-operations', 'trust-risk'],
+  accidents: ['admin-accidents', 'vehicle-operations', 'trust-risk', 'growth-ownership'],
+  traffic_violations: ['contraventions', 'vehicle-operations', 'trust-risk', 'growth-ownership'],
+  rent_to_own_contracts: ['rent-to-own-contracts', 'growth-ownership'],
   other_charges: ['maintenance', 'vehicle-operations'],
 };
 
@@ -52,9 +60,12 @@ const tableLabels: Record<RealtimeTableName, string> = {
   rentals: 'Location',
   loans: 'Prêt',
   payments: 'Paiement',
+  invoice: 'Facture',
   credit_scores: 'Score',
   driver_scores: 'Score conducteur',
   driver_score_events: 'Evenement score',
+  driver_wallets: 'Portefeuille',
+  driver_wallet_transactions: 'Transaction portefeuille',
   support_tickets: 'Ticket',
   kyc_submissions: 'KYC',
   maintenance_orders: 'Maintenance',
@@ -62,6 +73,7 @@ const tableLabels: Record<RealtimeTableName, string> = {
   vehicle_positions: 'GPS',
   accidents: 'Sinistre',
   traffic_violations: 'Contravention',
+  rent_to_own_contracts: 'Contrat propriete',
   other_charges: 'Charge',
 };
 
