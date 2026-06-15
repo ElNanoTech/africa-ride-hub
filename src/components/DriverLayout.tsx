@@ -23,9 +23,9 @@ import damFlotteLogo from '@/assets/dam-flotte-logo.png';
 
 const ROUTE_ORDER = [
   '/driver',
-  '/driver/finance',
   '/driver/vehicles',
-  '/driver/fleet-control',
+  '/driver/finance',
+  '/journey',
   '/driver/profile',
 ];
 
@@ -35,9 +35,13 @@ const FINANCE_ROUTE_PREFIXES = [
   '/driver/wallet',
   '/driver/factures',
   '/driver/loans',
+  '/driver/income',
+];
+
+const JOURNEY_ROUTE_PREFIXES = [
+  '/journey',
   '/driver/credit',
   '/driver/ownership',
-  '/driver/income',
 ];
 
 function getRouteIndex(pathname: string): number {
@@ -46,6 +50,9 @@ function getRouteIndex(pathname: string): number {
   }
   if (FINANCE_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
     return ROUTE_ORDER.indexOf('/driver/finance');
+  }
+  if (JOURNEY_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`))) {
+    return ROUTE_ORDER.indexOf('/journey');
   }
   const exactIndex = ROUTE_ORDER.indexOf(pathname);
   if (exactIndex !== -1) return exactIndex;

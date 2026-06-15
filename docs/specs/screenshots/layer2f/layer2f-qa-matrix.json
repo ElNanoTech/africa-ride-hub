@@ -461,12 +461,12 @@
       "detail": "Executive Metrics"
     },
     {
-      "name": "/admin/drivers/adb34b60-70f9-4c35-9e88-7993636bef39?tab=growth loads",
+      "name": "/admin/drivers/daef84e3-1244-4e9f-ac48-fd0784f81f3e?tab=growth loads",
       "passed": true,
       "detail": "Ownership Readiness"
     },
     {
-      "name": "/admin/drivers/adb34b60-70f9-4c35-9e88-7993636bef39?tab=loans loads",
+      "name": "/admin/drivers/daef84e3-1244-4e9f-ac48-fd0784f81f3e?tab=loans loads",
       "passed": true,
       "detail": "Historique des Prêts"
     },
@@ -511,9 +511,344 @@
       "detail": "Crédit & Propriété"
     },
     {
+      "name": "journey-home: Mon Parcours",
+      "passed": true,
+      "detail": "Mon Parcours"
+    },
+    {
+      "name": "journey-home: My Journey",
+      "passed": true,
+      "detail": "My Journey"
+    },
+    {
+      "name": "journey-home: Current Stage",
+      "passed": true,
+      "detail": "Current Stage"
+    },
+    {
+      "name": "journey-home: Journey Roadmap",
+      "passed": true,
+      "detail": "Journey Roadmap"
+    },
+    {
+      "name": "journey-home: Ownership Readiness",
+      "passed": true,
+      "detail": "Ownership Readiness"
+    },
+    {
+      "name": "journey-home: Eligibility Status",
+      "passed": true,
+      "detail": "Eligibility Status"
+    },
+    {
+      "name": "journey-home: Available Opportunities",
+      "passed": true,
+      "detail": "Available Opportunities"
+    },
+    {
+      "name": "journey-home: Next Actions",
+      "passed": true,
+      "detail": "Next Actions"
+    },
+    {
+      "name": "journey-home: Achievements",
+      "passed": true,
+      "detail": "Achievements"
+    },
+    {
+      "name": "journey-home: Ownership Vision",
+      "passed": true,
+      "detail": "Ownership Vision"
+    },
+    {
+      "name": "journey-home: Parcours",
+      "passed": true,
+      "detail": "Parcours"
+    },
+    {
+      "name": "journey no guaranteed ownership copy",
+      "passed": true,
+      "detail": "absent: Guaranteed ownership"
+    },
+    {
+      "name": "journey no instant financing copy",
+      "passed": true,
+      "detail": "absent: Instant financing"
+    },
+    {
+      "name": "journey no fake underwriting copy",
+      "passed": true,
+      "detail": "absent: AI underwriting"
+    },
+    {
+      "name": "journey no ownership claim",
+      "passed": true,
+      "detail": "absent: You own this vehicle"
+    },
+    {
+      "name": "eligibility-screen: Eligibility Screen",
+      "passed": true,
+      "detail": "Eligibility Screen"
+    },
+    {
+      "name": "eligibility-screen: Why Am I Not Eligible?",
+      "passed": true,
+      "detail": "Why Am I Not Eligible?"
+    },
+    {
+      "name": "eligibility-screen: Requirements Met",
+      "passed": true,
+      "detail": "Requirements Met"
+    },
+    {
+      "name": "eligibility-screen: Requirements Missing",
+      "passed": true,
+      "detail": "Requirements Missing"
+    },
+    {
+      "name": "eligibility-screen: Requirements In Progress",
+      "passed": true,
+      "detail": "Requirements In Progress"
+    },
+    {
+      "name": "eligibility-screen: Next Actions",
+      "passed": true,
+      "detail": "Next Actions"
+    },
+    {
+      "name": "opportunity-center: Opportunity Center",
+      "passed": true,
+      "detail": "Opportunity Center"
+    },
+    {
+      "name": "opportunity-center: No fake pre-approvals",
+      "passed": true,
+      "detail": "No fake pre-approvals"
+    },
+    {
+      "name": "opportunity-center: Vehicle Ownership Program",
+      "passed": true,
+      "detail": "Vehicle Ownership Program"
+    },
+    {
+      "name": "opportunity-center: Locked",
+      "passed": true,
+      "detail": "Locked"
+    },
+    {
+      "name": "opportunity-detail: Opportunity Detail Screen",
+      "passed": true,
+      "detail": "Opportunity Detail Screen"
+    },
+    {
+      "name": "opportunity-detail: Locked Opportunity Experience",
+      "passed": true,
+      "detail": "Locked Opportunity Experience"
+    },
+    {
+      "name": "opportunity-detail: Overview",
+      "passed": true,
+      "detail": "Overview"
+    },
+    {
+      "name": "opportunity-detail: Benefits",
+      "passed": true,
+      "detail": "Benefits"
+    },
+    {
+      "name": "opportunity-detail: Requirements",
+      "passed": true,
+      "detail": "Requirements"
+    },
+    {
+      "name": "opportunity-detail: Documents Needed",
+      "passed": true,
+      "detail": "Documents Needed"
+    },
+    {
+      "name": "opportunity-detail: Financial Expectations",
+      "passed": true,
+      "detail": "Financial Expectations"
+    },
+    {
+      "name": "opportunity-detail: Timeline",
+      "passed": true,
+      "detail": "Timeline"
+    },
+    {
+      "name": "opportunity-detail: Frequently Asked Questions",
+      "passed": true,
+      "detail": "Frequently Asked Questions"
+    },
+    {
+      "name": "opportunity-detail: Readiness only",
+      "passed": true,
+      "detail": "Readiness only"
+    },
+    {
+      "name": "start application hidden without active offer",
+      "passed": true,
+      "detail": "absent: Application begins"
+    },
+    {
+      "name": "simulator: Ownership Simulator",
+      "passed": true,
+      "detail": "Ownership Simulator"
+    },
+    {
+      "name": "simulator: Simulation only",
+      "passed": true,
+      "detail": "Simulation only"
+    },
+    {
+      "name": "simulator: Does not represent approval",
+      "passed": true,
+      "detail": "Does not represent approval"
+    },
+    {
+      "name": "simulator: Does not guarantee financing",
+      "passed": true,
+      "detail": "Does not guarantee financing"
+    },
+    {
+      "name": "simulator: Vehicle Options",
+      "passed": true,
+      "detail": "Vehicle Options"
+    },
+    {
+      "name": "simulator: Estimated Monthly Obligation",
+      "passed": true,
+      "detail": "Estimated Monthly Obligation"
+    },
+    {
+      "name": "application-tracker: Application Progress Tracker",
+      "passed": true,
+      "detail": "Application Progress Tracker"
+    },
+    {
+      "name": "application-tracker: Started",
+      "passed": true,
+      "detail": "Started"
+    },
+    {
+      "name": "application-tracker: Submitted",
+      "passed": true,
+      "detail": "Submitted"
+    },
+    {
+      "name": "application-tracker: Documents Review",
+      "passed": true,
+      "detail": "Documents Review"
+    },
+    {
+      "name": "application-tracker: Risk Review",
+      "passed": true,
+      "detail": "Risk Review"
+    },
+    {
+      "name": "application-tracker: Approved",
+      "passed": true,
+      "detail": "Approved"
+    },
+    {
+      "name": "application-tracker: Awaiting Down Payment",
+      "passed": true,
+      "detail": "Awaiting Down Payment"
+    },
+    {
+      "name": "application-tracker: Awaiting Contract",
+      "passed": true,
+      "detail": "Awaiting Contract"
+    },
+    {
+      "name": "application-tracker: Awaiting Vehicle Assignment",
+      "passed": true,
+      "detail": "Awaiting Vehicle Assignment"
+    },
+    {
+      "name": "application-tracker: Ready",
+      "passed": true,
+      "detail": "Ready"
+    },
+    {
+      "name": "application-tracker: Ownership Active",
+      "passed": true,
+      "detail": "Ownership Active"
+    },
+    {
+      "name": "application-tracker: Document Collection",
+      "passed": true,
+      "detail": "Document Collection"
+    },
+    {
+      "name": "application-tracker: Down Payment Readiness",
+      "passed": true,
+      "detail": "Down Payment Readiness"
+    },
+    {
+      "name": "application-tracker: No money movement",
+      "passed": true,
+      "detail": "No money movement"
+    },
+    {
+      "name": "application-tracker: Ownership Activation",
+      "passed": true,
+      "detail": "Ownership Activation"
+    },
+    {
+      "name": "milestones-achievements: Ownership Milestones",
+      "passed": true,
+      "detail": "Ownership Milestones"
+    },
+    {
+      "name": "milestones-achievements: First Rental",
+      "passed": true,
+      "detail": "First Rental"
+    },
+    {
+      "name": "milestones-achievements: 30 Days Active",
+      "passed": true,
+      "detail": "30 Days Active"
+    },
+    {
+      "name": "milestones-achievements: 100 Invoices Paid",
+      "passed": true,
+      "detail": "100 Invoices Paid"
+    },
+    {
+      "name": "milestones-achievements: Eligible For Ownership",
+      "passed": true,
+      "detail": "Eligible For Ownership"
+    },
+    {
+      "name": "milestones-achievements: Application Submitted",
+      "passed": true,
+      "detail": "Application Submitted"
+    },
+    {
+      "name": "milestones-achievements: Ownership Activated",
+      "passed": true,
+      "detail": "Ownership Activated"
+    },
+    {
+      "name": "milestones-achievements: Achievements",
+      "passed": true,
+      "detail": "Achievements"
+    },
+    {
       "name": "driver-facing offer publishing remains out of scope",
       "passed": true,
-      "detail": "Part 2 admin-only workspace architecture"
+      "detail": "Journey shows readiness only unless a persisted active offer exists"
+    },
+    {
+      "name": "journey realtime coverage",
+      "passed": true,
+      "detail": "Driver route subscribes to driver, score, payment, invoice, wallet, KYC, vehicle, loan, rental, contract, inspection, violation, accident changes"
+    },
+    {
+      "name": "journey permission scope",
+      "passed": true,
+      "detail": "Journey data hook queries only the authenticated driver id"
     },
     {
       "name": "console/network findings",

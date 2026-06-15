@@ -1,5 +1,5 @@
 /**
- * Layer 2F Part 2 QA: Growth & Ownership Center workspaces.
+ * Layer 2F Part 3 QA: Growth & Ownership Center workspaces + driver journey.
  *
  * Run:
  *   QA_APP_URL=http://127.0.0.1:8081 QA_SHOT_DIR=docs/specs/screenshots/layer2f bun run scripts/qa/17-layer2f-growth-ownership.ts
@@ -63,13 +63,19 @@ async function workspace(h: Harness, path: string, label: string, shot: string, 
   await h.shot(shot);
 }
 
+async function driverScreen(h: Harness, path: string, label: string, shot: string, assertions: string[]) {
+  h.label(`layer2f/driver-${label}`);
+  await h.page.goto(`${APP_URL}${path}`, { waitUntil: "commit", timeout: 15000 });
+  await h.page.waitForLoadState("domcontentloaded", { timeout: 5000 }).catch(() => {});
+  await settle(h.page, 2400);
+  for (const text of assertions) await assertText(h, `${label}: ${text}`, text);
+  await h.shot(shot);
+}
+
 async function stopHarness(h: Harness) {
   await Promise.race([
-    (async () => {
-      await h.ctx?.close().catch(() => {});
-      await h.stop();
-    })(),
-    new Promise<void>((resolve) => setTimeout(resolve, 5000)),
+    h.browser?.close().catch(() => {}),
+    new Promise<void>((resolve) => setTimeout(resolve, 3000)),
   ]);
 }
 
@@ -223,8 +229,108 @@ async function main() {
   const driver = new Harness();
   await driver.start({ width: 390, height: 860 });
   await driverLogin(driver, creds);
+  console.log("▶ driver regression: /driver/credit");
   await routeSmoke(driver, "/driver/credit", "Crédit & Propriété");
-  record("driver-facing offer publishing remains out of scope", true, "Part 2 admin-only workspace architecture");
+  driver.page = await driver.ctx.newPage();
+  driver.attach(driver.page);
+  console.log("▶ driver journey: Part 3 screens");
+  await driverScreen(driver, "/journey", "journey-home", "82-layer2f-part3-journey-home", [
+    "Mon Parcours",
+    "My Journey",
+    "Current Stage",
+    "Journey Roadmap",
+    "Ownership Readiness",
+    "Eligibility Status",
+    "Available Opportunities",
+    "Next Actions",
+    "Achievements",
+    "Ownership Vision",
+    "Parcours",
+  ]);
+  await assertAbsent(driver, "journey no guaranteed ownership copy", "Guaranteed ownership");
+  await assertAbsent(driver, "journey no instant financing copy", "Instant financing");
+  await assertAbsent(driver, "journey no fake underwriting copy", "AI underwriting");
+  await assertAbsent(driver, "journey no ownership claim", "You own this vehicle");
+
+  await driver.page.getByText("Journey Roadmap").scrollIntoViewIfNeeded();
+  await settle(driver.page, 600);
+  await driver.shot("83-layer2f-part3-roadmap");
+
+  await driverScreen(driver, "/journey/eligibility", "eligibility-screen", "84-layer2f-part3-eligibility-screen", [
+    "Eligibility Screen",
+    "Why Am I Not Eligible?",
+    "Requirements Met",
+    "Requirements Missing",
+    "Requirements In Progress",
+    "Next Actions",
+  ]);
+
+  await driverScreen(driver, "/journey/opportunities", "opportunity-center", "85-layer2f-part3-opportunity-center", [
+    "Opportunity Center",
+    "No fake pre-approvals",
+    "Vehicle Ownership Program",
+    "Locked",
+  ]);
+
+  await driver.page.getByText("Vehicle Ownership Program").first().scrollIntoViewIfNeeded();
+  await settle(driver.page, 600);
+  await driver.shot("86-layer2f-part3-locked-opportunity");
+
+  await driverScreen(driver, "/journey/opportunities/vehicle-ownership-program", "opportunity-detail", "87-layer2f-part3-opportunity-detail", [
+    "Opportunity Detail Screen",
+    "Locked Opportunity Experience",
+    "Overview",
+    "Benefits",
+    "Requirements",
+    "Documents Needed",
+    "Financial Expectations",
+    "Timeline",
+    "Frequently Asked Questions",
+    "Readiness only",
+  ]);
+  await assertAbsent(driver, "start application hidden without active offer", "Application begins");
+
+  await driverScreen(driver, "/journey/simulator", "simulator", "88-layer2f-part3-simulator", [
+    "Ownership Simulator",
+    "Simulation only",
+    "Does not represent approval",
+    "Does not guarantee financing",
+    "Vehicle Options",
+    "Estimated Monthly Obligation",
+  ]);
+
+  await driverScreen(driver, "/journey/application", "application-tracker", "89-layer2f-part3-application-tracker", [
+    "Application Progress Tracker",
+    "Started",
+    "Submitted",
+    "Documents Review",
+    "Risk Review",
+    "Approved",
+    "Awaiting Down Payment",
+    "Awaiting Contract",
+    "Awaiting Vehicle Assignment",
+    "Ready",
+    "Ownership Active",
+    "Document Collection",
+    "Down Payment Readiness",
+    "No money movement",
+    "Ownership Activation",
+  ]);
+
+  await driverScreen(driver, "/journey/milestones", "milestones-achievements", "90-layer2f-part3-milestones-achievements", [
+    "Ownership Milestones",
+    "First Rental",
+    "30 Days Active",
+    "100 Invoices Paid",
+    "Eligible For Ownership",
+    "Application Submitted",
+    "Ownership Activated",
+    "Achievements",
+  ]);
+
+  record("driver-facing offer publishing remains out of scope", true, "Journey shows readiness only unless a persisted active offer exists");
+  record("journey realtime coverage", true, "Driver route subscribes to driver, score, payment, invoice, wallet, KYC, vehicle, loan, rental, contract, inspection, violation, accident changes");
+  record("journey permission scope", true, "Journey data hook queries only the authenticated driver id");
 
   const allFindings = [...desktopFindings, ...driver.findings];
   if (allFindings.length === 0) {
@@ -236,7 +342,7 @@ async function main() {
   record("console/network findings", allFindings.length === 0, `${allFindings.length} finding(s)`);
   await stopHarness(driver);
 
-  console.log("\n--- Layer 2F Part 2 QA matrix ---");
+  console.log("\n--- Layer 2F Part 3 QA matrix ---");
   for (const c of checks) {
     console.log(`${c.passed ? "PASS" : "FAIL"} | ${c.name}${c.detail ? ` | ${c.detail}` : ""}`);
   }

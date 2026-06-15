@@ -58,6 +58,7 @@ const DriverVehicles = lazy(() => import("./pages/driver/Vehicles"));
 const DriverScore = lazy(() => import("./pages/driver/Score"));
 const DriverLoans = lazy(() => import("./pages/driver/Loans"));
 const DriverCredit = lazy(() => import("./pages/driver/Credit"));
+const DriverJourney = lazy(() => import("./pages/driver/Journey"));
 const DriverRental = lazy(() => import("./pages/driver/Rental"));
 const DriverProfile = lazy(() => import("./pages/driver/Profile"));
 const DriverKYC = lazy(() => import("./pages/driver/KYC"));
@@ -208,6 +209,13 @@ const App = () => {
                     <Route path="/loans" element={<DriverLoans />} />
                     <Route path="/driver/loans" element={<DriverLoans />} />
                     <Route path="/driver/credit" element={<DriverCredit />} />
+                    <Route path="/journey" element={<DriverJourney />} />
+                    <Route path="/journey/eligibility" element={<DriverJourney />} />
+                    <Route path="/journey/opportunities" element={<DriverJourney />} />
+                    <Route path="/journey/opportunities/:opportunityId" element={<DriverJourney />} />
+                    <Route path="/journey/simulator" element={<DriverJourney />} />
+                    <Route path="/journey/application" element={<DriverJourney />} />
+                    <Route path="/journey/milestones" element={<DriverJourney />} />
                     <Route path="/profile" element={<DriverProfile />} />
 	                    <Route path="/driver/profile" element={<DriverProfile />} />
 	                    <Route path="/driver/kyc" element={<DriverKYC />} />

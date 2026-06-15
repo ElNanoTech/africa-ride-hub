@@ -5,7 +5,26 @@ import { toast } from 'sonner';
 import { useDriverId } from './useDriverData';
 import { triggerConfetti } from './useConfetti';
 
-type DriverTableName = 'notifications' | 'loans' | 'rentals' | 'payments' | 'support_tickets' | 'support_ticket_messages' | 'credit_scores' | 'driver_scores' | 'kyc_submissions' | 'vehicles';
+type DriverTableName =
+  | 'drivers'
+  | 'notifications'
+  | 'loans'
+  | 'rentals'
+  | 'payments'
+  | 'invoice'
+  | 'driver_wallets'
+  | 'driver_wallet_transactions'
+  | 'support_tickets'
+  | 'support_ticket_messages'
+  | 'credit_scores'
+  | 'driver_scores'
+  | 'driver_score_events'
+  | 'kyc_submissions'
+  | 'vehicles'
+  | 'vehicle_inspections'
+  | 'traffic_violations'
+  | 'accidents'
+  | 'rent_to_own_contracts';
 
 interface DriverRealtimeConfig {
   tables: DriverTableName[];
@@ -13,33 +32,57 @@ interface DriverRealtimeConfig {
 }
 
 const tableToQueryKeyMap: Record<DriverTableName, string[]> = {
+  drivers: ['driverFullProfile', 'driver-journey'],
   notifications: ['driverNotifications'],
   loans: ['driverLoans'],
   rentals: ['driverRentals'],
   payments: ['driverPayments'],
+  invoice: ['driver-invoices', 'driver-journey'],
+  driver_wallets: ['driver-journey'],
+  driver_wallet_transactions: ['driver-journey'],
   support_tickets: ['driverSupportTickets'],
   support_ticket_messages: ['driverSupportTickets'],
   credit_scores: ['driverCreditScores'],
-  driver_scores: ['driverCurrentScore', 'driverCreditScores'],
-  kyc_submissions: ['driver-kyc-submission', 'driverProfile'],
-  vehicles: ['driverVehicles', 'driverRentals'],
+  driver_scores: ['driverCurrentScore', 'driverCreditScores', 'driver-journey'],
+  driver_score_events: ['driver-score-events', 'driver-journey'],
+  kyc_submissions: ['driver-kyc-submission', 'driverProfile', 'driverFullProfile', 'driver-journey'],
+  vehicles: ['driverVehicles', 'driverRentals', 'driver-journey'],
+  vehicle_inspections: ['driver-journey'],
+  traffic_violations: ['driver-journey'],
+  accidents: ['driver-journey'],
+  rent_to_own_contracts: ['driver-journey'],
 };
 
 const tableLabels: Record<DriverTableName, string> = {
+  drivers: 'Profil',
   notifications: 'Notification',
   loans: 'Prêt',
   rentals: 'Location',
   payments: 'Paiement',
+  invoice: 'Facture',
+  driver_wallets: 'Portefeuille',
+  driver_wallet_transactions: 'Transaction portefeuille',
   support_tickets: 'Ticket',
   support_ticket_messages: 'Message',
   credit_scores: 'Score',
   driver_scores: 'Score',
+  driver_score_events: 'Evenement score',
   kyc_submissions: 'KYC',
   vehicles: 'Véhicule',
+  vehicle_inspections: 'Controle vehicule',
+  traffic_violations: 'Contravention',
+  accidents: 'Sinistre',
+  rent_to_own_contracts: 'Contrat propriete',
 };
 
 // Tables that don't have a driver_id column — subscribe without filter
 const TABLES_WITHOUT_DRIVER_FILTER: DriverTableName[] = ['support_ticket_messages', 'vehicles'];
+
+function realtimeDriverFilter(table: DriverTableName, driverId: string): string | undefined {
+  if (TABLES_WITHOUT_DRIVER_FILTER.includes(table)) return undefined;
+  if (table === 'drivers') return `id=eq.${driverId}`;
+  return `driver_id=eq.${driverId}`;
+}
 
 const eventLabels = {
   INSERT: 'reçu',
@@ -64,7 +107,7 @@ export function useDriverRealtimeSubscription({ tables, showToasts = true }: Dri
           event: '*',
           schema: 'public',
           table,
-          filter: TABLES_WITHOUT_DRIVER_FILTER.includes(table) ? undefined : `driver_id=eq.${driverId}`,
+          filter: realtimeDriverFilter(table, driverId),
         },
         (payload) => {
           const tableName = (payload.table as DriverTableName) || table;

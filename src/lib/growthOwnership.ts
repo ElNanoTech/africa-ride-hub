@@ -273,7 +273,9 @@ export type GrowthDriverProfile = {
   onTimeRate: number;
   walletBalance: number;
   lastPaymentDate: string | null;
+  paidPaymentCount: number;
   activeRental: boolean;
+  firstRentalDate: string | null;
   activeVehicleId: string | null;
   currentVehicleLabel: string | null;
   blockers: GrowthBlocker[];
@@ -291,6 +293,135 @@ export type GrowthDriverProfile = {
   riskReasons: string[];
   canPublishOffer: boolean;
   publishDisabledReason: string;
+};
+
+export type DriverJourneyStageStatus = 'completed' | 'current' | 'locked';
+export type DriverJourneyRequirementStatus = 'met' | 'missing' | 'in_progress';
+export type DriverJourneyOpportunityStatus = 'Locked' | 'Almost Ready' | 'Available' | 'In Progress' | 'Completed' | 'Expired';
+export type DriverJourneyApplicationStageStatus = 'completed' | 'current' | 'locked';
+export type DriverJourneyDocumentStatus = 'Missing' | 'Uploaded' | 'Under Review' | 'Approved' | 'Rejected' | 'Requires Re-upload';
+
+export type DriverJourneyEligibilityDisplayState =
+  | 'Not Eligible'
+  | 'Almost Eligible'
+  | 'Eligible For Review'
+  | 'Offer Available'
+  | 'Application In Progress'
+  | 'Approved Pending Activation'
+  | 'Ownership Active';
+
+export type DriverJourneyStage = {
+  stage: GrowthLifecycleStage;
+  label: string;
+  description: string;
+  status: DriverJourneyStageStatus;
+  benefits: string[];
+  requirements: string[];
+};
+
+export type DriverJourneyRequirement = {
+  key: string;
+  label: string;
+  status: DriverJourneyRequirementStatus;
+  current: string;
+  target: string;
+  explanation: string;
+  suggestion: string;
+};
+
+export type DriverJourneyAction = {
+  key: string;
+  label: string;
+  impact: 'high' | 'medium' | 'low';
+  route: string;
+  explanation: string;
+};
+
+export type DriverJourneyOpportunity = {
+  id: string;
+  name: string;
+  status: DriverJourneyOpportunityStatus;
+  eligibilityLevel: string;
+  benefits: string[];
+  requirements: DriverJourneyRequirement[];
+  expiration: string | null;
+  reason: string;
+  remaining: string;
+  recommendedActions: DriverJourneyAction[];
+  isPublishedOffer: boolean;
+  canStartApplication: boolean;
+  detailRoute: string;
+  disclaimer: string;
+  financialExpectations: {
+    totalAmount: number;
+    downPayment: number;
+    estimatedMonthlyObligation: number;
+    currency: 'FCFA';
+  };
+  timeline: string;
+};
+
+export type DriverJourneyApplicationStage = {
+  key: string;
+  label: string;
+  status: DriverJourneyApplicationStageStatus;
+  explanation: string;
+  nextStep: string;
+};
+
+export type DriverJourneyDocument = {
+  key: string;
+  label: string;
+  status: DriverJourneyDocumentStatus;
+  explanation: string;
+  rejectionReason: string | null;
+};
+
+export type DriverJourneyAchievement = {
+  key: string;
+  label: string;
+  achieved: boolean;
+  evidence: string;
+};
+
+export type DriverJourneyMilestone = {
+  key: string;
+  label: string;
+  achieved: boolean;
+  date: string | null;
+  explanation: string;
+};
+
+export type DriverJourneySummary = {
+  currentStage: GrowthLifecycleStage;
+  currentStageLabel: string;
+  currentStageDescription: string;
+  nextStage: GrowthDriverProfile['nextStage'];
+  progress: number;
+  roadmap: DriverJourneyStage[];
+  eligibility: {
+    state: DriverJourneyEligibilityDisplayState;
+    explanation: string;
+    requirementsMet: DriverJourneyRequirement[];
+    requirementsMissing: DriverJourneyRequirement[];
+    requirementsInProgress: DriverJourneyRequirement[];
+  };
+  nextActions: DriverJourneyAction[];
+  opportunities: DriverJourneyOpportunity[];
+  activeOpportunityCount: number;
+  applicationTracker: DriverJourneyApplicationStage[];
+  documents: DriverJourneyDocument[];
+  downPaymentReadiness: {
+    required: number;
+    saved: number;
+    remaining: number;
+    estimatedCompletionDate: string | null;
+  };
+  achievements: DriverJourneyAchievement[];
+  milestones: DriverJourneyMilestone[];
+  simulatorDisclaimer: string;
+  activationVisible: boolean;
+  activationReason: string;
 };
 
 export type GrowthOverview = {
@@ -408,6 +539,17 @@ function latestPaymentDate(payments: GrowthPaymentLike[]): string | null {
     .map((payment) => isoDate(payment.paid_date ?? payment.paid_at ?? payment.created_at ?? payment.due_date))
     .filter((date): date is string => Boolean(date))
     .sort((a, b) => b.localeCompare(a))[0] ?? null;
+}
+
+function paidPaymentCount(payments: GrowthPaymentLike[]): number {
+  return payments.filter((payment) => ['paid', 'overpaid'].includes(normalize(payment.status))).length;
+}
+
+function firstRentalDate(rentals: GrowthRentalLike[]): string | null {
+  return [...rentals]
+    .map((rental) => isoDate(rental.start_date ?? rental.created_at))
+    .filter((date): date is string => Boolean(date))
+    .sort((a, b) => a.localeCompare(b))[0] ?? null;
 }
 
 function vehicleLabel(vehicle: GrowthVehicleLike | undefined, fallbackId: string | null): string | null {
@@ -810,7 +952,9 @@ export function buildGrowthProfiles(input: {
       onTimeRate,
       walletBalance,
       lastPaymentDate: latestPaymentDate(payments),
+      paidPaymentCount: paidPaymentCount(payments),
       activeRental,
+      firstRentalDate: firstRentalDate(driverRentals),
       activeVehicleId,
       currentVehicleLabel: vehicleLabel(activeVehicleId ? vehicleById.get(activeVehicleId) : undefined, activeVehicleId),
       blockers,
@@ -880,6 +1024,620 @@ export function buildGrowthOverview(profiles: GrowthDriverProfile[]): GrowthOver
     topBlockers,
     priorityQueue,
     analytics,
+  };
+}
+
+const JOURNEY_STAGE_COPY: Record<GrowthLifecycleStage, {
+  label: string;
+  description: string;
+  benefits: string[];
+  requirements: string[];
+}> = {
+  Prospect: {
+    label: 'Prospect',
+    description: 'Votre profil commence son parcours KIRA.',
+    benefits: ['Decouvrir les services', 'Preparer les documents'],
+    requirements: ['Creer un profil', 'Completer les informations de base'],
+  },
+  'Verified Driver': {
+    label: 'Chauffeur Verifie',
+    description: 'Votre identite est confirmee et votre profil peut progresser.',
+    benefits: ['Acces aux etapes chauffeur', 'Confiance de base etablie'],
+    requirements: ['KYC verifie', 'Profil actif'],
+  },
+  'Daily Rental Driver': {
+    label: 'Chauffeur Location',
+    description: 'Vous construisez votre historique avec des locations et paiements suivis.',
+    benefits: ['Historique de conduite', 'Score en progression'],
+    requirements: ['Location active ou recente', 'Paiements suivis'],
+  },
+  'Trusted Driver': {
+    label: 'Chauffeur de Confiance',
+    description: 'Vous avez demontre une bonne regularite et un comportement fiable.',
+    benefits: ['Meilleure visibilite eligibility', 'Preparation aux opportunites'],
+    requirements: ['Score au-dessus de 700', 'Paiements reguliers'],
+  },
+  'Financing Eligible Driver': {
+    label: 'Pret pour Revue',
+    description: 'Votre dossier peut etre etudie par les equipes KIRA.',
+    benefits: ['Revue possible', 'Prochaine etape vers un dossier structure'],
+    requirements: ['Score cible atteint', 'Historique suffisant', 'Aucun blocage critique'],
+  },
+  'Vehicle Owner': {
+    label: 'Parcours Propriete Actif',
+    description: 'Un contrat ou parcours de propriete est actif et suivi.',
+    benefits: ['Progression contractuelle visible', 'Responsabilites clarifiees'],
+    requirements: ['Contrat signe', 'Vehicule assigne', 'Paiements suivis'],
+  },
+  'Fleet Entrepreneur': {
+    label: 'Entrepreneur Flotte',
+    description: 'Le parcours peut s etendre vers la gestion de plusieurs vehicules.',
+    benefits: ['Vision entrepreneuriale', 'Suivi flotte futur'],
+    requirements: ['Parcours propriete solide', 'Historique long terme'],
+  },
+};
+
+const DRIVER_APPLICATION_STAGES: Array<{
+  key: string;
+  label: string;
+  explanation: string;
+  nextStep: string;
+}> = [
+  {
+    key: 'started',
+    label: 'Started',
+    explanation: 'La demande existe dans le systeme.',
+    nextStep: 'Verifier que les informations sont completes.',
+  },
+  {
+    key: 'submitted',
+    label: 'Submitted',
+    explanation: 'La demande est envoyee pour revue.',
+    nextStep: 'Attendre la premiere verification KIRA.',
+  },
+  {
+    key: 'documents-review',
+    label: 'Documents Review',
+    explanation: 'Les documents requis sont controles.',
+    nextStep: 'Corriger tout document manquant ou refuse.',
+  },
+  {
+    key: 'risk-review',
+    label: 'Risk Review',
+    explanation: 'KIRA verifie les signaux de confiance sans exposer les regles internes.',
+    nextStep: 'Garder les paiements et controles a jour.',
+  },
+  {
+    key: 'approved',
+    label: 'Approved',
+    explanation: 'La demande est approuvee sous conditions operationnelles.',
+    nextStep: 'Preparer l activation avec KIRA.',
+  },
+  {
+    key: 'awaiting-down-payment',
+    label: 'Awaiting Down Payment',
+    explanation: 'La readiness du paiement initial doit etre confirmee.',
+    nextStep: 'Suivre le montant restant dans KiraPay ou avec l equipe.',
+  },
+  {
+    key: 'awaiting-contract',
+    label: 'Awaiting Contract',
+    explanation: 'Le contrat doit etre prepare et signe.',
+    nextStep: 'Verifier le resume du contrat avant signature.',
+  },
+  {
+    key: 'awaiting-vehicle',
+    label: 'Awaiting Vehicle Assignment',
+    explanation: 'Un vehicule doit etre assigne au dossier.',
+    nextStep: 'Attendre la confirmation du vehicule.',
+  },
+  {
+    key: 'ready',
+    label: 'Ready',
+    explanation: 'Toutes les conditions operationnelles sont pretes.',
+    nextStep: 'L activation est lancee par le moteur credit.',
+  },
+  {
+    key: 'ownership-active',
+    label: 'Ownership Active',
+    explanation: 'Le parcours de propriete est actif et suivi.',
+    nextStep: 'Respecter les responsabilites et paiements.',
+  },
+];
+
+function eligibilityDisplayState(state: GrowthEligibilityState): DriverJourneyEligibilityDisplayState {
+  if (['ACTIVE_OWNERSHIP_PATH', 'COMPLETED'].includes(state)) return 'Ownership Active';
+  if (['APPLICATION_APPROVED', 'ACTIVATION_PENDING'].includes(state)) return 'Approved Pending Activation';
+  if (['APPLICATION_STARTED', 'APPLICATION_SUBMITTED'].includes(state)) return 'Application In Progress';
+  if (state === 'OFFER_PUBLISHED') return 'Offer Available';
+  if (['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(state)) return 'Eligible For Review';
+  if (state === 'ALMOST_ELIGIBLE') return 'Almost Eligible';
+  return 'Not Eligible';
+}
+
+function eligibilityExplanation(profile: GrowthDriverProfile, state: DriverJourneyEligibilityDisplayState): string {
+  if (state === 'Ownership Active') return 'Votre parcours de propriete est actif dans les donnees KIRA.';
+  if (state === 'Approved Pending Activation') return 'Votre dossier est approuve, mais activation, contrat, paiement initial et vehicule doivent encore etre confirmes.';
+  if (state === 'Application In Progress') return 'Votre demande existe et avance dans le suivi KIRA.';
+  if (state === 'Offer Available') return 'Une opportunite publiee serait visible ici lorsqu elle existe dans les donnees.';
+  if (state === 'Eligible For Review') return 'Votre dossier peut etre revu par KIRA, mais aucune offre conducteur n est publiee sans produit persiste et audit.';
+  if (state === 'Almost Eligible') return 'Vous etes proche. Les actions ci-dessous expliquent ce qui manque.';
+  const blocker = profile.blockers[0];
+  return blocker ? blocker.label : 'Votre profil n a pas encore assez de signaux pour une revue.';
+}
+
+function requirementStatusFor(blockers: GrowthBlocker[], keys: string[], warningAsProgress = true): DriverJourneyRequirementStatus {
+  const matching = blockers.filter((item) => keys.includes(item.key));
+  if (matching.length === 0) return 'met';
+  if (matching.some((blocker) => blocker.severity === 'critical')) return 'missing';
+  return warningAsProgress ? 'in_progress' : 'missing';
+}
+
+function buildJourneyRequirements(profile: GrowthDriverProfile): DriverJourneyRequirement[] {
+  const scoreTarget = 850;
+  return [
+    {
+      key: 'identity',
+      label: 'Identite verifiee',
+      status: requirementStatusFor(profile.blockers, ['kyc'], false),
+      current: profile.blockers.some((blocker) => blocker.key === 'kyc') ? 'KYC incomplet' : 'KYC verifie',
+      target: 'KYC verifie',
+      explanation: 'KIRA doit confirmer votre identite avant une revue de propriete.',
+      suggestion: 'Completer ou corriger vos documents KYC.',
+    },
+    {
+      key: 'score',
+      label: 'Score KIRA',
+      status: requirementStatusFor(profile.blockers, ['score_low', 'score_gap']),
+      current: profile.score == null ? 'Aucun score' : `${profile.score} points`,
+      target: `${scoreTarget} points pour la revue vehicule`,
+      explanation: 'Le score resume vos signaux de confiance sans exposer les formules internes.',
+      suggestion: 'Payer a temps et maintenir une conduite/operation stable.',
+    },
+    {
+      key: 'payment-history',
+      label: 'Paiements a temps',
+      status: requirementStatusFor(profile.blockers, ['overdue', 'payment_rate']),
+      current: `${profile.onTimeRate}% a temps`,
+      target: '90% minimum, sans impaye ouvert',
+      explanation: 'Les paiements reguliers construisent la confiance.',
+      suggestion: 'Regler les factures ouvertes et eviter les retards.',
+    },
+    {
+      key: 'rental-history',
+      label: 'Historique de location',
+      status: requirementStatusFor(profile.blockers, ['history']),
+      current: `${profile.weeksHistory} semaine(s) scorees`,
+      target: '12 semaines minimum pour confiance de croissance',
+      explanation: 'KIRA a besoin d un historique suffisant pour evaluer la regularite.',
+      suggestion: 'Continuer les locations et garder les controles a jour.',
+    },
+    {
+      key: 'vehicle-care',
+      label: 'Soin du vehicule',
+      status: requirementStatusFor(profile.blockers, ['fleet_control', 'violations', 'accidents', 'vehicle']),
+      current: profile.currentVehicleLabel ?? (profile.activeVehicleId ? 'Vehicule actif' : 'Aucun vehicule actif'),
+      target: 'Vehicule assigne et aucun blocage operationnel',
+      explanation: 'Les controles, sinistres et contraventions ouverts peuvent bloquer la progression.',
+      suggestion: 'Resoudre les controles, sinistres ou contraventions ouverts.',
+    },
+    {
+      key: 'wallet',
+      label: 'Comportement portefeuille',
+      status: requirementStatusFor(profile.blockers, ['wallet_negative'], false),
+      current: `${Math.max(0, profile.walletBalance).toLocaleString('fr-FR')} FCFA disponible`,
+      target: 'Solde non negatif',
+      explanation: 'Le portefeuille aide a suivre la preparation financiere sans mouvement d argent ici.',
+      suggestion: 'Garder un solde sain et eviter les soldes negatifs.',
+    },
+  ];
+}
+
+function actionFromBlocker(blocker: GrowthBlocker): DriverJourneyAction {
+  if (blocker.key === 'overdue') {
+    return {
+      key: 'pay-overdue',
+      label: 'Regler les paiements en retard',
+      impact: 'high',
+      route: '/driver/factures',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'kyc') {
+    return {
+      key: 'complete-kyc',
+      label: 'Completer la verification identite',
+      impact: 'high',
+      route: '/driver/kyc',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'fleet_control') {
+    return {
+      key: 'complete-control',
+      label: 'Finaliser le controle vehicule',
+      impact: 'high',
+      route: '/driver/fleet-control',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'score_low' || blocker.key === 'score_gap') {
+    return {
+      key: 'improve-score',
+      label: 'Ameliorer le score KIRA',
+      impact: blocker.key === 'score_low' ? 'high' : 'medium',
+      route: '/driver/score',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'payment_rate') {
+    return {
+      key: 'on-time-payments',
+      label: 'Payer a temps les prochaines factures',
+      impact: 'medium',
+      route: '/driver/factures',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'history') {
+    return {
+      key: 'build-history',
+      label: 'Construire plus d historique',
+      impact: 'medium',
+      route: '/driver/rental',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'vehicle') {
+    return {
+      key: 'vehicle-assignment',
+      label: 'Maintenir une affectation vehicule',
+      impact: 'medium',
+      route: '/driver/vehicles',
+      explanation: blocker.label,
+    };
+  }
+  if (blocker.key === 'wallet_negative') {
+    return {
+      key: 'wallet-health',
+      label: 'Retablir le solde KiraPay',
+      impact: 'high',
+      route: '/driver/portefeuille',
+      explanation: blocker.label,
+    };
+  }
+  return {
+    key: blocker.key,
+    label: blocker.label,
+    impact: blocker.severity === 'critical' ? 'high' : 'medium',
+    route: '/journey/eligibility',
+    explanation: blocker.label,
+  };
+}
+
+function buildJourneyActions(profile: GrowthDriverProfile): DriverJourneyAction[] {
+  const blockerActions = [...profile.blockers]
+    .sort((a, b) => {
+      const severityRank: Record<GrowthBlockerSeverity, number> = { critical: 0, warning: 1, info: 2 };
+      return severityRank[a.severity] - severityRank[b.severity] || a.label.localeCompare(b.label);
+    })
+    .map(actionFromBlocker);
+  const unique = new Map<string, DriverJourneyAction>();
+  for (const action of blockerActions) {
+    if (!unique.has(action.key)) unique.set(action.key, action);
+  }
+  if (unique.size === 0 && profile.currentApplication) {
+    unique.set('track-application', {
+      key: 'track-application',
+      label: 'Suivre votre demande',
+      impact: 'high',
+      route: '/journey/application',
+      explanation: 'Une demande existe dans les donnees KIRA.',
+    });
+  }
+  if (unique.size === 0) {
+    unique.set('maintain-trust', {
+      key: 'maintain-trust',
+      label: 'Maintenir les bons comportements',
+      impact: 'low',
+      route: '/journey/eligibility',
+      explanation: 'Continuez les paiements a temps, les controles et les documents a jour.',
+    });
+  }
+  return [...unique.values()].slice(0, 3);
+}
+
+function applicationStageKey(stage: GrowthOwnershipPipelineStage | null): string | null {
+  switch (stage) {
+    case 'Application Started':
+      return 'started';
+    case 'Submitted':
+      return 'submitted';
+    case 'Under Review':
+      return 'risk-review';
+    case 'Approved':
+      return 'approved';
+    case 'Awaiting Down Payment':
+      return 'awaiting-down-payment';
+    case 'Awaiting Contract':
+      return 'awaiting-contract';
+    case 'Awaiting Vehicle':
+      return 'awaiting-vehicle';
+    case 'Ready For Activation':
+      return 'ready';
+    case 'Ownership Active':
+      return 'ownership-active';
+    default:
+      return null;
+  }
+}
+
+function buildApplicationTracker(profile: GrowthDriverProfile): DriverJourneyApplicationStage[] {
+  const currentKey = applicationStageKey(profile.ownershipPipelineStage);
+  const currentIndex = currentKey ? DRIVER_APPLICATION_STAGES.findIndex((stage) => stage.key === currentKey) : -1;
+  return DRIVER_APPLICATION_STAGES.map((stage, index) => ({
+    ...stage,
+    status: currentIndex === -1 ? 'locked' : index < currentIndex ? 'completed' : index === currentIndex ? 'current' : 'locked',
+  }));
+}
+
+function buildJourneyDocuments(profile: GrowthDriverProfile): DriverJourneyDocument[] {
+  const kycBlocked = profile.blockers.some((blocker) => blocker.key === 'kyc');
+  const applicationStarted = Boolean(profile.currentApplication);
+  const waitingCopy = applicationStarted
+    ? 'Document attendu pour la revue du dossier.'
+    : 'Ce document sera demande lorsqu une vraie demande sera ouverte.';
+
+  return [
+    {
+      key: 'national-id',
+      label: 'National ID',
+      status: kycBlocked ? 'Missing' : 'Approved',
+      explanation: kycBlocked ? 'Votre identite doit etre verifiee.' : 'Identite verifiee dans KIRA.',
+      rejectionReason: null,
+    },
+    {
+      key: 'driver-license',
+      label: 'Driver License',
+      status: applicationStarted ? 'Missing' : 'Missing',
+      explanation: waitingCopy,
+      rejectionReason: null,
+    },
+    {
+      key: 'proof-residence',
+      label: 'Proof of Residence',
+      status: applicationStarted ? 'Missing' : 'Missing',
+      explanation: waitingCopy,
+      rejectionReason: null,
+    },
+    {
+      key: 'income-verification',
+      label: 'Income Verification',
+      status: applicationStarted ? 'Missing' : 'Missing',
+      explanation: waitingCopy,
+      rejectionReason: profile.currentApplication?.status === 'rejected'
+        ? profile.currentApplication.rejection_reason ?? 'La raison de rejet doit etre expliquee par KIRA.'
+        : null,
+    },
+  ];
+}
+
+function buildJourneyOpportunities(
+  profile: GrowthDriverProfile,
+  requirements: DriverJourneyRequirement[],
+  actions: DriverJourneyAction[],
+): DriverJourneyOpportunity[] {
+  const ownershipOffer = profile.offers.find((offer) => offer.offerType === 'car_loan') ?? profile.offers[0] ?? null;
+  if (!ownershipOffer) return [];
+
+  const isPublishedOffer = ownershipOffer.offerStatus === 'ACTIVE'
+    && ownershipOffer.driverOfferState === 'AVAILABLE'
+    && ownershipOffer.eligible;
+  const inProgress = Boolean(profile.currentApplication);
+  const completed = ['ACTIVE_OWNERSHIP_PATH', 'COMPLETED'].includes(profile.eligibilityState);
+  const requirementsMissing = requirements.filter((requirement) => requirement.status !== 'met');
+  const status: DriverJourneyOpportunityStatus = completed
+    ? 'Completed'
+    : inProgress
+      ? 'In Progress'
+      : isPublishedOffer
+        ? 'Available'
+        : requirementsMissing.length <= 2
+          ? 'Almost Ready'
+          : 'Locked';
+
+  const primaryMissing = requirementsMissing[0];
+  const scoreRemaining = ownershipOffer.gaps.score > 0 ? `${ownershipOffer.gaps.score} point(s)` : null;
+  const historyRemaining = ownershipOffer.gaps.weeks > 0 ? `${ownershipOffer.gaps.weeks} semaine(s)` : null;
+  const paymentRemaining = ownershipOffer.gaps.onTimeRate > 0 ? `${ownershipOffer.gaps.onTimeRate}% de taux paiement` : null;
+  const remaining = [scoreRemaining, historyRemaining, paymentRemaining]
+    .filter(Boolean)
+    .join(', ') || primaryMissing?.target || 'Aucune condition restante visible';
+
+  return [
+    {
+      id: 'vehicle-ownership-program',
+      name: 'Vehicle Ownership Program',
+      status,
+      eligibilityLevel: profile.lifecycleStage,
+      benefits: [
+        'Comprendre le chemin vers la propriete',
+        'Voir les conditions restantes',
+        'Preparer les documents avant revue',
+      ],
+      requirements,
+      expiration: null,
+      reason: isPublishedOffer
+        ? 'Une offre publiee et active existe dans les donnees.'
+        : primaryMissing?.explanation ?? 'Aucune offre publiee n existe encore pour ce conducteur.',
+      remaining,
+      recommendedActions: actions,
+      isPublishedOffer,
+      canStartApplication: isPublishedOffer && ['ELIGIBLE_FOR_REVIEW', 'OFFER_PUBLISHED', 'OFFER_READY'].includes(profile.eligibilityState),
+      detailRoute: '/journey/opportunities/vehicle-ownership-program',
+      disclaimer: 'Readiness only. This is not a published offer and does not represent approval.',
+      financialExpectations: {
+        totalAmount: ownershipOffer.terms.amount,
+        downPayment: ownershipOffer.terms.downPayment,
+        estimatedMonthlyObligation: ownershipOffer.terms.dailyPayment * 30,
+        currency: 'FCFA',
+      },
+      timeline: ownershipOffer.terms.termMonths > 0
+        ? `${ownershipOffer.terms.termMonths} mois indicatifs apres approbation reelle`
+        : 'Timeline disponible apres offre publiee',
+    },
+  ];
+}
+
+function buildJourneyAchievements(profile: GrowthDriverProfile): DriverJourneyAchievement[] {
+  const trustedIndex = GROWTH_STAGE_ORDER.indexOf('Trusted Driver');
+  const currentIndex = GROWTH_STAGE_ORDER.indexOf(profile.lifecycleStage);
+  return [
+    {
+      key: 'kyc-completed',
+      label: 'KYC Completed',
+      achieved: !profile.blockers.some((blocker) => blocker.key === 'kyc'),
+      evidence: 'Statut KYC du profil conducteur.',
+    },
+    {
+      key: 'score-above-700',
+      label: 'Score Above 700',
+      achieved: (profile.score ?? 0) >= 700,
+      evidence: profile.score == null ? 'Aucun score disponible.' : `Score courant ${profile.score}.`,
+    },
+    {
+      key: 'trusted-driver',
+      label: 'Trusted Driver',
+      achieved: currentIndex >= trustedIndex,
+      evidence: `Etape actuelle: ${profile.lifecycleStage}.`,
+    },
+    {
+      key: 'ownership-eligible',
+      label: 'Ownership Eligible',
+      achieved: ['ELIGIBLE_FOR_REVIEW', 'OFFER_READY', 'OFFER_PUBLISHED'].includes(profile.eligibilityState),
+      evidence: `Etat eligibility: ${profile.eligibilityState}.`,
+    },
+    {
+      key: 'vehicle-owner',
+      label: 'Vehicle Owner',
+      achieved: ['Vehicle Owner', 'Fleet Entrepreneur'].includes(profile.lifecycleStage),
+      evidence: profile.ownershipContract ? 'Contrat rent-to-own present.' : 'Aucun contrat actif confirme.',
+    },
+    {
+      key: 'fleet-entrepreneur',
+      label: 'Fleet Entrepreneur',
+      achieved: profile.lifecycleStage === 'Fleet Entrepreneur',
+      evidence: 'Etape future confirmee uniquement par donnees persistantes.',
+    },
+  ];
+}
+
+function buildJourneyMilestones(profile: GrowthDriverProfile, today: string): DriverJourneyMilestone[] {
+  const eligible = ['ELIGIBLE_FOR_REVIEW', 'OFFER_READY', 'OFFER_PUBLISHED'].includes(profile.eligibilityState);
+  const applicationSubmitted = ['APPLICATION_SUBMITTED', 'APPLICATION_APPROVED', 'ACTIVATION_PENDING', 'ACTIVE_OWNERSHIP_PATH', 'COMPLETED'].includes(profile.eligibilityState);
+  return [
+    {
+      key: 'first-rental',
+      label: 'First Rental',
+      achieved: Boolean(profile.firstRentalDate),
+      date: profile.firstRentalDate,
+      explanation: profile.firstRentalDate ? 'Premiere location enregistree.' : 'Aucune premiere location confirmee dans les donnees.',
+    },
+    {
+      key: 'thirty-days-active',
+      label: '30 Days Active',
+      achieved: daysBetween(profile.createdAt, today) >= 30,
+      date: profile.createdAt,
+      explanation: 'Base sur la date de creation du profil conducteur.',
+    },
+    {
+      key: 'one-hundred-paid',
+      label: '100 Invoices Paid',
+      achieved: profile.paidPaymentCount >= 100,
+      date: null,
+      explanation: `${profile.paidPaymentCount} paiement(s) confirme(s).`,
+    },
+    {
+      key: 'eligible-ownership',
+      label: 'Eligible For Ownership',
+      achieved: eligible,
+      date: eligible ? profile.projectedEligibilityDate ?? new Date().toISOString().slice(0, 10) : null,
+      explanation: eligible ? 'Le dossier peut etre revu.' : 'Les conditions restantes sont visibles dans eligibility.',
+    },
+    {
+      key: 'application-submitted',
+      label: 'Application Submitted',
+      achieved: applicationSubmitted,
+      date: profile.applicationDate,
+      explanation: applicationSubmitted ? 'Demande soumise dans les donnees.' : 'Aucune demande soumise.',
+    },
+    {
+      key: 'ownership-activated',
+      label: 'Ownership Activated',
+      achieved: ['ACTIVE_OWNERSHIP_PATH', 'COMPLETED'].includes(profile.eligibilityState),
+      date: profile.ownershipContract?.start_date ?? null,
+      explanation: 'Visible uniquement apres contrat/activation reels.',
+    },
+  ];
+}
+
+function buildRoadmap(profile: GrowthDriverProfile): DriverJourneyStage[] {
+  const currentIndex = GROWTH_STAGE_ORDER.indexOf(profile.lifecycleStage);
+  return GROWTH_STAGE_ORDER.map((stage, index) => {
+    const copy = JOURNEY_STAGE_COPY[stage];
+    return {
+      stage,
+      ...copy,
+      status: index < currentIndex ? 'completed' : index === currentIndex ? 'current' : 'locked',
+    };
+  });
+}
+
+export function buildDriverJourney(profile: GrowthDriverProfile, today = new Date().toISOString().slice(0, 10)): DriverJourneySummary {
+  const requirements = buildJourneyRequirements(profile);
+  const requirementsMet = requirements.filter((requirement) => requirement.status === 'met');
+  const requirementsMissing = requirements.filter((requirement) => requirement.status === 'missing');
+  const requirementsInProgress = requirements.filter((requirement) => requirement.status === 'in_progress');
+  const nextActions = buildJourneyActions(profile);
+  const opportunities = buildJourneyOpportunities(profile, requirements, nextActions);
+  const eligibilityState = eligibilityDisplayState(profile.eligibilityState);
+  const ownershipOpportunity = opportunities[0];
+  const downPaymentRequired = ownershipOpportunity?.financialExpectations.downPayment ?? 0;
+  const saved = Math.max(0, profile.walletBalance);
+  const currentStageCopy = JOURNEY_STAGE_COPY[profile.lifecycleStage];
+
+  return {
+    currentStage: profile.lifecycleStage,
+    currentStageLabel: currentStageCopy.label,
+    currentStageDescription: currentStageCopy.description,
+    nextStage: profile.nextStage,
+    progress: profile.growthProgress,
+    roadmap: buildRoadmap(profile),
+    eligibility: {
+      state: eligibilityState,
+      explanation: eligibilityExplanation(profile, eligibilityState),
+      requirementsMet,
+      requirementsMissing,
+      requirementsInProgress,
+    },
+    nextActions,
+    opportunities,
+    activeOpportunityCount: opportunities.filter((opportunity) => opportunity.status === 'Available').length,
+    applicationTracker: buildApplicationTracker(profile),
+    documents: buildJourneyDocuments(profile),
+    downPaymentReadiness: {
+      required: downPaymentRequired,
+      saved,
+      remaining: Math.max(0, downPaymentRequired - saved),
+      estimatedCompletionDate: saved >= downPaymentRequired && downPaymentRequired > 0 ? today : null,
+    },
+    achievements: buildJourneyAchievements(profile),
+    milestones: buildJourneyMilestones(profile, today),
+    simulatorDisclaimer: 'Simulation only. Does not represent approval. Does not guarantee financing.',
+    activationVisible: profile.ownershipPipelineStage === 'Ready For Activation',
+    activationReason: profile.ownershipPipelineStage === 'Ready For Activation'
+      ? 'Application approved, down payment received, contract signed, and vehicle assigned.'
+      : 'Activation appears only after real approval, down payment, signed contract, and vehicle assignment.',
   };
 }
 

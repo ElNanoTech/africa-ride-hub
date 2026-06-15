@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Car, User, Wallet, ClipboardCheck } from 'lucide-react';
+import { Home, Car, User, Wallet, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useHapticFeedback } from '@/hooks/useHapticFeedback';
 import { useDriverRentals } from '@/hooks/useDriverData';
@@ -32,14 +32,14 @@ type RentalPaymentSummary = {
 
 const baseNavItems: NavItem[] = [
   { to: '/driver', label: 'Accueil', icon: Home, activeWhen: ['/driver-dashboard'] },
+  { to: '/driver/vehicles', label: 'Véhicules', icon: Car, activeWhen: ['/vehicles', '/driver/vehicle', '/driver/rental', '/driver/fleet-control', '/driver/inspection'] },
   {
     to: '/driver/finance',
     label: 'Finance',
     icon: Wallet,
-    activeWhen: ['/driver/portefeuille', '/driver/wallet', '/driver/factures', '/driver/loans', '/driver/credit', '/driver/ownership', '/driver/income'],
+    activeWhen: ['/driver/portefeuille', '/driver/wallet', '/driver/factures', '/driver/loans', '/driver/income'],
   },
-  { to: '/driver/vehicles', label: 'Véhicule', icon: Car, activeWhen: ['/vehicles', '/driver/vehicle', '/driver/rental'] },
-  { to: '/driver/fleet-control', label: 'Contrôle', icon: ClipboardCheck, activeWhen: ['/driver/inspection'] },
+  { to: '/journey', label: 'Parcours', icon: Flag, activeWhen: ['/journey', '/driver/credit', '/driver/ownership'] },
   { to: '/driver/profile', label: 'Profil', icon: User, activeWhen: ['/profile', '/driver/settings', '/driver/support', '/driver/kyc', '/driver/profile/kyc'] },
 ];
 
@@ -131,7 +131,7 @@ export function BottomNav() {
         return { ...item, badge: financeBadge, badgeVariant: financeBadgeVariant };
       }
 
-      if (item.to !== '/driver/fleet-control' || !activeInspection) return item;
+      if (item.to !== '/driver/vehicles' || !activeInspection) return item;
 
       const s = activeInspection.effective_status;
       // Only badge when driver action is required.

@@ -157,6 +157,6 @@ export async function adminLogin(h: Harness, creds: Creds) {
 }
 
 export async function settle(p: Page, ms = 1200) {
-  await p.waitForLoadState("networkidle").catch(() => {});
+  await p.waitForLoadState("networkidle", { timeout: 2000 }).catch(() => {});
   await p.waitForTimeout(ms);
 }

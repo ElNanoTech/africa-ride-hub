@@ -14,6 +14,7 @@ const ROUTES_TO_PRELOAD: Importer[] = [
   () => import('@/pages/Landing'),
   () => import('@/pages/driver/Login'),
   () => import('@/pages/driver/Home'),
+  () => import('@/pages/driver/Journey'),
   () => import('@/pages/admin/Login'),
   () => import('@/pages/admin/Dashboard'),
 ];

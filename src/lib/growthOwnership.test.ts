@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildDriverJourney,
   buildGrowthOverview,
   buildGrowthProfiles,
   buildOfferEvaluations,
@@ -201,5 +202,95 @@ describe('growth ownership helpers', () => {
     expect(profile.publishDisabledReason).toContain('Trust & Risk');
     expect(profile.offers.every((offer) => offer.offerStatus === 'DRAFT')).toBe(true);
     expect(profile.offers.every((offer) => offer.eligible === false)).toBe(true);
+  });
+
+  it('builds a driver journey that explains progress without publishing fake opportunities', () => {
+    const [profile] = buildGrowthProfiles({
+      drivers: [{ id: 'eligible', full_name: 'Awa Eligible', kyc_status: 'verified', driver_status: 'active', active_vehicle_id: 'veh1', created_at: '2026-01-01' }],
+      scores: scores.filter((score) => score.driver_id === 'eligible'),
+      payments: payments.filter((payment) => payment.driver_id === 'eligible'),
+      wallets: [{ driver_id: 'eligible', balance: 120_000 }],
+      loans: [],
+      contracts: [],
+      rentals: [{ id: 'r1', driver_id: 'eligible', vehicle_id: 'veh1', status: 'active', start_date: '2026-01-01' }],
+      violations: [],
+      accidents: [],
+      controls: [],
+      risks: [],
+      today,
+    });
+
+    const journey = buildDriverJourney(profile, today);
+
+    expect(journey.currentStage).toBe('Financing Eligible Driver');
+    expect(journey.eligibility.state).toBe('Eligible For Review');
+    expect(journey.roadmap.find((stage) => stage.stage === 'Financing Eligible Driver')?.status).toBe('current');
+    expect(journey.nextActions).toHaveLength(1);
+    expect(journey.opportunities[0]).toMatchObject({
+      id: 'vehicle-ownership-program',
+      isPublishedOffer: false,
+      canStartApplication: false,
+      status: 'Almost Ready',
+    });
+    expect(journey.activeOpportunityCount).toBe(0);
+    expect(journey.simulatorDisclaimer).toContain('Does not guarantee financing');
+    expect(journey.achievements.find((achievement) => achievement.key === 'score-above-700')?.achieved).toBe(true);
+    expect(journey.milestones.find((milestone) => milestone.key === 'first-rental')?.achieved).toBe(true);
+  });
+
+  it('explains locked driver opportunities and limits next best actions to three', () => {
+    const [profile] = buildGrowthProfiles({
+      drivers: [{ id: 'blocked', full_name: 'Blocked Driver', kyc_status: 'pending', driver_status: 'active', created_at: '2026-06-01' }],
+      scores: [{ driver_id: 'blocked', score: 560, tier: 'E', calculation_week: '2026-06-15' }],
+      payments: [
+        { id: 'b1', driver_id: 'blocked', status: 'pending', due_date: '2026-05-01' },
+        { id: 'b2', driver_id: 'blocked', status: 'late', due_date: '2026-05-08', paid_date: '2026-05-12' },
+      ],
+      wallets: [{ driver_id: 'blocked', balance: -5_000 }],
+      loans: [],
+      contracts: [],
+      rentals: [],
+      violations: [{ id: 'v1', driver_id: 'blocked', status: 'open' }],
+      accidents: [],
+      controls: [],
+      risks: [],
+      today,
+    });
+
+    const journey = buildDriverJourney(profile, today);
+
+    expect(journey.eligibility.state).toBe('Not Eligible');
+    expect(journey.eligibility.requirementsMissing.map((requirement) => requirement.key)).toEqual(expect.arrayContaining(['identity', 'score', 'payment-history']));
+    expect(journey.nextActions.length).toBeLessThanOrEqual(3);
+    expect(journey.opportunities[0].status).toBe('Locked');
+    expect(journey.opportunities[0].reason).toBeTruthy();
+    expect(journey.opportunities[0].remaining).not.toBe('Aucune condition restante visible');
+  });
+
+  it('builds an application tracker from real loan and contract state', () => {
+    const [profile] = buildGrowthProfiles({
+      drivers: [{ id: 'submitted', full_name: 'Ousmane Submitted', kyc_status: 'verified', driver_status: 'active', active_vehicle_id: 'veh5', created_at: '2026-05-02' }],
+      scores: [{ driver_id: 'submitted', score: 875, tier: 'A', calculation_week: '2026-06-15' }],
+      payments: [{ id: 's1', driver_id: 'submitted', status: 'paid', due_date: '2026-06-01', paid_date: '2026-06-01' }],
+      wallets: [],
+      loans: [{ id: 'l-submitted', driver_id: 'submitted', status: 'under_review', loan_type: 'car_loan', applied_at: '2026-06-09' }],
+      contracts: [],
+      rentals: [],
+      violations: [],
+      accidents: [],
+      controls: [],
+      risks: [],
+      today,
+    });
+
+    const journey = buildDriverJourney(profile, today);
+    const tracker = new Map(journey.applicationTracker.map((stage) => [stage.key, stage.status]));
+
+    expect(journey.eligibility.state).toBe('Application In Progress');
+    expect(tracker.get('started')).toBe('completed');
+    expect(tracker.get('submitted')).toBe('completed');
+    expect(tracker.get('risk-review')).toBe('current');
+    expect(tracker.get('approved')).toBe('locked');
+    expect(journey.documents.some((document) => document.status === 'Missing')).toBe(true);
   });
 });

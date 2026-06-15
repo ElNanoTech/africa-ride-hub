@@ -6,6 +6,7 @@ const DRIVER_APP_PREFIXES = [
   '/loans',
   '/profile',
   '/notifications',
+  '/journey',
 ] as const;
 
 export function isAdminRoute(pathname: string): boolean {
