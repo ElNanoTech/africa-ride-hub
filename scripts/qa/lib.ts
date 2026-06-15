@@ -24,6 +24,11 @@ export type Creds = {
   driver_pin: string;
   vehicle_id: string;
   vehicle_plate: string;
+  layer3a?: {
+    vehicleProductId: string;
+    vehicleVersionId: string;
+    assetId: string;
+  } | null;
 };
 
 export function loadCreds(): Creds {

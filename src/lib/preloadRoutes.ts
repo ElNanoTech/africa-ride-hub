@@ -15,8 +15,10 @@ const ROUTES_TO_PRELOAD: Importer[] = [
   () => import('@/pages/driver/Login'),
   () => import('@/pages/driver/Home'),
   () => import('@/pages/driver/Journey'),
+  () => import('@/pages/driver/Credit'),
   () => import('@/pages/admin/Login'),
   () => import('@/pages/admin/Dashboard'),
+  () => import('@/pages/admin/CreditOperations'),
 ];
 
 function shouldSkip(): boolean {

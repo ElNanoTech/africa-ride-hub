@@ -82,6 +82,21 @@ import {
 } from '@/lib/financialOperations';
 import { OPEN_RENTAL_STATUSES } from '@/lib/rentals';
 
+type UntypedQueryResult<T> = {
+  data: T | null;
+  error: Error | null;
+};
+
+type UntypedQueryBuilder<T = unknown> = PromiseLike<UntypedQueryResult<T>> & {
+  select: (columns?: string, options?: Record<string, unknown>) => UntypedQueryBuilder<T>;
+  order: (column: string, options?: Record<string, unknown>) => UntypedQueryBuilder<T>;
+  range: (from: number, to: number) => UntypedQueryBuilder<T>;
+};
+
+const financialSupabase = supabase as unknown as {
+  from: <T = unknown>(table: string) => UntypedQueryBuilder<T>;
+};
+
 type DriverMini = {
   full_name: string | null;
   phone_number: string | null;
@@ -146,6 +161,12 @@ type InvoiceRow = {
   cancelled_at: string | null;
   rental_id: string | null;
   driver_snapshot_name: string | null;
+  currency_code: string | null;
+  source_product_id: string | null;
+  source_credit_account_id: string | null;
+  source_application_id: string | null;
+  obligation_type: string | null;
+  idempotency_key: string | null;
 };
 
 type WalletBalanceRow = {
@@ -693,9 +714,9 @@ export default function AdminFinancialOperations() {
     enabled: canAccessFinancialOps,
     queryFn: async () => {
       const rows = await fetchAllRows((from, to) =>
-        supabase
-          .from('invoice')
-          .select('id, customer_id, driver_id, invoice_number, invoice_kind, status, total_ttc, amount_paid, remaining_due, issued_at, created_at, paid_at, cancelled_at, rental_id, driver_snapshot_name')
+        financialSupabase
+          .from<InvoiceRow[]>('invoice')
+          .select('id, customer_id, driver_id, invoice_number, invoice_kind, status, total_ttc, amount_paid, remaining_due, issued_at, created_at, paid_at, cancelled_at, rental_id, driver_snapshot_name, currency_code, source_product_id, source_credit_account_id, source_application_id, obligation_type, idempotency_key')
           .order('created_at', { ascending: false })
           .order('id', { ascending: true })
           .range(from, to),

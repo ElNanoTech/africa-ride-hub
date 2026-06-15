@@ -1,5 +1,13 @@
 export type InvoiceStatus = "draft" | "issued" | "partial" | "paid" | "cancelled";
 export type InvoiceKind = "invoice" | "monthly_statement" | "daily_rental";
+export type CreditObligationType =
+  | "DOWN_PAYMENT"
+  | "CREDIT_FEE"
+  | "ACTIVATION_FEE"
+  | "OWNERSHIP_INSTALLMENT"
+  | "MOTORCYCLE_INSTALLMENT"
+  | "PHONE_INSTALLMENT"
+  | "EQUIPMENT_INSTALLMENT";
 
 /**
  * Predefined invoice tag catalog. Admins pick from this list to categorize
@@ -53,6 +61,12 @@ export interface Invoice {
   cancelled_by: string | null;
   notes: string | null;
   tags: string[];
+  currency_code: string;
+  source_product_id: string | null;
+  source_credit_account_id: string | null;
+  source_application_id: string | null;
+  obligation_type: CreditObligationType | null;
+  idempotency_key: string | null;
   created_at: string;
   updated_at: string;
 }

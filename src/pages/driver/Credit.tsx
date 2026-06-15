@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   Award,
   Bike,
@@ -67,6 +67,16 @@ import { useDriverFullProfile } from '@/hooks/useDriverProfile';
 import { useDailyStreak } from '@/hooks/useDailyStreak';
 import { useLoansRealtime } from '@/hooks/useDriverRealtimeSubscription';
 import { useOfflineStatus } from '@/hooks/useOfflineStatus';
+import {
+  creditStatusLabel,
+  offerTypeToProductType,
+  useDriverCreditEngineData,
+  useSubmitCreditApplication,
+  type CreditProductRow,
+  type CreditApplicationRow,
+  type CreditAccountRow,
+  type CreditInvoiceRow,
+} from '@/hooks/useCreditProductEngineData';
 import suzukiAlto from '@/assets/vehicles/suzuki-alto.png';
 
 type CoachTopic = 'car' | 'score' | 'next';
@@ -125,31 +135,7 @@ const scoreTrackClasses = {
 };
 
 function useApplyForCredit() {
-  const queryClient = useQueryClient();
-  const { data: driverId } = useDriverId();
-
-  return useMutation({
-    mutationFn: async (offer: CreditOffer) => {
-      if (!driverId) throw new Error('Profil conducteur non trouvé');
-
-      const { data, error } = await supabase
-        .from('loans')
-        .insert({
-          driver_id: driverId,
-          loan_type: offer.type,
-          amount_requested: offer.amount,
-          status: 'pending',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['driverLoans'] });
-    },
-  });
+  return useSubmitCreditApplication();
 }
 
 function useScoreEvents(driverId?: string | null) {
@@ -492,10 +478,12 @@ function MetricMini({ label, value }: { label: string; value: string }) {
 
 function OfferDialog({
   offer,
+  product,
   existing,
   onClose,
 }: {
   offer: CreditOffer | null;
+  product: CreditProductRow | null;
   existing: boolean;
   onClose: () => void;
 }) {
@@ -505,8 +493,8 @@ function OfferDialog({
   if (!offer) return null;
 
   const handleSubmit = () => {
-    if (existing || !isOnline) return;
-    applyForCredit.mutate(offer, { onSuccess: onClose });
+    if (existing || !isOnline || !product) return;
+    applyForCredit.mutate({ productId: product.product_id }, { onSuccess: onClose });
   };
 
   return (
@@ -521,9 +509,21 @@ function OfferDialog({
           <InfoRow icon={Wallet} label="Paiement" value={`${formatCurrency(offer.dailyPayment)}/jour · apport ${formatCurrency(offer.downPayment)}`} />
           <InfoRow icon={Calendar} label="Durée" value={`${offer.termMonths} mois`} />
           <InfoRow icon={ShieldCheck} label="Engagement" value={offer.commitment} />
+          {product && (
+            <InfoRow
+              icon={ShieldCheck}
+              label="Moteur Layer 3A"
+              value={`Produit versionné : ${product.name}. La demande crée un snapshot à la soumission.`}
+            />
+          )}
           {existing && (
             <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
               Une demande existe déjà pour cette opportunité.
+            </div>
+          )}
+          {!product && (
+            <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+              Produit crédit actif indisponible. Réessayez après synchronisation.
             </div>
           )}
           {!isOnline && (
@@ -532,8 +532,8 @@ function OfferDialog({
               <span>Connexion requise pour envoyer une demande. Les informations restent consultables hors ligne.</span>
             </div>
           )}
-          <Button className="w-full min-h-12" onClick={handleSubmit} disabled={existing || !isOnline || applyForCredit.isPending}>
-            {applyForCredit.isPending ? 'Envoi...' : !isOnline ? 'Connexion requise' : 'Je suis intéressé'}
+          <Button className="w-full min-h-12" onClick={handleSubmit} disabled={existing || !isOnline || !product || applyForCredit.isPending}>
+            {applyForCredit.isPending ? 'Envoi...' : !isOnline ? 'Connexion requise' : !product ? 'Produit indisponible' : 'Soumettre une demande versionnée'}
           </Button>
         </div>
       </DialogContent>
@@ -589,6 +589,108 @@ function ApplicationsCard({ loans }: { loans: DriverLoan[] }) {
             </div>
           );
         })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function CreditEngineFoundationCard({
+  products,
+  applications,
+  accounts,
+  invoices,
+  isLoading,
+  isError,
+}: {
+  products: CreditProductRow[];
+  applications: CreditApplicationRow[];
+  accounts: CreditAccountRow[];
+  invoices: CreditInvoiceRow[];
+  isLoading: boolean;
+  isError: boolean;
+}) {
+  const activeProducts = products.filter((product) => product.status === 'ACTIVE');
+  const latestApplication = applications[0];
+  const latestInvoice = invoices[0];
+
+  return (
+    <Card className="border-primary/25">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center gap-2">
+          <ShieldCheck className="h-4 w-4 text-primary" />
+          My Credit Products
+        </CardTitle>
+        <CardDescription>Produits réels, versions, demandes, activation et factures d’apport.</CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0 space-y-3">
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+          </div>
+        ) : (
+          <>
+            {isError && (
+              <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+                Produits crédit indisponibles pour le moment. Réessayez après synchronisation.
+              </div>
+            )}
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <MetricMini label="Produits actifs" value={`${activeProducts.length}`} />
+              <MetricMini label="Demandes 3A" value={`${applications.length}`} />
+              <MetricMini label="Comptes crédit" value={`${accounts.length}`} />
+            </div>
+            {activeProducts.length > 0 && (
+              <div className="space-y-2">
+                {activeProducts.slice(0, 3).map((product) => {
+                  const activeVersion = product.product_versions?.find((version) => version.status === 'ACTIVE');
+                  return (
+                    <div key={product.product_id} className="rounded-lg border p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-semibold text-sm">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">{product.description ?? 'Produit crédit configuré'}</p>
+                        </div>
+                        <Badge variant="outline">v{activeVersion?.version_number ?? 1}</Badge>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {latestApplication ? (
+              <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{latestApplication.credit_products?.name ?? 'Demande crédit'}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Snapshot v{latestApplication.product_versions?.version_number ?? 1} · score confirmé {latestApplication.score_snapshot ?? 'en attente'}
+                    </p>
+                  </div>
+                  <Badge variant="secondary">{creditStatusLabel(latestApplication.status)}</Badge>
+                </div>
+                <p className="mt-2 text-xs text-muted-foreground">{latestApplication.eligibility_explanation}</p>
+              </div>
+            ) : (
+              <p className="rounded-lg border border-dashed p-3 text-sm text-muted-foreground">
+                Aucune demande Layer 3A soumise. Les opportunités ouvertes ci-dessous créent désormais une demande persistée et auditée.
+              </p>
+            )}
+            {latestInvoice && (
+              <div className="rounded-lg border p-3 text-sm">
+                <div className="flex items-center justify-between gap-3">
+                  <span>Facture d’apport</span>
+                  <Badge variant={latestInvoice.status === 'paid' ? 'verified' : 'outline'}>
+                    {creditStatusLabel(latestInvoice.status)}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {latestInvoice.invoice_number ?? 'En attente'} · {formatCurrency(latestInvoice.total_ttc)}
+                </p>
+              </div>
+            )}
+          </>
+        )}
       </CardContent>
     </Card>
   );
@@ -840,6 +942,7 @@ export default function DriverCredit() {
   const { data: scoreEvents = [] } = useScoreEvents(driverId);
   const { badges, isLoading: badgesLoading, earnedCount, totalCount } = useBadgesWithStatus();
   const { streak } = useDailyStreak();
+  const creditEngineQuery = useDriverCreditEngineData();
   const [selectedOffer, setSelectedOffer] = useState<CreditOffer | null>(null);
   const [coachTopic, setCoachTopic] = useState<CoachTopic>('car');
 
@@ -861,11 +964,23 @@ export default function DriverCredit() {
   const metrics = { score, weeksHistory, onTimeRate: paymentRate };
   const availableOffers = getAvailableOffers(CREDIT_OFFERS, metrics);
   const nextUnlock = getNextUnlock(CREDIT_OFFERS, metrics);
+  const creditEngine = creditEngineQuery.data;
+  const creditProducts = creditEngine?.products ?? [];
+  const creditApplications = creditEngine?.applications ?? [];
+  const creditAccounts = creditEngine?.accounts ?? [];
+  const creditInvoices = creditEngine?.invoices ?? [];
+  const selectedProductType = selectedOffer ? offerTypeToProductType[selectedOffer.type] : null;
+  const selectedProduct = selectedProductType
+    ? creditProducts.find((product) => product.product_type === selectedProductType && product.status === 'ACTIVE') ?? null
+    : null;
   const carOffer = CREDIT_OFFERS.find((offer) => offer.type === 'car_loan')!;
   const carGap = getEligibilityGaps(carOffer, metrics);
   const hasNegativeScoreEvent = scoreEvents.some((event) => event.delta < 0);
   const existingSelectedOfferApplication = selectedOffer
-    ? driverLoans.some((loan) => loan.loan_type === selectedOffer.type && ['pending', 'under_review', 'approved', 'repaying'].includes(loan.status ?? ''))
+    ? creditApplications.some((application) =>
+      application.credit_products?.product_type === offerTypeToProductType[selectedOffer.type]
+      && ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(application.status)
+    )
     : false;
   const controlStatus = (() => {
     const status = activeInspection?.effective_status;
@@ -924,6 +1039,15 @@ export default function DriverCredit() {
           <OwnershipJourneyCard score={score} weeksHistory={weeksHistory} paymentRate={paymentRate} voiceText={ownershipVoice} />
 
           <EligibilityGapCard score={score} weeksHistory={weeksHistory} paymentRate={paymentRate} controlStatus={controlStatus} kycStatus={kycStatus} />
+
+          <CreditEngineFoundationCard
+            products={creditProducts}
+            applications={creditApplications}
+            accounts={creditAccounts}
+            invoices={creditInvoices}
+            isLoading={creditEngineQuery.isLoading}
+            isError={creditEngineQuery.isError}
+          />
 
           <NextUnlockCard offer={nextUnlock} score={score} weeksHistory={weeksHistory} paymentRate={paymentRate} />
 
@@ -1000,6 +1124,7 @@ export default function DriverCredit() {
 
       <OfferDialog
         offer={selectedOffer}
+        product={selectedProduct}
         existing={existingSelectedOfferApplication}
         onClose={() => setSelectedOffer(null)}
       />

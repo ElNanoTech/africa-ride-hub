@@ -21,6 +21,130 @@ const ANON_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? "sb_publishable_mw
 const QA_PLATE = "QA-E2E-100";
 const QA_PIN = "4271";
 
+async function seedLayer3ACreditEngine(c: ReturnType<typeof createClient>, customerId: string) {
+  const vendorId = "35000000-0000-0000-0000-000000000001";
+  const vehicleProductId = "35100000-0000-0000-0000-000000000001";
+  const motoProductId = "35100000-0000-0000-0000-000000000002";
+  const phoneProductId = "35100000-0000-0000-0000-000000000003";
+  const vehicleVersionId = "35200000-0000-0000-0000-000000000001";
+  const motoVersionId = "35200000-0000-0000-0000-000000000002";
+  const phoneVersionId = "35200000-0000-0000-0000-000000000003";
+  const assetId = "35300000-0000-0000-0000-000000000001";
+
+  try {
+    const vendor = await c.from("vendors").upsert({
+      vendor_id: vendorId,
+      customer_id: customerId,
+      vendor_name: "QA DAM Africa Fleet",
+      vendor_type: "FLEET_PROVIDER",
+      status: "ACTIVE",
+      country: "CI",
+      contact_information_json: { qa: true },
+    }, { onConflict: "vendor_id" });
+    if (vendor.error) throw vendor.error;
+
+    const products = [
+      {
+        product_id: vehicleProductId,
+        customer_id: customerId,
+        vendor_id: vendorId,
+        product_type: "CAR_OWNERSHIP",
+        name: "QA Vehicle Ownership Program",
+        description: "Layer 3A QA vehicle ownership launch path.",
+        status: "ACTIVE",
+        rules_json: {
+          min_score: 720,
+          manual_review_below_score: 650,
+          default_asset_price: 4000000,
+          currency_code: "XOF",
+          down_payment: { type: "PERCENTAGE", percent: 10, currency_code: "XOF" },
+        },
+        eligibility_rules_json: { min_score: 720, score_source: "driver_scores.current_score" },
+        down_payment_rules_json: { type: "PERCENTAGE", percent: 10, currency_code: "XOF" },
+        asset_rules_json: { asset_type: "VEHICLE", requires_possession_confirmation: true },
+        activation_rules_json: { requires_signed_agreement: true, requires_down_payment_paid: true, requires_possession_confirmed: true },
+        visibility_rules_json: { driver_visible: true, qa: true },
+      },
+      {
+        product_id: motoProductId,
+        customer_id: customerId,
+        vendor_id: vendorId,
+        product_type: "MOTORCYCLE_FINANCING",
+        name: "QA Motorcycle Financing",
+        description: "Layer 3A QA motorcycle configurable product.",
+        status: "ACTIVE",
+        rules_json: {
+          min_score: 650,
+          manual_review_below_score: 600,
+          default_asset_price: 1500000,
+          currency_code: "XOF",
+          down_payment: { type: "PERCENTAGE", percent: 15, currency_code: "XOF" },
+        },
+        eligibility_rules_json: { min_score: 650, score_source: "driver_scores.current_score" },
+        down_payment_rules_json: { type: "PERCENTAGE", percent: 15, currency_code: "XOF" },
+        asset_rules_json: { asset_type: "MOTORCYCLE", requires_possession_confirmation: true },
+        activation_rules_json: { requires_signed_agreement: true, requires_down_payment_paid: true, requires_possession_confirmed: true },
+        visibility_rules_json: { driver_visible: true, qa: true },
+      },
+      {
+        product_id: phoneProductId,
+        customer_id: customerId,
+        vendor_id: vendorId,
+        product_type: "PHONE_FINANCING",
+        name: "QA Phone Financing",
+        description: "Layer 3A QA phone configurable product.",
+        status: "ACTIVE",
+        rules_json: {
+          min_score: 600,
+          manual_review_below_score: 550,
+          default_asset_price: 500000,
+          currency_code: "XOF",
+          down_payment: { type: "PERCENTAGE", percent: 10, currency_code: "XOF" },
+        },
+        eligibility_rules_json: { min_score: 600, score_source: "driver_scores.current_score" },
+        down_payment_rules_json: { type: "PERCENTAGE", percent: 10, currency_code: "XOF" },
+        asset_rules_json: { asset_type: "PHONE", requires_possession_confirmation: true },
+        activation_rules_json: { requires_signed_agreement: true, requires_down_payment_paid: true, requires_possession_confirmed: true },
+        visibility_rules_json: { driver_visible: true, qa: true },
+      },
+    ];
+
+    const productSeed = await c.from("credit_products").upsert(products, { onConflict: "product_id" });
+    if (productSeed.error) throw productSeed.error;
+
+    const versionRows = [
+      { version_id: vehicleVersionId, customer_id: customerId, product_id: vehicleProductId, version_number: 1, effective_from: "2026-06-15T00:00:00Z", status: "ACTIVE", rules_snapshot_json: products[0].rules_json },
+      { version_id: motoVersionId, customer_id: customerId, product_id: motoProductId, version_number: 1, effective_from: "2026-06-15T00:00:00Z", status: "ACTIVE", rules_snapshot_json: products[1].rules_json },
+      { version_id: phoneVersionId, customer_id: customerId, product_id: phoneProductId, version_number: 1, effective_from: "2026-06-15T00:00:00Z", status: "ACTIVE", rules_snapshot_json: products[2].rules_json },
+    ];
+    const versions = await c.from("product_versions").upsert(versionRows, { onConflict: "version_id" });
+    if (versions.error) throw versions.error;
+
+    const asset = await c.from("financed_assets").upsert({
+      asset_id: assetId,
+      customer_id: customerId,
+      asset_type: "VEHICLE",
+      description: "QA Suzuki Dzire",
+      vendor_id: vendorId,
+      purchase_price: 4000000,
+      purchase_price_currency_code: "XOF",
+      residual_value: 1200000,
+      residual_value_currency_code: "XOF",
+      asset_condition: "NEW",
+      fulfillment_status: "PENDING",
+      possession_status: "NOT_POSSESSED",
+      status: "AVAILABLE",
+    }, { onConflict: "asset_id" });
+    if (asset.error) throw asset.error;
+
+    console.log("✅ Layer 3A credit catalog seeded");
+    return { vehicleProductId, vehicleVersionId, assetId };
+  } catch (error) {
+    console.log(`⚠️ Layer 3A seed skipped: ${(error as Error).message}`);
+    return null;
+  }
+}
+
 async function main() {
   // 1. bootstrap
   const res = await fetch(`${SUPABASE_URL}/functions/v1/e2e-bootstrap`, {
@@ -104,6 +228,17 @@ async function main() {
   if (upd.error) console.log(`⚠️ driver activate failed: ${upd.error.message}`);
   else console.log(`✅ driver activated: ${JSON.stringify(upd.data)}`);
 
+  await c.from("driver_scores").upsert({
+    driver_id: driverId,
+    customer_id: boot.customer_id,
+    current_score: 780,
+  }, { onConflict: "customer_id,driver_id" }).then(({ error }) => {
+    if (error) console.log(`⚠️ driver score seed failed: ${error.message}`);
+    else console.log("✅ driver score seeded: 780");
+  });
+
+  const layer3a = await seedLayer3ACreditEngine(c, boot.customer_id);
+
   const creds = {
     supabase_url: SUPABASE_URL,
     customer_id: boot.customer_id,
@@ -114,6 +249,7 @@ async function main() {
     driver_pin: QA_PIN,
     vehicle_id: veh.id,
     vehicle_plate: QA_PLATE,
+    layer3a,
   };
   writeFileSync("/tmp/qa-creds.json", JSON.stringify(creds, null, 2));
   console.log("✅ creds written to /tmp/qa-creds.json");
