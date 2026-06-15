@@ -1,0 +1,160 @@
+{
+  "checks": [
+    {
+      "name": "drivers list route still loads",
+      "passed": true,
+      "detail": "Conducteurs"
+    },
+    {
+      "name": "driver operating record badge",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "health dashboard payments",
+      "passed": true,
+      "detail": "Payments"
+    },
+    {
+      "name": "health dashboard kyc",
+      "passed": true,
+      "detail": "KYC"
+    },
+    {
+      "name": "health dashboard fleet control",
+      "passed": true,
+      "detail": "Fleet Control"
+    },
+    {
+      "name": "health dashboard vehicle",
+      "passed": true,
+      "detail": "Vehicle"
+    },
+    {
+      "name": "health dashboard credit",
+      "passed": true,
+      "detail": "Credit"
+    },
+    {
+      "name": "health dashboard risk",
+      "passed": true,
+      "detail": "Risk"
+    },
+    {
+      "name": "lifecycle card",
+      "passed": true,
+      "detail": "Driver Lifecycle"
+    },
+    {
+      "name": "ownership candidate panel",
+      "passed": true,
+      "detail": "Ownership Candidate"
+    },
+    {
+      "name": "risk explanation panel",
+      "passed": true,
+      "detail": "Risk Explanation"
+    },
+    {
+      "name": "action panel",
+      "passed": true,
+      "detail": "What Requires Action"
+    },
+    {
+      "name": "generate access action present",
+      "passed": true,
+      "detail": "Générer code d'accès"
+    },
+    {
+      "name": "suspend or reactivate action present",
+      "passed": true,
+      "detail": "Suspendre"
+    },
+    {
+      "name": "tab Overview content",
+      "passed": true,
+      "detail": "Recommandations"
+    },
+    {
+      "name": "tab Finance content",
+      "passed": true,
+      "detail": "Solde disponible DAM"
+    },
+    {
+      "name": "tab Vehicle content",
+      "passed": true,
+      "detail": "Historique des Locations"
+    },
+    {
+      "name": "tab Fleet Control content",
+      "passed": true,
+      "detail": "Contrôles visuels périodiques"
+    },
+    {
+      "name": "tab Risk content",
+      "passed": true,
+      "detail": "Contraventions"
+    },
+    {
+      "name": "tab Growth content",
+      "passed": true,
+      "detail": "Historique des Prêts"
+    },
+    {
+      "name": "tab Documents content",
+      "passed": true,
+      "detail": "Documents"
+    },
+    {
+      "name": "tab Activity content",
+      "passed": true,
+      "detail": "Chronologie unifiée"
+    },
+    {
+      "name": "send alert/message action",
+      "passed": true,
+      "detail": "dialog submitted with user-facing result"
+    },
+    {
+      "name": "create invoice dialog opens",
+      "passed": true,
+      "detail": "Émettre une facture"
+    },
+    {
+      "name": "legacy tab invoices",
+      "passed": true,
+      "detail": "Factures"
+    },
+    {
+      "name": "legacy tab wallet",
+      "passed": true,
+      "detail": "Solde disponible DAM"
+    },
+    {
+      "name": "legacy tab violations",
+      "passed": true,
+      "detail": "Contraventions"
+    },
+    {
+      "name": "legacy tab notes",
+      "passed": true,
+      "detail": "Notes"
+    },
+    {
+      "name": "legacy tab loans",
+      "passed": true,
+      "detail": "Historique des Prêts"
+    },
+    {
+      "name": "mobile driver360 route",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}

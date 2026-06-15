@@ -12,19 +12,7 @@ import { useAdminCreateRental } from '@/hooks/useAdminData';
 import { formatCurrency } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-
-// Exported single source of truth for "this driver currently holds a
-// vehicle" (also used by the drivers list for the Loyer column).
-export const OPEN_RENTAL_STATUSES = [
-  'pending',
-  'approved',
-  'active',
-  'paid',
-  'return_pending',
-  'overdue_return',
-  'payment_overdue',
-  'vehicle_disabled',
-];
+import { OPEN_RENTAL_STATUSES } from '@/lib/rentals';
 
 type DriverOption = {
   id: string;
@@ -50,6 +38,7 @@ interface AssignVehicleDialogProps {
   vehicleId?: string;
   vehicleLabel?: string;
   defaultRate?: number | null;
+  onAssigned?: () => void;
 }
 
 function useAvailableDrivers(enabled: boolean) {
@@ -129,6 +118,7 @@ export function AssignVehicleDialog({
   vehicleId,
   vehicleLabel,
   defaultRate,
+  onAssigned,
 }: AssignVehicleDialogProps) {
   const [selectedDriverId, setSelectedDriverId] = useState<string | undefined>(driverId);
   const [selectedVehicleId, setSelectedVehicleId] = useState<string | undefined>(vehicleId);
@@ -183,6 +173,7 @@ export function AssignVehicleDialog({
         vehicleId: selectedVehicleId,
         rate: Math.round(numericRate),
       });
+      onAssigned?.();
       onOpenChange(false);
     } catch {
       // toast handled in hook

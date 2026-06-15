@@ -28,7 +28,7 @@ import { useDriversRiskSummary, type DriverRiskSummaryRow } from '@/hooks/useDri
 import { RISK_LEVEL_LABEL, type DriverRiskLevel } from '@/lib/driverRisk';
 import { RiskBadge } from '@/components/admin/RiskBadge';
 import { KpiTile, type KpiVariant } from '@/components/admin/KpiTile';
-import { OPEN_RENTAL_STATUSES } from '@/components/admin/AssignVehicleDialog';
+import { OPEN_RENTAL_STATUSES } from '@/lib/rentals';
 import { logAction } from '@/hooks/useAuditLog';
 import { exportToCSV, exportDriversListToPDF } from '@/lib/export';
 import { fetchAllRows } from '@/lib/fetchAll';
@@ -63,6 +63,18 @@ interface ImportResult {
   errors: Array<{ row: number; error: string }>;
   credentials?: ImportCredential[];
 }
+
+type KycReviewDriver = {
+  id: string;
+  full_name: string;
+  phone_number: string;
+  latestKycSubmission?: {
+    id: string;
+    status: string;
+    submitted_at: string;
+    rejection_reason?: string;
+  } | null;
+};
 
 const getKycBadgeVariant = (status: string) => {
   switch (status) {
@@ -169,7 +181,7 @@ export default function AdminDrivers() {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   
   // KYC Review Modal state
-  const [kycReviewDriver, setKycReviewDriver] = useState<typeof drivers extends (infer T)[] ? T : never | null>(null);
+  const [kycReviewDriver, setKycReviewDriver] = useState<KycReviewDriver | null>(null);
   const [showKycReviewModal, setShowKycReviewModal] = useState(false);
   const [showCreateDriver, setShowCreateDriver] = useState(false);
 
@@ -290,7 +302,7 @@ export default function AdminDrivers() {
     };
   }, [queryClient]);
   
-  const handleOpenKycReview = (driver: any) => {
+  const handleOpenKycReview = (driver: KycReviewDriver) => {
     setKycReviewDriver(driver);
     setShowKycReviewModal(true);
   };

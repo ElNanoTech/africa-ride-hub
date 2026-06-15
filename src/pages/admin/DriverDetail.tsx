@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { AdminLayout, AdminPageHeader } from '@/components/AdminLayout';
+import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,27 +10,24 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { LoadingState } from '@/components/LoadingState';
 import { ErrorState } from '@/components/ErrorState';
-import { ScoreGauge, TierBadge } from '@/components/ScoreGauge';
+import { TierBadge } from '@/components/ScoreGauge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Phone, Mail, Car, CreditCard, Calendar, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Clock, Wallet, XCircle, FileText, ExternalLink, Download, FileSpreadsheet, ChevronRight, Pencil, Trash2, Loader2, CarFront, Receipt, MessageSquarePlus, Send, IdCard } from 'lucide-react';
+import { ArrowLeft, Car, AlertTriangle, CheckCircle, Wallet, XCircle, FileText, ExternalLink, Download, FileSpreadsheet } from 'lucide-react';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
 import { formatCurrency, formatDateShort } from '@/lib/format';
 import { KYC, PAYMENT, LOAN, SCORE, ADMIN, UI } from '@/lib/i18n';
 import { useUpdateKycStatus } from '@/hooks/useAdminData';
 import { exportToCSV, exportDriverDetailToPDF } from '@/lib/export';
 import { toast } from 'sonner';
-import { AIDriverSummary } from '@/components/AIDriverSummary';
 import { EditDriverDialog } from '@/components/admin/EditDriverDialog';
 import { AssignVehicleDialog } from '@/components/admin/AssignVehicleDialog';
-import { Driver360HeaderCard } from '@/components/admin/Driver360HeaderCard';
 import {
   DriverInvoicesPanel,
   DriverAccidentsPanel,
@@ -45,13 +42,10 @@ import { DriverFleetControlPanel } from '@/components/admin/driver360/DriverFlee
 import { DriverViolationsPanel } from '@/components/admin/driver360/DriverViolationsPanel';
 import { DriverRentalsPanel } from '@/components/admin/driver360/DriverRentalsPanel';
 import { DriverActionsMenu } from '@/components/admin/DriverActionsMenu';
-import { RiskBadge } from '@/components/admin/RiskBadge';
 import { SendDriverMessageDialog } from '@/components/admin/SendDriverMessageDialog';
 import { CreateInvoiceDialog } from '@/components/admin/CreateInvoiceDialog';
-import { useDriverRisk } from '@/hooks/useDriverRisk';
-import { useDriverWallet } from '@/hooks/useAdminData';
+import { DriverOperationsHub } from '@/components/admin/driver360/DriverOperationsHub';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DriverWalletCard } from '@/components/admin/DriverWalletCard';
 import { StatusBadge } from '@/lib/statusBadges';
 import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
@@ -156,13 +150,34 @@ function NextStepBanner({ driver, kycSubmission, onApproveKyc, onRejectKyc, onAc
   return null;
 }
 
-// Tab values the ?tab= deep link accepts (CH-L4). 'wallet' is special: it
-// opens the default tab and scrolls the KiraPay card into view.
+// Layer 2B tabs. Legacy CH-* deep links are normalized into these groups so
+// existing URLs from Attention Center, lists, and older QA scripts keep
+// landing on useful content.
 const TAB_VALUES = [
-  'overview', 'scores', 'payments', 'rentals', 'loans', 'income', 'invoices',
-  'fleet-control', 'violations', 'accidents', 'tickets', 'documents', 'notes',
-  'audit', 'activity',
+  'overview', 'finance', 'vehicle', 'fleet-control', 'risk', 'growth', 'documents', 'activity',
 ] as const;
+
+const LEGACY_TAB_TO_LAYER2B: Record<string, typeof TAB_VALUES[number]> = {
+  scores: 'risk',
+  payments: 'finance',
+  invoices: 'finance',
+  income: 'finance',
+  wallet: 'finance',
+  rentals: 'vehicle',
+  loans: 'growth',
+  violations: 'risk',
+  accidents: 'risk',
+  tickets: 'activity',
+  notes: 'activity',
+  audit: 'activity',
+};
+
+function normalizeTabParam(tab: string | null): typeof TAB_VALUES[number] {
+  if (tab && (TAB_VALUES as readonly string[]).includes(tab)) {
+    return tab as typeof TAB_VALUES[number];
+  }
+  return tab ? LEGACY_TAB_TO_LAYER2B[tab] ?? 'overview' : 'overview';
+}
 
 export default function AdminDriverDetail() {
   const { id } = useParams<{ id: string }>();
@@ -175,8 +190,6 @@ export default function AdminDriverDetail() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAssignVehicleDialog, setShowAssignVehicleDialog] = useState(false);
-  const [showDeletePhotoDialog, setShowDeletePhotoDialog] = useState(false);
-  const [deletingPhoto, setDeletingPhoto] = useState(false);
 
   // CH-P5 quick actions
   const [showMessageDialog, setShowMessageDialog] = useState(false);
@@ -185,9 +198,7 @@ export default function AdminDriverDetail() {
 
   // CH-L4 — ?tab= deep link (tab=wallet scrolls the KiraPay card into view).
   const tabParam = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<string>(
-    tabParam && (TAB_VALUES as readonly string[]).includes(tabParam) ? tabParam : 'overview',
-  );
+  const [activeTab, setActiveTab] = useState<string>(normalizeTabParam(tabParam));
   const walletCardRef = useRef<HTMLDivElement>(null);
   const kycCardRef = useRef<HTMLDivElement>(null);
 
@@ -196,38 +207,12 @@ export default function AdminDriverDetail() {
   };
 
   const handleAddNote = () => {
-    setActiveTab('notes');
+    setActiveTab('activity');
     setNotesFocusToken((t) => t + 1);
   };
 
-  const handleDeletePhoto = async () => {
-    if (!id) return;
-    setDeletingPhoto(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('admin-update-driver', {
-        body: { driverId: id, profileImageUrl: null },
-      });
-      if (error) throw error;
-      if (data?.error) throw new Error(data.error);
-      toast.success('Photo supprimée');
-      queryClient.invalidateQueries({ queryKey: ['admin-driver-detail', id] });
-      setShowDeletePhotoDialog(false);
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Erreur lors de la suppression';
-      toast.error(msg);
-    } finally {
-      setDeletingPhoto(false);
-    }
-  };
-  
   // KYC mutation
   const updateKycStatus = useUpdateKycStatus();
-
-  // CH-P4 — header chips: computed risk + wallet balance (shared query keys
-  // with the overview panel and the wallet card, so no extra round-trips).
-  const driverRisk = useDriverRisk(id);
-  const { data: walletData } = useDriverWallet(id);
-  const walletBalance = walletData?.wallet?.balance ?? null;
 
   // Fetch driver details
   const { data: driver, isLoading: driverLoading, error: driverError, refetch } = useQuery({
@@ -253,13 +238,12 @@ export default function AdminDriverDetail() {
     enabled: !!id,
   });
 
-  // CH-L4 — apply the ?tab= deep link once the page content is rendered.
-  // tab=wallet scrolls the KiraPay card (it lives above the tabs).
+  // CH-L4 / Layer 2B — apply ?tab= once content is rendered. Legacy aliases
+  // map into the new grouped tabs; tab=wallet also scrolls the wallet panel.
   useEffect(() => {
     if (!tabParam || driverLoading) return;
-    if ((TAB_VALUES as readonly string[]).includes(tabParam)) {
-      setActiveTab(tabParam);
-    } else if (tabParam === 'wallet') {
+    setActiveTab(normalizeTabParam(tabParam));
+    if (tabParam === 'wallet') {
       const t = setTimeout(() => {
         walletCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 300);
@@ -384,6 +368,16 @@ export default function AdminDriverDetail() {
     () => queueInvalidate('driver-documents'), !!id);
   useRealtimePostgresChanges<{ driver_id?: string }>('kyc_submissions', '*', matchesDriver,
     () => queueInvalidate('admin-driver-kyc', 'driver-360', 'admin-driver-detail'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('rentals', '*', matchesDriver,
+    () => queueInvalidate('admin-driver-rentals-full', 'driver-360', 'admin-driver-detail', 'driver-ops-payments'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('vehicle_inspections', '*', matchesDriver,
+    () => queueInvalidate('driver-fleet-controls', 'driver-360', 'driver-ops-inspections'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('traffic_violations', '*', matchesDriver,
+    () => queueInvalidate('driver-violations', 'driver-risk', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_notes', '*', matchesDriver,
+    () => queueInvalidate('driver-notes', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('driver_audit', '*', matchesDriver,
+    () => queueInvalidate('driver-audit', 'driver-activity-timeline'), !!id);
 
   // Process score data for charts
   const scoreChartData = scores?.map(s => ({
@@ -397,19 +391,6 @@ export default function AdminDriverDetail() {
 
   // Calculate summary stats
   const latestScore = scores?.[scores.length - 1];
-  const previousScore = scores?.[scores.length - 2];
-  const scoreChange = latestScore && previousScore ? latestScore.score - previousScore.score : 0;
-
-  const paymentStats = payments?.reduce((acc, p) => {
-    if (p.status === 'paid') acc.paid++;
-    else if (p.status === 'overdue') acc.overdue++;
-    else acc.pending++;
-    acc.total++;
-    return acc;
-  }, { paid: 0, overdue: 0, pending: 0, total: 0 }) || { paid: 0, overdue: 0, pending: 0, total: 0 };
-
-  const totalIncome = incomeRecords?.reduce((sum, r) => sum + r.net_income, 0) || 0;
-  const avgIncome = incomeRecords?.length ? Math.round(totalIncome / incomeRecords.length) : 0;
 
   // KYC handlers
   const handleApproveKyc = async () => {
@@ -587,7 +568,7 @@ export default function AdminDriverDetail() {
           ]} 
         />
 
-        <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
+        <div className="mb-4">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -597,143 +578,23 @@ export default function AdminDriverDetail() {
             <span className="hidden sm:inline">Retour aux conducteurs</span>
             <span className="sm:hidden">Retour</span>
           </Button>
-          
-          {/* Action buttons */}
-          <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setShowAssignVehicleDialog(true)}
-              disabled={driver.driver_status !== 'active'}
-              title={driver.driver_status !== 'active' ? 'Le conducteur doit être actif' : undefined}
-            >
-              <CarFront className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Allouer un véhicule</span>
-            </Button>
-            {/* CH-P5 quick actions */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowInvoiceDialog(true)}
-              disabled={!(driver as { customer_id?: string | null }).customer_id}
-              title={!(driver as { customer_id?: string | null }).customer_id ? 'Conducteur sans client rattaché' : undefined}
-            >
-              <Receipt className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Créer facture</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleAddNote}>
-              <MessageSquarePlus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Ajouter note</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowMessageDialog(true)}>
-              <Send className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Envoyer message</span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)}>
-              <Pencil className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Modifier</span>
-            </Button>
+        </div>
+
+        <DriverOperationsHub
+          driver={driver}
+          onEdit={() => setShowEditDialog(true)}
+          onAssignVehicle={() => setShowAssignVehicleDialog(true)}
+          onSendMessage={() => setShowMessageDialog(true)}
+          onGenerateInvoice={() => setShowInvoiceDialog(true)}
+          actionMenu={(
             <DriverActionsMenu
               driverId={driver.id}
               driverName={driver.full_name}
               driverStatus={driver.driver_status}
               onChanged={() => { refetch(); }}
             />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 sm:mr-2" />
-                  <span className="hidden sm:inline">Exporter</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleExportCSV}>
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
-                  Exporter les scores en CSV
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleExportPDF}>
-                  <FileText className="h-4 w-4 mr-2" />
-                  Rapport complet en PDF
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <Avatar className="h-16 w-16 border-2 border-border shadow-sm">
-              <AvatarImage src={(driver as any).profile_image_url ?? undefined} alt={driver.full_name} />
-              <AvatarFallback className="text-lg font-semibold bg-muted">
-                {driver.full_name
-                  .split(' ')
-                  .map((s) => s[0])
-                  .filter(Boolean)
-                  .slice(0, 2)
-                  .join('')
-                  .toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            {(driver as any).profile_image_url && (
-              <Button
-                type="button"
-                size="icon"
-                variant="destructive"
-                className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full shadow-md"
-                onClick={() => setShowDeletePhotoDialog(true)}
-                aria-label="Supprimer la photo"
-                title="Supprimer la photo"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <AdminPageHeader
-              title={driver.full_name}
-              description={`ID Yango: ${driver.yango_driver_id}`}
-            />
-          </div>
-        </div>
-
-        {/* CH-P4 — risk badge, permit number + expiry, wallet balance chip */}
-        <div className="flex flex-wrap items-center gap-2 mt-3">
-          <RiskBadge
-            level={driverRisk.data?.level}
-            reasons={driverRisk.data?.reasons}
-            loading={driverRisk.isLoading}
-          />
-          {(() => {
-            const permitNumber = (driver as { permit_number?: string | null }).permit_number;
-            const permitExpiry = (driver as { permit_expiry_date?: string | null }).permit_expiry_date;
-            const expired = !!permitExpiry && permitExpiry < new Date().toISOString().split('T')[0];
-            if (!permitNumber && !permitExpiry) {
-              return (
-                <Badge variant="outline" className="gap-1 text-muted-foreground">
-                  <IdCard className="h-3 w-3" /> Permis non renseigné
-                </Badge>
-              );
-            }
-            return (
-              <Badge
-                variant="outline"
-                className={`gap-1 ${expired ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/60' : ''}`}
-                title={expired ? 'Permis expiré' : undefined}
-              >
-                <IdCard className="h-3 w-3" />
-                {permitNumber ? `Permis ${permitNumber}` : 'Permis'}
-                {permitExpiry ? ` · ${expired ? 'expiré le' : 'exp.'} ${formatDateShort(permitExpiry)}` : ''}
-              </Badge>
-            );
-          })()}
-          {walletBalance !== null && (
-            <Badge
-              variant="outline"
-              className={`gap-1 ${walletBalance < 0 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/60' : ''}`}
-            >
-              <Wallet className="h-3 w-3" /> KiraPay : {formatCurrency(walletBalance)}
-            </Badge>
           )}
-        </div>
+        />
       </div>
 
       {/* Next-step CTA banner — guides admin through KYC approval and activation */}
@@ -760,158 +621,9 @@ export default function AdminDriverDetail() {
         isProcessing={updateKycStatus.isPending}
       />
 
-      {/* Driver Info Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-6">
-        {/* Current Score */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Score Actuel</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <div className="text-3xl font-bold">{latestScore?.score || '-'}</div>
-              {latestScore && <TierBadge tier={latestScore.tier} size="md" />}
-            </div>
-            {scoreChange !== 0 && (
-              <div className="flex items-center mt-2 text-sm">
-                {scoreChange > 0 ? (
-                  <>
-                    <TrendingUp className="h-4 w-4 mr-1 text-emerald-500" />
-                    <span className="text-emerald-500">+{scoreChange} pts</span>
-                  </>
-                ) : (
-                  <>
-                    <TrendingDown className="h-4 w-4 mr-1 text-destructive" />
-                    <span className="text-destructive">{scoreChange} pts</span>
-                  </>
-                )}
-                <span className="text-muted-foreground ml-1">vs semaine précédente</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* KYC Status */}
-        <Card ref={kycCardRef} className={driver.kyc_status === 'pending' ? 'border-amber-500/50' : ''}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Statut KYC</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Badge 
-              variant={driver.kyc_status === 'verified' ? 'verified' : 
-                       driver.kyc_status === 'rejected' ? 'rejected' : 
-                       driver.kyc_status === 'not_submitted' ? 'outline' : 'pending'}
-              className="text-sm"
-            >
-              {driver.kyc_status === 'verified' ? KYC.STATUS_VERIFIED : 
-               driver.kyc_status === 'pending' ? KYC.STATUS_PENDING : 
-               driver.kyc_status === 'not_submitted' ? 'Non soumis' : KYC.STATUS_REJECTED}
-            </Badge>
-            <div className="mt-2 text-sm text-muted-foreground">
-              Statut: <span className="font-medium text-foreground">
-                {driver.driver_status === 'active' ? 'Actif' : 
-                 driver.driver_status === 'suspended' ? 'Suspendu' : 'Inactif'}
-              </span>
-            </div>
-            {!kycSubmission && driver.kyc_status === 'pending' && (
-              <p className="text-xs text-muted-foreground mt-2">Aucun document soumis — approbation manuelle</p>
-            )}
-            {/* Show KYC action buttons when driver status is pending (with or without submission) */}
-            {(kycSubmission?.status === 'pending' || (!kycSubmission && driver.kyc_status === 'pending')) && (
-              <div className="flex gap-2 mt-3">
-                <Button 
-                  size="sm" 
-                  onClick={handleApproveKyc}
-                  disabled={updateKycStatus.isPending}
-                  className="flex-1 min-h-[44px]"
-                >
-                  <CheckCircle className="h-3 w-3 mr-1" />
-                  Approuver
-                </Button>
-                <Button 
-                  size="sm" 
-                  variant="destructive"
-                  onClick={() => setShowRejectModal(true)}
-                  disabled={updateKycStatus.isPending}
-                  className="flex-1 min-h-[44px]"
-                >
-                  <XCircle className="h-3 w-3 mr-1" />
-                  Rejeter
-                </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Payment Stats */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Paiements</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <div className="text-2xl font-bold text-emerald-600">{paymentStats.paid}</div>
-              <span className="text-muted-foreground">/</span>
-              <div className="text-lg text-muted-foreground">{paymentStats.total}</div>
-              <span className="text-sm text-muted-foreground">payés</span>
-            </div>
-            {paymentStats.overdue > 0 && (
-              <div className="flex items-center mt-2 text-sm text-destructive">
-                <AlertTriangle className="h-4 w-4 mr-1" />
-                {paymentStats.overdue} en retard
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Income */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Revenu Moyen</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(avgIncome)}</div>
-            <div className="text-sm text-muted-foreground mt-1">
-              par jour (30 derniers jours)
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* AI Driver Summary - Premium */}
-      <AIDriverSummary driverId={id!} driverName={driver.full_name} />
-
-      {/* Contact Info */}
-      <Card className="mb-6">
-        <CardContent className="p-4">
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              <span>{driver.phone_number}</span>
-            </div>
-            {driver.email && (
-              <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-muted-foreground" />
-                <span>{driver.email}</span>
-              </div>
-            )}
-            {driver.vehicles && (
-              <div className="flex items-center gap-2">
-                <Car className="h-4 w-4 text-muted-foreground" />
-                <span>{driver.vehicles.model_name} ({driver.vehicles.license_plate})</span>
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>Inscrit le {formatDateShort(new Date(driver.created_at))}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* KYC Details Card - Show when pending or has submission */}
       {kycSubmission && (
-        <Card className={`mb-6 ${driver.kyc_status === 'pending' ? 'border-amber-500/50 bg-amber-500/5' : ''}`}>
+        <Card ref={kycCardRef} className={`mb-6 scroll-mt-20 ${driver.kyc_status === 'pending' ? 'border-amber-500/50 bg-amber-500/5' : ''}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -1022,35 +734,43 @@ export default function AdminDriverDetail() {
         </Card>
       )}
 
-      {/* Driver 360 summary */}
-      {driver?.id && <Driver360HeaderCard driverId={driver.id} />}
-
-      {/* Driver wallet (upfront balance) */}
-      {driver?.id && (
-        <div ref={walletCardRef} className="scroll-mt-20">
-          <DriverWalletCard driverId={driver.id} />
-        </div>
-      )}
-
       {/* Tabs for detailed info */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="flex flex-wrap h-auto">
-          <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-          <TabsTrigger value="scores">Historique des Scores</TabsTrigger>
-          <TabsTrigger value="payments">Paiements</TabsTrigger>
-          <TabsTrigger value="rentals">Locations</TabsTrigger>
-          <TabsTrigger value="loans">Prêts</TabsTrigger>
-          <TabsTrigger value="income">Revenus</TabsTrigger>
-          <TabsTrigger value="invoices">Factures</TabsTrigger>
-          <TabsTrigger value="fleet-control">Fleet Control</TabsTrigger>
-          <TabsTrigger value="violations">Contraventions</TabsTrigger>
-          <TabsTrigger value="accidents">Sinistres</TabsTrigger>
-          <TabsTrigger value="tickets">Tickets</TabsTrigger>
-          <TabsTrigger value="documents">Documents</TabsTrigger>
-          <TabsTrigger value="notes">Notes</TabsTrigger>
-          <TabsTrigger value="audit">Audit</TabsTrigger>
-          <TabsTrigger value="activity">Activité</TabsTrigger>
-        </TabsList>
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <TabsList className="flex h-auto flex-wrap justify-start">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="finance">Finance</TabsTrigger>
+            <TabsTrigger value="vehicle">Vehicle</TabsTrigger>
+            <TabsTrigger value="fleet-control">Fleet Control</TabsTrigger>
+            <TabsTrigger value="risk">Risk</TabsTrigger>
+            <TabsTrigger value="growth">Growth</TabsTrigger>
+            <TabsTrigger value="documents">Documents</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
+          </TabsList>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handleAddNote}>
+              Ajouter note
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exporter
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleExportCSV}>
+                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  Scores en CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleExportPDF}>
+                  <FileText className="h-4 w-4 mr-2" />
+                  Rapport complet PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
 
         {/* Vue d'ensemble Tab — CH-P1 */}
         <TabsContent value="overview">
@@ -1061,8 +781,8 @@ export default function AdminDriverDetail() {
           />
         </TabsContent>
 
-        {/* Scores Tab */}
-        <TabsContent value="scores" className="space-y-4">
+        {/* Risk Tab: score, contraventions, and sinistres */}
+        <TabsContent value="risk" className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-2">
             <Card>
               <CardHeader>
@@ -1195,8 +915,11 @@ export default function AdminDriverDetail() {
           </Card>
         </TabsContent>
 
-        {/* Payments Tab */}
-        <TabsContent value="payments">
+        {/* Finance Tab: wallet, invoices, payments, and income */}
+        <TabsContent value="finance" className="space-y-4">
+          <div ref={walletCardRef} className="scroll-mt-20">
+            <DriverWalletCard driverId={driver.id} />
+          </div>
           <Card>
             <CardHeader>
               <CardTitle>Historique des Paiements</CardTitle>
@@ -1248,13 +971,13 @@ export default function AdminDriverDetail() {
           </Card>
         </TabsContent>
 
-        {/* Rentals Tab — CH-P6: full history + admin return action */}
-        <TabsContent value="rentals">
+        {/* Vehicle Tab — CH-P6: full history + admin return action */}
+        <TabsContent value="vehicle">
           <DriverRentalsPanel driverId={driver.id} driverName={driver.full_name} />
         </TabsContent>
 
-        {/* Loans Tab */}
-        <TabsContent value="loans">
+        {/* Growth Tab: applications and ownership path */}
+        <TabsContent value="growth">
           <Card>
             <CardHeader>
               <CardTitle>Historique des Prêts</CardTitle>
@@ -1313,8 +1036,8 @@ export default function AdminDriverDetail() {
           </Card>
         </TabsContent>
 
-        {/* Income Tab */}
-        <TabsContent value="income">
+        {/* Finance Tab — income */}
+        <TabsContent value="finance">
           <Card>
             <CardHeader>
               <CardTitle>Historique des Revenus</CardTitle>
@@ -1379,8 +1102,8 @@ export default function AdminDriverDetail() {
           </Card>
         </TabsContent>
 
-        {/* Factures Tab */}
-        <TabsContent value="invoices">
+        {/* Finance Tab — invoices */}
+        <TabsContent value="finance">
           <DriverInvoicesPanel driverId={driver.id} />
         </TabsContent>
 
@@ -1389,8 +1112,8 @@ export default function AdminDriverDetail() {
           <DriverFleetControlPanel driverId={driver.id} />
         </TabsContent>
 
-        {/* Contraventions Tab — CH-P3 (distinct from support "Tickets", D-1) */}
-        <TabsContent value="violations">
+        {/* Risk Tab — contraventions (distinct from support "Tickets", D-1) */}
+        <TabsContent value="risk">
           <DriverViolationsPanel
             driverId={driver.id}
             driverName={driver.full_name}
@@ -1398,13 +1121,13 @@ export default function AdminDriverDetail() {
           />
         </TabsContent>
 
-        {/* Sinistres Tab */}
-        <TabsContent value="accidents">
+        {/* Risk Tab — sinistres */}
+        <TabsContent value="risk">
           <DriverAccidentsPanel driverId={driver.id} />
         </TabsContent>
 
-        {/* Tickets Tab */}
-        <TabsContent value="tickets">
+        {/* Activity Tab — support tickets */}
+        <TabsContent value="activity">
           <DriverTicketsPanel driverId={driver.id} />
         </TabsContent>
 
@@ -1413,8 +1136,8 @@ export default function AdminDriverDetail() {
           <DriverDocumentsPanel driverId={driver.id} customerId={(driver as { customer_id?: string | null }).customer_id ?? null} />
         </TabsContent>
 
-        {/* Notes Tab */}
-        <TabsContent value="notes">
+        {/* Activity Tab — notes */}
+        <TabsContent value="activity">
           <DriverNotesPanel
             driverId={driver.id}
             customerId={(driver as { customer_id?: string | null }).customer_id ?? null}
@@ -1422,12 +1145,12 @@ export default function AdminDriverDetail() {
           />
         </TabsContent>
 
-        {/* Audit Tab */}
-        <TabsContent value="audit">
+        {/* Activity Tab — audit */}
+        <TabsContent value="activity">
           <DriverAuditPanel driverId={driver.id} />
         </TabsContent>
 
-        {/* Activité Tab */}
+        {/* Activity Tab — unified timeline */}
         <TabsContent value="activity">
           <DriverActivityPanel driverId={driver.id} />
         </TabsContent>
@@ -1528,9 +1251,9 @@ export default function AdminDriverDetail() {
             full_name: driver.full_name,
             phone_number: driver.phone_number,
             email: driver.email ?? null,
-            profile_image_url: (driver as any).profile_image_url ?? null,
-            driver_status: (driver as any).driver_status ?? 'active',
-            active_vehicle_id: (driver as any).active_vehicle_id ?? null,
+            profile_image_url: driver.profile_image_url ?? null,
+            driver_status: driver.driver_status ?? 'active',
+            active_vehicle_id: driver.active_vehicle_id ?? null,
           }}
           kycSubmission={kycSubmission}
         />
@@ -1542,6 +1265,16 @@ export default function AdminDriverDetail() {
           onOpenChange={setShowAssignVehicleDialog}
           driverId={driver.id}
           driverName={driver.full_name}
+          onAssigned={() => {
+            queryClient.invalidateQueries({ queryKey: ['admin-driver-detail', driver.id] });
+            queryClient.invalidateQueries({ queryKey: ['driver-360', driver.id] });
+            queryClient.invalidateQueries({ queryKey: ['admin-driver-rentals-full', driver.id] });
+            queryClient.invalidateQueries({ queryKey: ['driver-fleet-controls', driver.id] });
+            queryClient.invalidateQueries({ queryKey: ['driver-ops-inspections', driver.id] });
+            queryClient.invalidateQueries({ queryKey: ['driver-ops-payments', driver.id] });
+            queryClient.invalidateQueries({ queryKey: ['admin-drivers'] });
+            refetch();
+          }}
         />
       )}
 
@@ -1567,30 +1300,6 @@ export default function AdminDriverDetail() {
         />
       )}
 
-      <AlertDialog open={showDeletePhotoDialog} onOpenChange={setShowDeletePhotoDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer la photo du conducteur ?</AlertDialogTitle>
-            <AlertDialogDescription>
-              La photo de profil de {driver.full_name} sera retirée définitivement. Cette action est immédiate.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deletingPhoto}>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                handleDeletePhoto();
-              }}
-              disabled={deletingPhoto}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {deletingPhoto && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AdminLayout>
   );
 }
