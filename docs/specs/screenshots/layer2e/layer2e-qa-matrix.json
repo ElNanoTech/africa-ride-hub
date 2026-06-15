@@ -1,0 +1,335 @@
+{
+  "checks": [
+    {
+      "name": "seeded fine fixture",
+      "passed": true,
+      "detail": "existing"
+    },
+    {
+      "name": "seeded accident fixture",
+      "passed": true,
+      "detail": "QA-E2E-100"
+    },
+    {
+      "name": "primary route title",
+      "passed": true,
+      "detail": "Trust & Risk"
+    },
+    {
+      "name": "average score metric",
+      "passed": true,
+      "detail": "Average Score"
+    },
+    {
+      "name": "drivers at risk metric",
+      "passed": true,
+      "detail": "Drivers at Risk"
+    },
+    {
+      "name": "critical drivers metric",
+      "passed": true,
+      "detail": "Critical Drivers"
+    },
+    {
+      "name": "compliance rate metric",
+      "passed": true,
+      "detail": "Compliance Rate"
+    },
+    {
+      "name": "open contraventions metric",
+      "passed": true,
+      "detail": "Open Contraventions"
+    },
+    {
+      "name": "open sinistres metric",
+      "passed": true,
+      "detail": "Open Sinistres"
+    },
+    {
+      "name": "kyc issues metric",
+      "passed": true,
+      "detail": "KYC Issues"
+    },
+    {
+      "name": "fleet control issues metric",
+      "passed": true,
+      "detail": "Fleet Control Issues"
+    },
+    {
+      "name": "risk distribution",
+      "passed": true,
+      "detail": "Risk Distribution"
+    },
+    {
+      "name": "risk alerts",
+      "passed": true,
+      "detail": "Risk Alerts"
+    },
+    {
+      "name": "recent trust events",
+      "passed": true,
+      "detail": "Recent Trust Events"
+    },
+    {
+      "name": "no ai underwriting copy",
+      "passed": true,
+      "detail": "absent: AI underwriting"
+    },
+    {
+      "name": "no repossession workflow",
+      "passed": true,
+      "detail": "absent: repossession"
+    },
+    {
+      "name": "tab trigger Overview",
+      "passed": true,
+      "detail": "Overview"
+    },
+    {
+      "name": "tab trigger Driver Risk",
+      "passed": true,
+      "detail": "Driver Risk"
+    },
+    {
+      "name": "tab trigger Vehicle Risk",
+      "passed": true,
+      "detail": "Vehicle Risk"
+    },
+    {
+      "name": "tab trigger Score Center",
+      "passed": true,
+      "detail": "Score Center"
+    },
+    {
+      "name": "tab trigger Compliance",
+      "passed": true,
+      "detail": "Compliance"
+    },
+    {
+      "name": "tab trigger Contraventions",
+      "passed": true,
+      "detail": "Contraventions"
+    },
+    {
+      "name": "tab trigger Sinistres",
+      "passed": true,
+      "detail": "Sinistres"
+    },
+    {
+      "name": "tab trigger Trust Events",
+      "passed": true,
+      "detail": "Trust Events"
+    },
+    {
+      "name": "tab trigger Audit",
+      "passed": true,
+      "detail": "Audit"
+    },
+    {
+      "name": "driver risk tab",
+      "passed": true,
+      "detail": "Driver Risk"
+    },
+    {
+      "name": "risk reason visible",
+      "passed": true,
+      "detail": "Reason"
+    },
+    {
+      "name": "driver 360 handoff visible",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "driver risk detail opens",
+      "passed": true,
+      "detail": "Risk Factors"
+    },
+    {
+      "name": "recommended actions visible",
+      "passed": true,
+      "detail": "Recommended Actions"
+    },
+    {
+      "name": "recent events visible",
+      "passed": true,
+      "detail": "Recent Events"
+    },
+    {
+      "name": "vehicle risk tab seeded plate",
+      "passed": true,
+      "detail": "QA-E2E-100"
+    },
+    {
+      "name": "vehicle risk assigned driver",
+      "passed": true,
+      "detail": "Assigned driver"
+    },
+    {
+      "name": "score breakdown",
+      "passed": true,
+      "detail": "Score Breakdown"
+    },
+    {
+      "name": "score changes",
+      "passed": true,
+      "detail": "Score Changes"
+    },
+    {
+      "name": "score simulation",
+      "passed": true,
+      "detail": "Score Simulation"
+    },
+    {
+      "name": "what if driver pays",
+      "passed": true,
+      "detail": "What if driver pays?"
+    },
+    {
+      "name": "projected score",
+      "passed": true,
+      "detail": "Projected score"
+    },
+    {
+      "name": "simulation accident delta",
+      "passed": true,
+      "detail": "What if accident removed?"
+    },
+    {
+      "name": "kyc compliance",
+      "passed": true,
+      "detail": "KYC Compliance"
+    },
+    {
+      "name": "fleet control compliance",
+      "passed": true,
+      "detail": "Fleet Control Compliance"
+    },
+    {
+      "name": "documents compliance",
+      "passed": true,
+      "detail": "Documents"
+    },
+    {
+      "name": "permits compliance",
+      "passed": true,
+      "detail": "Permits"
+    },
+    {
+      "name": "insurance compliance",
+      "passed": true,
+      "detail": "Insurance"
+    },
+    {
+      "name": "contraventions tab",
+      "passed": true,
+      "detail": "Open Contraventions"
+    },
+    {
+      "name": "contraventions score impact",
+      "passed": true,
+      "detail": "Score Impact"
+    },
+    {
+      "name": "contraventions handoff link",
+      "passed": true,
+      "detail": "/admin/contraventions"
+    },
+    {
+      "name": "sinistres tab",
+      "passed": true,
+      "detail": "Open Sinistres"
+    },
+    {
+      "name": "sinistres insurance status",
+      "passed": true,
+      "detail": "Insurance Status"
+    },
+    {
+      "name": "sinistres risk impact",
+      "passed": true,
+      "detail": "Risk Impact"
+    },
+    {
+      "name": "sinistres handoff link",
+      "passed": true,
+      "detail": "/admin/sinistres"
+    },
+    {
+      "name": "trust timeline populated",
+      "passed": true,
+      "detail": "Open"
+    },
+    {
+      "name": "trust audit",
+      "passed": true,
+      "detail": "Trust Audit"
+    },
+    {
+      "name": "audit fields event",
+      "passed": true,
+      "detail": "Event"
+    },
+    {
+      "name": "audit source visible",
+      "passed": true,
+      "detail": "source"
+    },
+    {
+      "name": "audit handoff link",
+      "passed": true,
+      "detail": "/admin/audit"
+    },
+    {
+      "name": "no dead buttons",
+      "passed": true,
+      "detail": "0 disabled button(s) on active tab"
+    },
+    {
+      "name": "/admin/trust-risk loads",
+      "passed": true,
+      "detail": "Trust & Risk"
+    },
+    {
+      "name": "/admin/scoring loads",
+      "passed": true,
+      "detail": "Scoring"
+    },
+    {
+      "name": "/admin/contraventions loads",
+      "passed": true,
+      "detail": "Contraventions"
+    },
+    {
+      "name": "/admin/incidents loads",
+      "passed": true,
+      "detail": "Sinistres"
+    },
+    {
+      "name": "/admin/fleet-control loads",
+      "passed": true,
+      "detail": "Fleet Control"
+    },
+    {
+      "name": "/admin/drivers/4c9bea2b-4a82-4d7f-bccb-b9baef1618fa?tab=risk loads",
+      "passed": true,
+      "detail": "Driver 360"
+    },
+    {
+      "name": "mobile trust risk route",
+      "passed": true,
+      "detail": "Trust & Risk"
+    },
+    {
+      "name": "mobile kpis visible",
+      "passed": true,
+      "detail": "Average Score"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}

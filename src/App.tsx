@@ -115,6 +115,7 @@ const DriverSinistreLocation = lazy(() => import("./pages/driver/sinistres/StepL
 const DriverSinistreCaseDetail = lazy(() => import("./pages/driver/sinistres/CaseDetail"));
 const DriverSinistreSuccess = lazy(() => import("./pages/driver/sinistres/SubmissionSuccess"));
 const AdminDrivingBehavior = lazy(() => import("./pages/admin/DrivingBehavior"));
+const AdminTrustRisk = lazy(() => import("./pages/admin/TrustRisk"));
 const AdminSinistres = lazy(() => import("./pages/admin/Sinistres"));
 const AdminSinistreDetail = lazy(() => import("./pages/admin/SinistreDetail"));
 const AdminSinistresAnalytics = lazy(() => import("./pages/admin/SinistresAnalytics"));
@@ -289,7 +290,9 @@ const App = () => {
                     <Route path="/admin/ai-usage" element={<AdminAIUsage />} />
                     <Route path="/admin/contracts" element={<AdminContracts />} />
                     <Route path="/admin/driving-behavior" element={<AdminDrivingBehavior />} />
+                    <Route path="/admin/trust-risk" element={<AdminTrustRisk />} />
                     <Route path="/admin/sinistres" element={<AdminSinistres />} />
+                    <Route path="/admin/incidents" element={<AdminSinistres />} />
                     <Route path="/admin/fleet-control" element={<AdminFleetControl />} />
                     <Route path="/admin/maintenance" element={<AdminMaintenance />} />
                     <Route path="/admin/contraventions" element={<AdminContraventions />} />

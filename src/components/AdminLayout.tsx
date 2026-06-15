@@ -73,9 +73,11 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/income-approvals',
   '/admin/pricing',
   '/admin/contracts',
+  '/admin/trust-risk',
   '/admin/scoring',
   '/admin/driving-behavior',
   '/admin/contraventions',
+  '/admin/incidents',
   '/admin/sinistres',
   '/admin/sinistres/analytics',
   '/admin/audit',
@@ -199,7 +201,14 @@ const sidebarItems: SidebarItem[] = [
     allowedRoles: ['super_admin', 'manager'],
     section: 'vehicle_ops',
   },
-  { 
+  {
+    to: '/admin/trust-risk',
+    icon: ShieldCheck,
+    label: 'Trust & Risk',
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'trust_risk',
+  },
+  {
     to: '/admin/driving-behavior', 
     icon: Activity, 
     label: 'Conduite',

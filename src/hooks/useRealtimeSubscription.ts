@@ -9,6 +9,9 @@ export type RealtimeTableName =
   | 'rentals'
   | 'loans'
   | 'payments'
+  | 'credit_scores'
+  | 'driver_scores'
+  | 'driver_score_events'
   | 'support_tickets'
   | 'kyc_submissions'
   | 'maintenance_orders'
@@ -25,18 +28,21 @@ interface RealtimeConfig {
 }
 
 const tableToQueryKeyMap: Record<RealtimeTableName, string[]> = {
-  drivers: ['admin-drivers', 'admin-stats', 'vehicle-operations'],
+  drivers: ['admin-drivers', 'admin-stats', 'vehicle-operations', 'trust-risk'],
   vehicles: ['admin-vehicles', 'admin-stats', 'vehicle-operations'],
   rentals: ['admin-rentals', 'admin-stats', 'vehicle-operations'],
   loans: ['admin-loans', 'admin-stats'],
-  payments: ['admin-payments', 'admin-stats'],
+  payments: ['admin-payments', 'admin-stats', 'trust-risk'],
+  credit_scores: ['admin-score-distribution', 'admin-score-trends', 'trust-risk'],
+  driver_scores: ['trust-risk'],
+  driver_score_events: ['driver-score-events', 'trust-risk'],
   support_tickets: ['admin-tickets', 'admin-stats'],
-  kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats'],
+  kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats', 'trust-risk'],
   maintenance_orders: ['maintenance', 'vehicle-operations'],
-  vehicle_inspections: ['fleet-control', 'vehicle-operations'],
+  vehicle_inspections: ['fleet-control', 'vehicle-operations', 'trust-risk'],
   vehicle_positions: ['vehicle-positions', 'vehicle-operations'],
-  accidents: ['admin-accidents', 'vehicle-operations'],
-  traffic_violations: ['contraventions', 'vehicle-operations'],
+  accidents: ['admin-accidents', 'vehicle-operations', 'trust-risk'],
+  traffic_violations: ['contraventions', 'vehicle-operations', 'trust-risk'],
   other_charges: ['maintenance', 'vehicle-operations'],
 };
 
@@ -46,6 +52,9 @@ const tableLabels: Record<RealtimeTableName, string> = {
   rentals: 'Location',
   loans: 'Prêt',
   payments: 'Paiement',
+  credit_scores: 'Score',
+  driver_scores: 'Score conducteur',
+  driver_score_events: 'Evenement score',
   support_tickets: 'Ticket',
   kyc_submissions: 'KYC',
   maintenance_orders: 'Maintenance',
