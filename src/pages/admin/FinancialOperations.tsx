@@ -585,17 +585,17 @@ function DailyRentalCommandCenter({
 
 function HealthCards({ health }: { health: FinancialHealthSummary }) {
   return (
-    <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-4">
       {health.cards.map((card) => (
         <Card key={card.key} className={cn('border', toneClass(card.tone))}>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between gap-2">
+          <CardContent className="min-h-[116px] p-4">
+            <div className="flex flex-col items-start gap-2">
               <p className="text-sm font-medium">{card.label}</p>
-              <Badge variant={card.tone === 'healthy' ? 'success' : card.tone === 'warning' ? 'high' : 'destructive'}>
+              <Badge className="w-fit whitespace-nowrap" variant={card.tone === 'healthy' ? 'success' : card.tone === 'warning' ? 'high' : 'destructive'}>
                 {card.status}
               </Badge>
             </div>
-            <p className="mt-2 text-xs opacity-80">{card.detail}</p>
+            <p className="mt-3 text-xs leading-relaxed opacity-80">{card.detail}</p>
           </CardContent>
         </Card>
       ))}
