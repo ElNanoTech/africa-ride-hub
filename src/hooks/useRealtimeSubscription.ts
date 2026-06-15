@@ -3,24 +3,44 @@ import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { toast } from 'sonner';
 
-type TableName = 'drivers' | 'vehicles' | 'rentals' | 'loans' | 'payments' | 'support_tickets' | 'kyc_submissions';
+export type RealtimeTableName =
+  | 'drivers'
+  | 'vehicles'
+  | 'rentals'
+  | 'loans'
+  | 'payments'
+  | 'support_tickets'
+  | 'kyc_submissions'
+  | 'maintenance_orders'
+  | 'vehicle_inspections'
+  | 'vehicle_positions'
+  | 'accidents'
+  | 'traffic_violations'
+  | 'other_charges';
 
 interface RealtimeConfig {
-  tables: TableName[];
+  tables: RealtimeTableName[];
   showToasts?: boolean;
+  enabled?: boolean;
 }
 
-const tableToQueryKeyMap: Record<TableName, string[]> = {
-  drivers: ['admin-drivers', 'admin-stats'],
-  vehicles: ['admin-vehicles', 'admin-stats'],
-  rentals: ['admin-rentals', 'admin-stats'],
+const tableToQueryKeyMap: Record<RealtimeTableName, string[]> = {
+  drivers: ['admin-drivers', 'admin-stats', 'vehicle-operations'],
+  vehicles: ['admin-vehicles', 'admin-stats', 'vehicle-operations'],
+  rentals: ['admin-rentals', 'admin-stats', 'vehicle-operations'],
   loans: ['admin-loans', 'admin-stats'],
   payments: ['admin-payments', 'admin-stats'],
   support_tickets: ['admin-tickets', 'admin-stats'],
   kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats'],
+  maintenance_orders: ['maintenance', 'vehicle-operations'],
+  vehicle_inspections: ['fleet-control', 'vehicle-operations'],
+  vehicle_positions: ['vehicle-positions', 'vehicle-operations'],
+  accidents: ['admin-accidents', 'vehicle-operations'],
+  traffic_violations: ['contraventions', 'vehicle-operations'],
+  other_charges: ['maintenance', 'vehicle-operations'],
 };
 
-const tableLabels: Record<TableName, string> = {
+const tableLabels: Record<RealtimeTableName, string> = {
   drivers: 'Chauffeur',
   vehicles: 'Véhicule',
   rentals: 'Location',
@@ -28,6 +48,12 @@ const tableLabels: Record<TableName, string> = {
   payments: 'Paiement',
   support_tickets: 'Ticket',
   kyc_submissions: 'KYC',
+  maintenance_orders: 'Maintenance',
+  vehicle_inspections: 'Controle vehicule',
+  vehicle_positions: 'GPS',
+  accidents: 'Sinistre',
+  traffic_violations: 'Contravention',
+  other_charges: 'Charge',
 };
 
 const eventLabels = {
@@ -36,10 +62,12 @@ const eventLabels = {
   DELETE: 'supprimé',
 };
 
-export function useRealtimeSubscription({ tables, showToasts = true }: RealtimeConfig) {
+export function useRealtimeSubscription({ tables, showToasts = true, enabled = true }: RealtimeConfig) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!enabled || tables.length === 0) return;
+
     const channel = supabase
       .channel('admin-realtime-updates')
       .on(
@@ -50,7 +78,7 @@ export function useRealtimeSubscription({ tables, showToasts = true }: RealtimeC
           table: tables[0],
         },
         (payload) => {
-          const table = payload.table as TableName;
+          const table = payload.table as RealtimeTableName;
           const event = payload.eventType;
           
           // Invalidate related queries
@@ -80,7 +108,7 @@ export function useRealtimeSubscription({ tables, showToasts = true }: RealtimeC
           table,
         },
         (payload) => {
-          const tableName = payload.table as TableName;
+          const tableName = payload.table as RealtimeTableName;
           const event = payload.eventType;
           
           // Invalidate related queries
@@ -106,7 +134,7 @@ export function useRealtimeSubscription({ tables, showToasts = true }: RealtimeC
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [queryClient, tables, showToasts]);
+  }, [enabled, queryClient, tables, showToasts]);
 }
 
 // Hook for dashboard real-time updates
@@ -118,7 +146,7 @@ export function useDashboardRealtime() {
 }
 
 // Hook for specific table real-time updates
-export function useTableRealtime(table: TableName, showToasts = false) {
+export function useTableRealtime(table: RealtimeTableName, showToasts = false) {
   useRealtimeSubscription({
     tables: [table],
     showToasts,

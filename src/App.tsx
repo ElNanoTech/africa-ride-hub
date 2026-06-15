@@ -81,7 +81,9 @@ const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
 const AdminDrivers = lazy(() => import("./pages/admin/Drivers"));
 const AdminDriverDetail = lazy(() => import("./pages/admin/DriverDetail"));
 const AdminDriverCreate = lazy(() => import("./pages/admin/DriverCreate"));
+const AdminVehicleOperations = lazy(() => import("./pages/admin/VehicleOperations"));
 const AdminVehicles = lazy(() => import("./pages/admin/Vehicles"));
+const AdminVehicleDetail = lazy(() => import("./pages/admin/VehicleDetail"));
 const AdminGpsMapping = lazy(() => import("./pages/admin/GpsMapping"));
 const AdminRentals = lazy(() => import("./pages/admin/Rentals"));
 const AdminLoans = lazy(() => import("./pages/admin/Loans"));
@@ -256,8 +258,10 @@ const App = () => {
                     <Route path="/admin/drivers" element={<AdminDrivers />} />
                     <Route path="/admin/drivers/new" element={<AdminDriverCreate />} />
                     <Route path="/admin/drivers/:id" element={<AdminDriverDetail />} />
+                    <Route path="/admin/vehicle-operations" element={<AdminVehicleOperations />} />
                     <Route path="/admin/vehicles" element={<AdminVehicles />} />
                     <Route path="/admin/vehicles/gps-mapping" element={<AdminGpsMapping />} />
+                    <Route path="/admin/vehicles/:id" element={<AdminVehicleDetail />} />
                     <Route path="/admin/gps-mapping" element={<AdminGpsMapping />} />
                     <Route path="/admin/rentals" element={<AdminRentals />} />
                     <Route path="/admin/loans" element={<AdminLoans />} />

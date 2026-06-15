@@ -53,7 +53,9 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/support',
   '/admin/drivers',
   '/admin/communication',
+  '/admin/vehicle-operations',
   '/admin/vehicles',
+  '/admin/vehicles/',
   '/admin/vehicles/gps-mapping',
   '/admin/tracking',
   '/admin/rentals',
@@ -166,10 +168,19 @@ const sidebarItems: SidebarItem[] = [
     badgeKey: 'pendingKyc', // Show pending KYC count
     section: 'driver_ops',
   },
-  { 
+  {
+    to: '/admin/vehicle-operations',
+    icon: BarChart3,
+    label: 'Vehicle Ops',
+    exact: true,
+    aliases: ['/admin/vehicles/'],
+    allowedRoles: ['super_admin', 'manager'],
+    section: 'vehicle_ops',
+  },
+  {
     to: '/admin/vehicles', 
     icon: Car, 
-    label: NAV.VEHICLES,
+    label: 'Inventory',
     allowedRoles: ['super_admin', 'manager'],
     exact: true,
     section: 'vehicle_ops',
@@ -366,7 +377,7 @@ const hasAccess = (userRoleKey: string, allowedRoles: AppRole[]): boolean => {
 };
 
 const matchesSidebarItem = (item: SidebarItem, pathname: string) => {
-  if (item.aliases?.includes(pathname)) return true;
+  if (item.aliases?.some((alias) => alias.endsWith('/') ? pathname.startsWith(alias) : pathname === alias)) return true;
   if (item.exact) return pathname === item.to;
   return pathname === item.to || pathname.startsWith(`${item.to}/`);
 };

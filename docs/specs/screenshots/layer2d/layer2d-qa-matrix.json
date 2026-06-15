@@ -1,0 +1,305 @@
+{
+  "checks": [
+    {
+      "name": "primary route title",
+      "passed": true,
+      "detail": "Vehicle Operations"
+    },
+    {
+      "name": "total vehicles metric",
+      "passed": true,
+      "detail": "Total Vehicles"
+    },
+    {
+      "name": "assigned metric",
+      "passed": true,
+      "detail": "Assigned"
+    },
+    {
+      "name": "available metric",
+      "passed": true,
+      "detail": "Available"
+    },
+    {
+      "name": "maintenance metric",
+      "passed": true,
+      "detail": "Maintenance"
+    },
+    {
+      "name": "immobilized metric",
+      "passed": true,
+      "detail": "Immobilized"
+    },
+    {
+      "name": "utilization metric",
+      "passed": true,
+      "detail": "Utilization Rate"
+    },
+    {
+      "name": "revenue metric",
+      "passed": true,
+      "detail": "Revenue This Month"
+    },
+    {
+      "name": "maintenance cost metric",
+      "passed": true,
+      "detail": "Maintenance Cost This Month"
+    },
+    {
+      "name": "attention queue",
+      "passed": true,
+      "detail": "Vehicle Attention Queue"
+    },
+    {
+      "name": "profitability index",
+      "passed": true,
+      "detail": "Vehicle Profitability Index"
+    },
+    {
+      "name": "operational indicator copy",
+      "passed": true,
+      "detail": "Do not use for accounting"
+    },
+    {
+      "name": "seeded vehicle plate visible",
+      "passed": true,
+      "detail": "QA-E2E-100"
+    },
+    {
+      "name": "inventory route link present",
+      "passed": true,
+      "detail": "/admin/vehicles"
+    },
+    {
+      "name": "maintenance route link present",
+      "passed": true,
+      "detail": "/admin/maintenance"
+    },
+    {
+      "name": "fleet control route link present",
+      "passed": true,
+      "detail": "/admin/fleet-control"
+    },
+    {
+      "name": "vehicle 360 title",
+      "passed": true,
+      "detail": "Vehicle 360"
+    },
+    {
+      "name": "vehicle 360 seeded plate",
+      "passed": true,
+      "detail": "QA-E2E-100"
+    },
+    {
+      "name": "tab trigger Overview",
+      "passed": true,
+      "detail": "Overview"
+    },
+    {
+      "name": "tab trigger Driver",
+      "passed": true,
+      "detail": "Driver"
+    },
+    {
+      "name": "tab trigger Finance",
+      "passed": true,
+      "detail": "Finance"
+    },
+    {
+      "name": "tab trigger Fleet Control",
+      "passed": true,
+      "detail": "Fleet Control"
+    },
+    {
+      "name": "tab trigger Maintenance",
+      "passed": true,
+      "detail": "Maintenance"
+    },
+    {
+      "name": "tab trigger GPS",
+      "passed": true,
+      "detail": "GPS"
+    },
+    {
+      "name": "tab trigger Contraventions",
+      "passed": true,
+      "detail": "Contraventions"
+    },
+    {
+      "name": "tab trigger Sinistres",
+      "passed": true,
+      "detail": "Sinistres"
+    },
+    {
+      "name": "tab trigger History",
+      "passed": true,
+      "detail": "History"
+    },
+    {
+      "name": "overview plate",
+      "passed": true,
+      "detail": "Plate"
+    },
+    {
+      "name": "overview utilization engine",
+      "passed": true,
+      "detail": "Utilization Engine"
+    },
+    {
+      "name": "driver assignment",
+      "passed": true,
+      "detail": "Driver Assignment"
+    },
+    {
+      "name": "assignment history",
+      "passed": true,
+      "detail": "Assignment History"
+    },
+    {
+      "name": "assign dialog opens",
+      "passed": true,
+      "detail": "Allouer un véhicule"
+    },
+    {
+      "name": "finance revenue",
+      "passed": true,
+      "detail": "Revenue"
+    },
+    {
+      "name": "finance maintenance cost",
+      "passed": true,
+      "detail": "Maintenance Cost"
+    },
+    {
+      "name": "finance fines",
+      "passed": true,
+      "detail": "Fines"
+    },
+    {
+      "name": "finance insurance",
+      "passed": true,
+      "detail": "Insurance"
+    },
+    {
+      "name": "finance net contribution",
+      "passed": true,
+      "detail": "Net Contribution"
+    },
+    {
+      "name": "finance range 7 days",
+      "passed": true,
+      "detail": "7 days"
+    },
+    {
+      "name": "finance range 12 months",
+      "passed": true,
+      "detail": "12 months"
+    },
+    {
+      "name": "fleet current control",
+      "passed": true,
+      "detail": "Current control"
+    },
+    {
+      "name": "fleet last validation",
+      "passed": true,
+      "detail": "Last validation"
+    },
+    {
+      "name": "fleet control link",
+      "passed": true,
+      "detail": "/admin/fleet-control"
+    },
+    {
+      "name": "maintenance open orders",
+      "passed": true,
+      "detail": "Open orders"
+    },
+    {
+      "name": "maintenance downtime",
+      "passed": true,
+      "detail": "Downtime"
+    },
+    {
+      "name": "maintenance link",
+      "passed": true,
+      "detail": "/admin/maintenance"
+    },
+    {
+      "name": "gps current location",
+      "passed": true,
+      "detail": "Current location"
+    },
+    {
+      "name": "gps open tracking",
+      "passed": true,
+      "detail": "Open Tracking"
+    },
+    {
+      "name": "tracking link",
+      "passed": true,
+      "detail": "/admin/tracking"
+    },
+    {
+      "name": "contraventions unpaid fines",
+      "passed": true,
+      "detail": "Unpaid fines"
+    },
+    {
+      "name": "contraventions driver attribution",
+      "passed": true,
+      "detail": "Driver attribution"
+    },
+    {
+      "name": "contraventions link",
+      "passed": true,
+      "detail": "/admin/contraventions"
+    },
+    {
+      "name": "sinistres accidents",
+      "passed": true,
+      "detail": "Accidents"
+    },
+    {
+      "name": "sinistres insurance status",
+      "passed": true,
+      "detail": "Insurance status"
+    },
+    {
+      "name": "history timeline",
+      "passed": true,
+      "detail": "Unified timeline"
+    },
+    {
+      "name": "/admin/vehicle-operations loads",
+      "passed": true,
+      "detail": "Vehicle Operations"
+    },
+    {
+      "name": "/admin/vehicles loads",
+      "passed": true,
+      "detail": "Véhicules"
+    },
+    {
+      "name": "/admin/vehicles/d7ea6fd5-892d-441d-a289-cd23fdecfeb8 loads",
+      "passed": true,
+      "detail": "Vehicle 360"
+    },
+    {
+      "name": "mobile vehicle operations route",
+      "passed": true,
+      "detail": "Vehicle Operations"
+    },
+    {
+      "name": "mobile attention queue visible",
+      "passed": true,
+      "detail": "Vehicle Attention Queue"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}
