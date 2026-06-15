@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Separator } from '@/components/ui/separator';
@@ -19,7 +20,7 @@ import { TierBadge } from '@/components/ScoreGauge';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area, BarChart, Bar, Legend } from 'recharts';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
-import { ArrowLeft, Car, AlertTriangle, CheckCircle, Wallet, XCircle, FileText, ExternalLink, Download, FileSpreadsheet } from 'lucide-react';
+import { ArrowLeft, Car, AlertTriangle, CheckCircle, Wallet, XCircle, FileText, ExternalLink, Download, FileSpreadsheet, LockKeyhole, Route, TrendingUp } from 'lucide-react';
 import { AdminBreadcrumb } from '@/components/AdminBreadcrumb';
 import { formatCurrency, formatDateShort } from '@/lib/format';
 import { KYC, PAYMENT, LOAN, SCORE, ADMIN, UI } from '@/lib/i18n';
@@ -49,6 +50,7 @@ import { DriverOperationsHub } from '@/components/admin/driver360/DriverOperatio
 import { DriverWalletCard } from '@/components/admin/DriverWalletCard';
 import { StatusBadge } from '@/lib/statusBadges';
 import { useRealtimePostgresChanges } from '@/hooks/useRealtimePostgresChanges';
+import { useGrowthOwnershipData } from '@/hooks/useGrowthOwnershipData';
 
 const TIER_INFO = {
   A: { label: 'Excellent', color: 'hsl(142, 76%, 36%)' },
@@ -391,6 +393,8 @@ export default function AdminDriverDetail() {
 
   // Calculate summary stats
   const latestScore = scores?.[scores.length - 1];
+  const growthOwnership = useGrowthOwnershipData(Boolean(id) && activeTab === 'growth');
+  const growthProfile = growthOwnership.profiles.find((profile) => profile.driverId === id) ?? null;
 
   // KYC handlers
   const handleApproveKyc = async () => {
@@ -978,6 +982,71 @@ export default function AdminDriverDetail() {
 
         {/* Growth Tab: applications and ownership path */}
         <TabsContent value="growth">
+          <div className="mb-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Ownership Readiness</CardTitle>
+                <CardDescription>Powered by Layer 2F Growth & Ownership Center.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {growthOwnership.isLoading ? (
+                  <div className="text-sm text-muted-foreground">Chargement de la préparation propriété...</div>
+                ) : growthProfile ? (
+                  <>
+                    <div className="grid gap-3 md:grid-cols-4">
+                      <div className="rounded-md border p-3">
+                        <p className="text-xs text-muted-foreground">Pipeline Stage</p>
+                        <p className="mt-1 font-semibold">{growthProfile.pipelineStage}</p>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="text-xs text-muted-foreground">Review Recommendation</p>
+                        <p className="mt-1 font-semibold">{growthProfile.reviewRecommendation}</p>
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="text-xs text-muted-foreground">Growth Progress</p>
+                        <p className="mt-1 font-semibold">{growthProfile.growthProgress}%</p>
+                        <Progress value={growthProfile.growthProgress} className="mt-2 h-2" />
+                      </div>
+                      <div className="rounded-md border p-3">
+                        <p className="text-xs text-muted-foreground">Projected Eligibility</p>
+                        <p className="mt-1 font-semibold">{growthProfile.projectedEligibilityDate ?? 'Manual review'}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-md border p-3">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <p className="font-medium">Next Action</p>
+                          <p className="mt-1 text-sm text-muted-foreground">{growthProfile.nextAction}</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <Button asChild variant="outline" size="sm">
+                            <Link to={`/admin/growth/reviews?driver=${driver.id}`}>
+                              <TrendingUp className="mr-2 h-4 w-4" />
+                              Review
+                            </Link>
+                          </Button>
+                          <Button asChild variant="outline" size="sm">
+                            <Link to={`/admin/growth/ownership?driver=${driver.id}`}>
+                              <Route className="mr-2 h-4 w-4" />
+                              Ownership Pipeline
+                            </Link>
+                          </Button>
+                          <Button type="button" variant="outline" size="sm" disabled>
+                            <LockKeyhole className="mr-2 h-4 w-4" />
+                            Publish disabled
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-sm text-muted-foreground">Aucun profil Growth & Ownership disponible pour ce conducteur.</div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>Historique des Prêts</CardTitle>

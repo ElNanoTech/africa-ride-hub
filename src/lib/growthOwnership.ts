@@ -19,6 +19,31 @@ export type GrowthLifecycleStage =
   | 'Vehicle Owner'
   | 'Fleet Entrepreneur';
 
+export type GrowthPipelineStage =
+  | 'Verified'
+  | 'Trusted'
+  | 'Almost Eligible'
+  | 'Eligible'
+  | 'Offer Published'
+  | 'Application Started'
+  | 'Submitted'
+  | 'Approved'
+  | 'Ownership Active'
+  | 'Fleet Entrepreneur';
+
+export type GrowthReviewRecommendation = 'Approve' | 'Needs Review' | 'Reject' | 'Manual Override';
+
+export type GrowthOwnershipPipelineStage =
+  | 'Application Started'
+  | 'Submitted'
+  | 'Under Review'
+  | 'Approved'
+  | 'Awaiting Down Payment'
+  | 'Awaiting Contract'
+  | 'Awaiting Vehicle'
+  | 'Ready For Activation'
+  | 'Ownership Active';
+
 export type GrowthEligibilityState =
   | 'NOT_EVALUATED'
   | 'NOT_ELIGIBLE'
@@ -188,26 +213,80 @@ export type GrowthOfferEvaluation = {
   driverExplanation: string;
 };
 
+export type GrowthFunnelStage = {
+  key: string;
+  label: string;
+  count: number;
+  route: string;
+};
+
+export type GrowthBlockerSummary = {
+  key: string;
+  label: string;
+  source: GrowthBlocker['source'];
+  severity: GrowthBlockerSeverity;
+  count: number;
+  route: string;
+};
+
+export type GrowthPriorityQueueItem = {
+  key: string;
+  label: string;
+  count: number;
+  priority: 'high' | 'medium' | 'low';
+  route: string;
+};
+
+export type GrowthAnalytics = {
+  eligibleGrowthRate: number;
+  offerAcceptanceRate: number;
+  applicationConversionRate: number;
+  approvalRate: number;
+  ownershipActivationRate: number;
+  fleetEntrepreneurRate: number;
+  cohortsByJoinMonth: Array<{ label: string; count: number }>;
+  scoreBands: Array<{ label: string; count: number }>;
+  vehicleAssignment: Array<{ label: string; count: number }>;
+  funnel: GrowthFunnelStage[];
+  riskBlockers: GrowthBlockerSummary[];
+  averageDownPayment: number | null;
+  averageOwnershipDurationDays: number | null;
+  revenueByOwnershipCohortAvailable: boolean;
+};
+
 export type GrowthDriverProfile = {
   driverId: string;
   driverName: string;
   phone: string | null;
+  createdAt: string | null;
   lifecycleStage: GrowthLifecycleStage;
   nextStage: GrowthLifecycleStage | 'Credit Engine Review' | 'Final Ownership Transfer';
+  pipelineStage: GrowthPipelineStage;
   eligibilityState: GrowthEligibilityState;
+  reviewRecommendation: GrowthReviewRecommendation;
+  growthProgress: number;
+  projectedEligibilityDate: string | null;
   score: number | null;
   tier: string | null;
   scoreProgress: number;
   weeksHistory: number;
   onTimeRate: number;
   walletBalance: number;
+  lastPaymentDate: string | null;
   activeRental: boolean;
   activeVehicleId: string | null;
+  currentVehicleLabel: string | null;
   blockers: GrowthBlocker[];
   recommendations: string[];
   offers: GrowthOfferEvaluation[];
   currentApplication: GrowthLoanLike | null;
   ownershipContract: GrowthContractLike | null;
+  ownershipPipelineStage: GrowthOwnershipPipelineStage | null;
+  applicationDate: string | null;
+  reviewer: string | null;
+  daysInStage: number;
+  nextAction: string;
+  slaFlags: string[];
   riskLevel: DriverRiskLevel | null;
   riskReasons: string[];
   canPublishOffer: boolean;
@@ -224,6 +303,17 @@ export type GrowthOverview = {
   expiringOffers: number;
   riskExceptions: number;
   conversionFunnel: Record<GrowthLifecycleStage, number>;
+  almostEligibleDrivers: number;
+  offersPublished: number;
+  applicationsStarted: number;
+  applicationsSubmitted: number;
+  applicationsApproved: number;
+  ownershipActive: number;
+  fleetEntrepreneurs: number;
+  growthFunnel: GrowthFunnelStage[];
+  topBlockers: GrowthBlockerSummary[];
+  priorityQueue: GrowthPriorityQueueItem[];
+  analytics: GrowthAnalytics;
 };
 
 export const GROWTH_STAGE_ORDER: GrowthLifecycleStage[] = [
@@ -236,8 +326,51 @@ export const GROWTH_STAGE_ORDER: GrowthLifecycleStage[] = [
   'Fleet Entrepreneur',
 ];
 
+export const GROWTH_PIPELINE_STAGES: GrowthPipelineStage[] = [
+  'Verified',
+  'Trusted',
+  'Almost Eligible',
+  'Eligible',
+  'Offer Published',
+  'Application Started',
+  'Submitted',
+  'Approved',
+  'Ownership Active',
+  'Fleet Entrepreneur',
+];
+
+export const OWNERSHIP_PIPELINE_STAGES: GrowthOwnershipPipelineStage[] = [
+  'Application Started',
+  'Submitted',
+  'Under Review',
+  'Approved',
+  'Awaiting Down Payment',
+  'Awaiting Contract',
+  'Awaiting Vehicle',
+  'Ready For Activation',
+  'Ownership Active',
+];
+
 function normalize(value: string | null | undefined): string {
   return (value ?? '').toLowerCase().trim();
+}
+
+function isoDate(value: string | null | undefined): string | null {
+  return value ? value.slice(0, 10) : null;
+}
+
+function daysBetween(start: string | null | undefined, end: string): number {
+  if (!start) return 0;
+  const startTime = new Date(start).getTime();
+  const endTime = new Date(end).getTime();
+  if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return 0;
+  return Math.max(0, Math.floor((endTime - startTime) / 86_400_000));
+}
+
+function addDays(dateValue: string, days: number): string {
+  const date = new Date(dateValue);
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
 }
 
 function driverName(driver: GrowthDriverLike): string {
@@ -252,7 +385,7 @@ function latestScore(scores: GrowthScoreLike[]): GrowthScoreLike | null {
 
 function activeLoan(loans: GrowthLoanLike[]): GrowthLoanLike | null {
   return [...loans].sort((a, b) => (b.applied_at ?? '').localeCompare(a.applied_at ?? ''))
-    .find((loan) => ['pending', 'under_review', 'approved', 'disbursed', 'repaying'].includes(normalize(loan.status))) ?? null;
+    .find((loan) => ['draft', 'started', 'pending', 'under_review', 'approved', 'disbursed', 'repaying'].includes(normalize(loan.status))) ?? null;
 }
 
 function activeContract(contracts: GrowthContractLike[]): GrowthContractLike | null {
@@ -268,6 +401,21 @@ function isCompletedContract(contract: GrowthContractLike | null): boolean {
 
 function hasActiveRental(rentals: GrowthRentalLike[]): boolean {
   return rentals.some((rental) => ['active', 'approved', 'ongoing'].includes(normalize(rental.status)));
+}
+
+function latestPaymentDate(payments: GrowthPaymentLike[]): string | null {
+  return [...payments]
+    .map((payment) => isoDate(payment.paid_date ?? payment.paid_at ?? payment.created_at ?? payment.due_date))
+    .filter((date): date is string => Boolean(date))
+    .sort((a, b) => b.localeCompare(a))[0] ?? null;
+}
+
+function vehicleLabel(vehicle: GrowthVehicleLike | undefined, fallbackId: string | null): string | null {
+  if (!vehicle) return fallbackId;
+  return [
+    vehicle.license_plate,
+    [vehicle.make, vehicle.model_name].filter(Boolean).join(' '),
+  ].filter(Boolean).join(' · ') || fallbackId;
 }
 
 function uniqueWeeks(scores: GrowthScoreLike[], payments: GrowthPaymentLike[]): number {
@@ -287,6 +435,108 @@ function nextStageFor(stage: GrowthLifecycleStage): GrowthDriverProfile['nextSta
   if (stage === 'Vehicle Owner') return 'Fleet Entrepreneur';
   if (stage === 'Fleet Entrepreneur') return 'Final Ownership Transfer';
   return GROWTH_STAGE_ORDER[Math.min(GROWTH_STAGE_ORDER.length - 1, index + 1)];
+}
+
+function buildReviewRecommendation(input: {
+  eligibilityState: GrowthEligibilityState;
+  blockers: GrowthBlocker[];
+  riskLevel: DriverRiskLevel | null;
+}): GrowthReviewRecommendation {
+  if (input.riskLevel === 'eleve' || input.riskLevel === 'critique') return 'Manual Override';
+  if (['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(input.eligibilityState)) return 'Approve';
+  if (input.blockers.some((blocker) => blocker.severity === 'critical')) return 'Reject';
+  return 'Needs Review';
+}
+
+function buildGrowthProgress(input: {
+  score: number | null;
+  weeksHistory: number;
+  onTimeRate: number;
+  blockers: GrowthBlocker[];
+}): number {
+  const scoreProgress = Math.min(100, Math.round(((input.score ?? 0) / 850) * 100));
+  const historyProgress = Math.min(100, Math.round((input.weeksHistory / 12) * 100));
+  const paymentProgress = Math.min(100, Math.round((input.onTimeRate / 90) * 100));
+  const blockerPenalty = input.blockers.filter((blocker) => blocker.severity === 'critical').length * 15;
+  return Math.max(0, Math.min(100, Math.round((scoreProgress + historyProgress + paymentProgress) / 3) - blockerPenalty));
+}
+
+function projectedEligibilityDate(input: {
+  blockers: GrowthBlocker[];
+  weeksHistory: number;
+  today: string;
+}): string | null {
+  if (input.blockers.some((blocker) => blocker.severity === 'critical')) return null;
+  const missingWeeks = Math.max(0, 12 - input.weeksHistory);
+  if (missingWeeks === 0) return input.today;
+  return addDays(input.today, missingWeeks * 7);
+}
+
+function pipelineStageFor(input: {
+  lifecycleStage: GrowthLifecycleStage;
+  eligibilityState: GrowthEligibilityState;
+  currentApplication: GrowthLoanLike | null;
+  ownershipContract: GrowthContractLike | null;
+}): GrowthPipelineStage {
+  const loanStatus = normalize(input.currentApplication?.status);
+  if (input.lifecycleStage === 'Fleet Entrepreneur') return 'Fleet Entrepreneur';
+  if (normalize(input.ownershipContract?.status) === 'active' || isCompletedContract(input.ownershipContract) || ['disbursed', 'repaying'].includes(loanStatus)) return 'Ownership Active';
+  if (loanStatus === 'approved' || input.eligibilityState === 'APPLICATION_APPROVED' || input.eligibilityState === 'ACTIVATION_PENDING') return 'Approved';
+  if (['pending', 'under_review'].includes(loanStatus) || input.eligibilityState === 'APPLICATION_SUBMITTED') return 'Submitted';
+  if (['draft', 'started'].includes(loanStatus) || input.eligibilityState === 'APPLICATION_STARTED') return 'Application Started';
+  if (input.eligibilityState === 'OFFER_PUBLISHED') return 'Offer Published';
+  if (['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(input.eligibilityState)) return 'Eligible';
+  if (input.eligibilityState === 'ALMOST_ELIGIBLE') return 'Almost Eligible';
+  if (input.lifecycleStage === 'Trusted Driver' || input.lifecycleStage === 'Financing Eligible Driver') return 'Trusted';
+  return 'Verified';
+}
+
+function ownershipStageFor(input: {
+  currentApplication: GrowthLoanLike | null;
+  ownershipContract: GrowthContractLike | null;
+  activeVehicleId: string | null;
+}): GrowthOwnershipPipelineStage | null {
+  const loanStatus = normalize(input.currentApplication?.status);
+  const contractStatus = normalize(input.ownershipContract?.status);
+  if (contractStatus === 'active' || isCompletedContract(input.ownershipContract) || ['disbursed', 'repaying'].includes(loanStatus)) return 'Ownership Active';
+  if (contractStatus === 'pending') return 'Awaiting Contract';
+  if (!input.activeVehicleId && loanStatus === 'approved') return 'Awaiting Vehicle';
+  if (loanStatus === 'approved') return 'Approved';
+  if (loanStatus === 'under_review') return 'Under Review';
+  if (loanStatus === 'pending') return 'Submitted';
+  if (['draft', 'started'].includes(loanStatus)) return 'Application Started';
+  return null;
+}
+
+function nextActionFor(input: {
+  ownershipPipelineStage: GrowthOwnershipPipelineStage | null;
+  reviewRecommendation: GrowthReviewRecommendation;
+  blockers: GrowthBlocker[];
+  canPublishOffer: boolean;
+}): string {
+  if (input.ownershipPipelineStage === 'Under Review' || input.ownershipPipelineStage === 'Submitted') return 'Review application and required documents';
+  if (input.ownershipPipelineStage === 'Approved') return 'Confirm down payment, contract, and vehicle readiness';
+  if (input.ownershipPipelineStage === 'Awaiting Contract') return 'Route to ownership contracts';
+  if (input.ownershipPipelineStage === 'Awaiting Vehicle') return 'Confirm vehicle availability';
+  if (input.ownershipPipelineStage === 'Ownership Active') return 'Monitor ownership health';
+  if (input.reviewRecommendation === 'Approve') return 'Review eligibility; publishing remains disabled until persistence and audit exist';
+  if (input.reviewRecommendation === 'Manual Override') return 'Escalate to Trust & Risk with note and audit context';
+  const blocker = input.blockers[0];
+  return blocker ? blocker.label : 'Continue monitoring growth progression';
+}
+
+function slaFlagsFor(input: {
+  ownershipPipelineStage: GrowthOwnershipPipelineStage | null;
+  daysInStage: number;
+  blockers: GrowthBlocker[];
+}): string[] {
+  const flags: string[] = [];
+  if (input.ownershipPipelineStage && input.daysInStage >= 7) flags.push('Application stuck 7 days');
+  if (input.blockers.some((blocker) => blocker.key === 'kyc') && input.daysInStage >= 14) flags.push('Missing document 14 days');
+  if (input.ownershipPipelineStage === 'Approved' && input.daysInStage >= 3) flags.push('Approval not actioned');
+  if (input.blockers.some((blocker) => blocker.key === 'vehicle')) flags.push('Vehicle unavailable');
+  if (input.ownershipPipelineStage === 'Approved') flags.push('Down payment pending verification');
+  return flags;
 }
 
 export function buildLifecycleStage(input: {
@@ -475,6 +725,7 @@ export function buildGrowthProfiles(input: {
   loans: GrowthLoanLike[];
   contracts: GrowthContractLike[];
   rentals: GrowthRentalLike[];
+  vehicles?: GrowthVehicleLike[];
   violations: GrowthViolationLike[];
   accidents: GrowthAccidentLike[];
   controls: GrowthFleetControlLike[];
@@ -488,6 +739,7 @@ export function buildGrowthProfiles(input: {
   const rentalsByDriver = groupBy(input.rentals, (row) => row.driver_id ?? '');
   const walletByDriver = new Map(input.wallets.map((wallet) => [wallet.driver_id, wallet]));
   const riskByDriver = new Map(input.risks.map((risk) => [risk.driver_id, risk]));
+  const vehicleById = new Map((input.vehicles ?? []).map((vehicle) => [vehicle.id, vehicle]));
 
   return input.drivers.map((driver) => {
     const driverScores = scoresByDriver.get(driver.id) ?? [];
@@ -522,6 +774,16 @@ export function buildGrowthProfiles(input: {
     const offers = buildOfferEvaluations({ score, weeksHistory, onTimeRate, blockers });
     const eligibilityState = deriveEligibilityState({ blockers, offers, currentApplication, ownershipContract });
     const lifecycleStage = buildLifecycleStage({ driver, score, weeksHistory, activeRental, ownershipContract, activeLoan: currentApplication });
+    const pipelineStage = pipelineStageFor({ lifecycleStage, eligibilityState, currentApplication, ownershipContract });
+    const reviewRecommendation = buildReviewRecommendation({ eligibilityState, blockers, riskLevel: risk?.level ?? null });
+    const ownershipPipelineStage = ownershipStageFor({ currentApplication, ownershipContract, activeVehicleId });
+    const stageDate = currentApplication?.approved_at
+      ?? currentApplication?.applied_at
+      ?? ownershipContract?.start_date
+      ?? driver.created_at
+      ?? input.today;
+    const daysInStage = daysBetween(stageDate, input.today);
+    const growthProgress = buildGrowthProgress({ score, weeksHistory, onTimeRate, blockers });
     const criticalBlocker = blockers.find((blocker) => blocker.severity === 'critical');
     const canPublishOffer = false;
     const publishDisabledReason = ['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(eligibilityState) && offers.some((offer) => offer.criteriaMet)
@@ -533,22 +795,35 @@ export function buildGrowthProfiles(input: {
       driverId: driver.id,
       driverName: driverName(driver),
       phone: driver.phone_number ?? null,
+      createdAt: driver.created_at ?? null,
       lifecycleStage,
       nextStage: nextStageFor(lifecycleStage),
+      pipelineStage,
       eligibilityState,
+      reviewRecommendation,
+      growthProgress,
+      projectedEligibilityDate: projectedEligibilityDate({ blockers, weeksHistory, today: input.today }),
       score,
       tier: currentScore?.tier ?? null,
       scoreProgress: calculateOwnershipProgress(score ?? 0),
       weeksHistory,
       onTimeRate,
       walletBalance,
+      lastPaymentDate: latestPaymentDate(payments),
       activeRental,
       activeVehicleId,
+      currentVehicleLabel: vehicleLabel(activeVehicleId ? vehicleById.get(activeVehicleId) : undefined, activeVehicleId),
       blockers,
       recommendations: buildGrowthRecommendations(partialProfile),
       offers,
       currentApplication,
       ownershipContract,
+      ownershipPipelineStage,
+      applicationDate: currentApplication?.applied_at ?? null,
+      reviewer: null,
+      daysInStage,
+      nextAction: nextActionFor({ ownershipPipelineStage, reviewRecommendation, blockers, canPublishOffer }),
+      slaFlags: slaFlagsFor({ ownershipPipelineStage, daysInStage, blockers }),
       riskLevel: risk?.level ?? null,
       riskReasons: risk?.reasons ?? [],
       canPublishOffer,
@@ -562,17 +837,192 @@ export function buildGrowthOverview(profiles: GrowthDriverProfile[]): GrowthOver
     acc[stage] = profiles.filter((profile) => profile.lifecycleStage === stage).length;
     return acc;
   }, {} as Record<GrowthLifecycleStage, number>);
+  const totalDrivers = profiles.length;
+  const eligibleDrivers = profiles.filter((profile) => ['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(profile.eligibilityState)).length;
+  const almostEligibleDrivers = profiles.filter((profile) => profile.eligibilityState === 'ALMOST_ELIGIBLE').length;
+  const applicationsStarted = profiles.filter((profile) => profile.pipelineStage === 'Application Started').length;
+  const applicationsSubmitted = profiles.filter((profile) => ['Submitted', 'Approved', 'Ownership Active', 'Fleet Entrepreneur'].includes(profile.pipelineStage)).length;
+  const applicationsApproved = profiles.filter((profile) => ['Approved', 'Ownership Active', 'Fleet Entrepreneur'].includes(profile.pipelineStage)).length;
+  const ownershipActive = profiles.filter((profile) => profile.pipelineStage === 'Ownership Active' || profile.pipelineStage === 'Fleet Entrepreneur').length;
+  const fleetEntrepreneurs = profiles.filter((profile) => profile.pipelineStage === 'Fleet Entrepreneur').length;
+  const growthFunnel = buildGrowthFunnel(profiles);
+  const topBlockers = buildTopBlockers(profiles);
+  const priorityQueue = buildPriorityQueue(profiles);
+  const analytics = buildGrowthAnalytics({
+    profiles,
+    growthFunnel,
+    topBlockers,
+    eligibleDrivers,
+    applicationsSubmitted,
+    applicationsApproved,
+    ownershipActive,
+    fleetEntrepreneurs,
+  });
 
   return {
-    totalDrivers: profiles.length,
-    eligibleDrivers: profiles.filter((profile) => ['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(profile.eligibilityState)).length,
-    closeToEligibility: profiles.filter((profile) => profile.eligibilityState === 'ALMOST_ELIGIBLE').length,
+    totalDrivers,
+    eligibleDrivers,
+    closeToEligibility: almostEligibleDrivers,
     blockedDrivers: profiles.filter((profile) => ['NOT_ELIGIBLE', 'SUSPENDED', 'REJECTED'].includes(profile.eligibilityState)).length,
     ownershipPathDrivers: profiles.filter((profile) => ['ACTIVATION_PENDING', 'ACTIVE_OWNERSHIP_PATH', 'COMPLETED'].includes(profile.eligibilityState)).length,
     activeOffers: 0,
     expiringOffers: 0,
     riskExceptions: profiles.filter((profile) => profile.blockers.some((blocker) => blocker.source === 'risk' || blocker.source === 'sinistres')).length,
     conversionFunnel: funnel,
+    almostEligibleDrivers,
+    offersPublished: 0,
+    applicationsStarted,
+    applicationsSubmitted,
+    applicationsApproved,
+    ownershipActive,
+    fleetEntrepreneurs,
+    growthFunnel,
+    topBlockers,
+    priorityQueue,
+    analytics,
+  };
+}
+
+function percent(numerator: number, denominator: number): number {
+  if (denominator <= 0) return 0;
+  return Math.round((numerator / denominator) * 100);
+}
+
+function buildGrowthFunnel(profiles: GrowthDriverProfile[]): GrowthFunnelStage[] {
+  const stageCount = (predicate: (profile: GrowthDriverProfile) => boolean) => profiles.filter(predicate).length;
+  return [
+    {
+      key: 'verified',
+      label: 'Verified Driver',
+      count: stageCount((profile) => ['Verified', 'Trusted', 'Almost Eligible', 'Eligible', 'Offer Published', 'Application Started', 'Submitted', 'Approved', 'Ownership Active', 'Fleet Entrepreneur'].includes(profile.pipelineStage)),
+      route: '/admin/growth/pipeline?stage=Verified',
+    },
+    {
+      key: 'trusted',
+      label: 'Trusted Driver',
+      count: stageCount((profile) => ['Trusted', 'Almost Eligible', 'Eligible', 'Offer Published', 'Application Started', 'Submitted', 'Approved', 'Ownership Active', 'Fleet Entrepreneur'].includes(profile.pipelineStage)),
+      route: '/admin/growth/pipeline?stage=Trusted',
+    },
+    {
+      key: 'eligible',
+      label: 'Eligible',
+      count: stageCount((profile) => ['Eligible', 'Offer Published', 'Application Started', 'Submitted', 'Approved', 'Ownership Active', 'Fleet Entrepreneur'].includes(profile.pipelineStage)),
+      route: '/admin/growth/pipeline?stage=Eligible',
+    },
+    {
+      key: 'offer-published',
+      label: 'Offer Published',
+      count: 0,
+      route: '/admin/growth/offers',
+    },
+    {
+      key: 'application-started',
+      label: 'Application Started',
+      count: stageCount((profile) => profile.pipelineStage === 'Application Started'),
+      route: '/admin/growth/ownership?stage=Application%20Started',
+    },
+    {
+      key: 'application-submitted',
+      label: 'Application Submitted',
+      count: stageCount((profile) => profile.pipelineStage === 'Submitted'),
+      route: '/admin/growth/ownership?stage=Submitted',
+    },
+    {
+      key: 'approved',
+      label: 'Approved',
+      count: stageCount((profile) => profile.pipelineStage === 'Approved'),
+      route: '/admin/growth/ownership?stage=Approved',
+    },
+    {
+      key: 'ownership-active',
+      label: 'Ownership Active',
+      count: stageCount((profile) => ['Ownership Active', 'Fleet Entrepreneur'].includes(profile.pipelineStage)),
+      route: '/admin/growth/ownership?stage=Ownership%20Active',
+    },
+  ];
+}
+
+function buildTopBlockers(profiles: GrowthDriverProfile[]): GrowthBlockerSummary[] {
+  const byKey = new Map<string, GrowthBlockerSummary>();
+  for (const profile of profiles) {
+    for (const blocker of profile.blockers) {
+      const key = `${blocker.source}:${blocker.key}`;
+      const current = byKey.get(key);
+      if (current) {
+        current.count += 1;
+      } else {
+        byKey.set(key, {
+          key: blocker.key,
+          label: blocker.label,
+          source: blocker.source,
+          severity: blocker.severity,
+          count: 1,
+          route: `/admin/growth/pipeline?blocker=${encodeURIComponent(blocker.key)}`,
+        });
+      }
+    }
+  }
+  return [...byKey.values()].sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)).slice(0, 8);
+}
+
+function buildPriorityQueue(profiles: GrowthDriverProfile[]): GrowthPriorityQueueItem[] {
+  const eligible = profiles.filter((profile) => ['ELIGIBLE_FOR_REVIEW', 'OFFER_READY'].includes(profile.eligibilityState)).length;
+  const lostEligibility = profiles.filter((profile) => profile.blockers.some((blocker) => blocker.severity === 'critical')).length;
+  const awaitingReview = profiles.filter((profile) => ['Submitted', 'Application Started'].includes(profile.pipelineStage)).length;
+  const awaitingDownPayment = profiles.filter((profile) => profile.pipelineStage === 'Approved').length;
+  const stalledApplications = profiles.filter((profile) => profile.slaFlags.some((flag) => flag.includes('stuck'))).length;
+
+  return [
+    { key: 'eligible-now', label: 'Drivers ready for eligibility review', count: eligible, priority: eligible > 0 ? 'high' : 'low', route: '/admin/growth/reviews?recommendation=Approve' },
+    { key: 'lost-eligibility', label: 'Drivers blocked from eligibility', count: lostEligibility, priority: lostEligibility > 0 ? 'high' : 'low', route: '/admin/growth/pipeline?filter=blocked' },
+    { key: 'offers-expiring', label: 'Offers expiring soon', count: 0, priority: 'low', route: '/admin/growth/offers' },
+    { key: 'applications-awaiting-review', label: 'Applications awaiting review', count: awaitingReview, priority: awaitingReview > 0 ? 'medium' : 'low', route: '/admin/growth/ownership' },
+    { key: 'applications-awaiting-down-payment', label: 'Applications awaiting down payment', count: awaitingDownPayment, priority: awaitingDownPayment > 0 ? 'medium' : 'low', route: '/admin/growth/ownership?stage=Approved' },
+    { key: 'applications-stalled', label: 'Applications stalled past SLA', count: stalledApplications, priority: stalledApplications > 0 ? 'high' : 'low', route: '/admin/growth/ownership?sla=stalled' },
+  ];
+}
+
+function buildGrowthAnalytics(input: {
+  profiles: GrowthDriverProfile[];
+  growthFunnel: GrowthFunnelStage[];
+  topBlockers: GrowthBlockerSummary[];
+  eligibleDrivers: number;
+  applicationsSubmitted: number;
+  applicationsApproved: number;
+  ownershipActive: number;
+  fleetEntrepreneurs: number;
+}): GrowthAnalytics {
+  const totalDrivers = input.profiles.length;
+  const joinMonthCounts = new Map<string, number>();
+  const scoreBandCounts = new Map<string, number>();
+  const vehicleCounts = new Map<string, number>();
+  for (const profile of input.profiles) {
+    const joinMonth = profile.createdAt?.slice(0, 7) ?? 'Unknown';
+    joinMonthCounts.set(joinMonth, (joinMonthCounts.get(joinMonth) ?? 0) + 1);
+
+    const score = profile.score ?? 0;
+    const band = score >= 850 ? '850+' : score >= 700 ? '700-849' : score >= 600 ? '600-699' : 'Below 600';
+    scoreBandCounts.set(band, (scoreBandCounts.get(band) ?? 0) + 1);
+
+    const vehicleBucket = profile.currentVehicleLabel ? 'Assigned vehicle' : 'No active vehicle';
+    vehicleCounts.set(vehicleBucket, (vehicleCounts.get(vehicleBucket) ?? 0) + 1);
+  }
+
+  return {
+    eligibleGrowthRate: percent(input.eligibleDrivers, totalDrivers),
+    offerAcceptanceRate: 0,
+    applicationConversionRate: percent(input.applicationsSubmitted, Math.max(1, input.eligibleDrivers)),
+    approvalRate: percent(input.applicationsApproved, input.applicationsSubmitted),
+    ownershipActivationRate: percent(input.ownershipActive, input.applicationsApproved),
+    fleetEntrepreneurRate: percent(input.fleetEntrepreneurs, input.ownershipActive),
+    cohortsByJoinMonth: [...joinMonthCounts.entries()].sort(([a], [b]) => b.localeCompare(a)).slice(0, 6).map(([label, count]) => ({ label, count })),
+    scoreBands: ['850+', '700-849', '600-699', 'Below 600'].map((label) => ({ label, count: scoreBandCounts.get(label) ?? 0 })),
+    vehicleAssignment: ['Assigned vehicle', 'No active vehicle'].map((label) => ({ label, count: vehicleCounts.get(label) ?? 0 })),
+    funnel: input.growthFunnel,
+    riskBlockers: input.topBlockers.filter((blocker) => ['risk', 'sinistres', 'contraventions'].includes(blocker.source)),
+    averageDownPayment: null,
+    averageOwnershipDurationDays: null,
+    revenueByOwnershipCohortAvailable: false,
   };
 }
 

@@ -261,12 +261,13 @@ export function useGrowthOwnershipData(enabled = true): GrowthOwnershipData {
     loans,
     contracts,
     rentals,
+    vehicles,
     violations,
     accidents,
     controls,
     risks,
     today,
-  }), [accidents, contracts, controls, drivers, loans, payments, rentals, risks, scores, today, violations, wallets]);
+  }), [accidents, contracts, controls, drivers, loans, payments, rentals, risks, scores, today, vehicles, violations, wallets]);
 
   const overview = useMemo(() => buildGrowthOverview(profiles), [profiles]);
   const queries = [driversQuery, scoresQuery, paymentsQuery, walletsQuery, loansQuery, contractsQuery, rentalsQuery, violationsQuery, accidentsQuery, controlsQuery, vehiclesQuery];

@@ -267,6 +267,11 @@ const App = () => {
                     <Route path="/admin/gps-mapping" element={<AdminGpsMapping />} />
                     <Route path="/admin/rentals" element={<AdminRentals />} />
                     <Route path="/admin/growth" element={<AdminGrowthOwnership />} />
+                    <Route path="/admin/growth/pipeline" element={<AdminGrowthOwnership />} />
+                    <Route path="/admin/growth/reviews" element={<AdminGrowthOwnership />} />
+                    <Route path="/admin/growth/offers" element={<AdminGrowthOwnership />} />
+                    <Route path="/admin/growth/ownership" element={<AdminGrowthOwnership />} />
+                    <Route path="/admin/growth/analytics" element={<AdminGrowthOwnership />} />
                     <Route path="/admin/growth-ownership" element={<AdminGrowthOwnership />} />
                     <Route path="/admin/loans" element={<AdminLoans />} />
                     <Route path="/admin/payments" element={<AdminPayments />} />
