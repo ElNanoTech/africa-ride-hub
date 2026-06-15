@@ -127,7 +127,7 @@ const DriverAlertes = lazy(() => import("./pages/driver/Alertes"));
 const DriverContraventions = lazy(() => import("./pages/driver/Contraventions"));
 const AdminBilling = lazy(() => import("./pages/admin/Billing"));
 const AdminBillingAudit = lazy(() => import("./pages/admin/BillingAudit"));
-const AdminFinance = lazy(() => import("./pages/admin/Finance"));
+const AdminFinancialOperations = lazy(() => import("./pages/admin/FinancialOperations"));
 const DriverFactures = lazy(() => import("./pages/driver/Factures"));
 const DriverFactureDetail = lazy(() => import("./pages/driver/FactureDetail"));
 const DriverWallet = lazy(() => import("./pages/driver/Wallet"));
@@ -262,7 +262,8 @@ const App = () => {
                     <Route path="/admin/rentals" element={<AdminRentals />} />
                     <Route path="/admin/loans" element={<AdminLoans />} />
                     <Route path="/admin/payments" element={<AdminPayments />} />
-                    <Route path="/admin/finance" element={<AdminFinance />} />
+                    <Route path="/admin/finance" element={<AdminFinancialOperations />} />
+                    <Route path="/admin/financial-operations" element={<AdminFinancialOperations />} />
                     <Route path="/admin/billing" element={<AdminBilling />} />
                     <Route path="/admin/billing/settings" element={<AdminBilling />} />
                     <Route path="/admin/billing/unresolved" element={<AdminBilling />} />

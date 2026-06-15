@@ -1,0 +1,270 @@
+{
+  "checks": [
+    {
+      "name": "primary route title",
+      "passed": true,
+      "detail": "Financial Operations"
+    },
+    {
+      "name": "collected today metric",
+      "passed": true,
+      "detail": "Collected Today"
+    },
+    {
+      "name": "expected today metric",
+      "passed": true,
+      "detail": "Expected Today"
+    },
+    {
+      "name": "recovery rate metric",
+      "passed": true,
+      "detail": "Recovery Rate"
+    },
+    {
+      "name": "outstanding balance metric",
+      "passed": true,
+      "detail": "Outstanding Balance"
+    },
+    {
+      "name": "cash-in definition visible",
+      "passed": true,
+      "detail": "Real cash-in only"
+    },
+    {
+      "name": "remaining due definition visible",
+      "passed": true,
+      "detail": "Remaining due, not invoice total"
+    },
+    {
+      "name": "daily rental first viewport",
+      "passed": true,
+      "detail": "Daily Rental Command Center"
+    },
+    {
+      "name": "due today rental metric",
+      "passed": true,
+      "detail": "Due Today"
+    },
+    {
+      "name": "paid today rental metric",
+      "passed": true,
+      "detail": "Paid Today"
+    },
+    {
+      "name": "drivers overdue metric",
+      "passed": true,
+      "detail": "Drivers Overdue"
+    },
+    {
+      "name": "no fake facturation route text",
+      "passed": true,
+      "detail": "absent: /admin/facturation"
+    },
+    {
+      "name": "no fake wallets route text",
+      "passed": true,
+      "detail": "absent: /admin/wallets"
+    },
+    {
+      "name": "no out-of-scope assign agent",
+      "passed": true,
+      "detail": "absent: Assign Agent"
+    },
+    {
+      "name": "tab trigger Overview",
+      "passed": true,
+      "detail": "Overview"
+    },
+    {
+      "name": "tab trigger Collections",
+      "passed": true,
+      "detail": "Collections"
+    },
+    {
+      "name": "tab trigger Payments",
+      "passed": true,
+      "detail": "Payments"
+    },
+    {
+      "name": "tab trigger Wallet Operations",
+      "passed": true,
+      "detail": "Wallet Operations"
+    },
+    {
+      "name": "tab trigger Reconciliation",
+      "passed": true,
+      "detail": "Reconciliation"
+    },
+    {
+      "name": "tab trigger Cash Flow",
+      "passed": true,
+      "detail": "Cash Flow"
+    },
+    {
+      "name": "tab trigger Financial Health",
+      "passed": true,
+      "detail": "Financial Health"
+    },
+    {
+      "name": "tab trigger Audit",
+      "passed": true,
+      "detail": "Audit"
+    },
+    {
+      "name": "collections queue",
+      "passed": true,
+      "detail": "Collections Queue"
+    },
+    {
+      "name": "collections keeps daily rental central",
+      "passed": true,
+      "detail": "Daily Rental Command Center"
+    },
+    {
+      "name": "bulk reminder available",
+      "passed": true,
+      "detail": "Send Reminder"
+    },
+    {
+      "name": "bulk export available",
+      "passed": true,
+      "detail": "Export"
+    },
+    {
+      "name": "send reminder action",
+      "passed": true,
+      "detail": "submitted"
+    },
+    {
+      "name": "export action",
+      "passed": true,
+      "detail": "financial-collections-2026-06-15.csv"
+    },
+    {
+      "name": "payment feed",
+      "passed": true,
+      "detail": "Payment Feed"
+    },
+    {
+      "name": "payments engine route link",
+      "passed": true,
+      "detail": "/admin/payments"
+    },
+    {
+      "name": "payment detail opens",
+      "passed": true,
+      "detail": "Payment Detail"
+    },
+    {
+      "name": "payment detail remaining due",
+      "passed": true,
+      "detail": "Remaining Due"
+    },
+    {
+      "name": "payment detail wallet applied",
+      "passed": true,
+      "detail": "Wallet Applied"
+    },
+    {
+      "name": "wallet total balance",
+      "passed": true,
+      "detail": "Total Wallet Balance"
+    },
+    {
+      "name": "wallet timeline",
+      "passed": true,
+      "detail": "Wallet Timeline"
+    },
+    {
+      "name": "wallet anomalies",
+      "passed": true,
+      "detail": "Wallet Anomalies"
+    },
+    {
+      "name": "wallet auto applies",
+      "passed": true,
+      "detail": "Auto-Applies"
+    },
+    {
+      "name": "reconciliation queue",
+      "passed": true,
+      "detail": "Reconciliation Queue"
+    },
+    {
+      "name": "safe actions copy",
+      "passed": true,
+      "detail": "Safe actions only"
+    },
+    {
+      "name": "reconciliation action vocabulary constrained",
+      "passed": true,
+      "detail": "only Repair, Re-run Settlement, View links, or disabled Escalate expected"
+    },
+    {
+      "name": "cash flow trend",
+      "passed": true,
+      "detail": "30-Day Cash Flow Trend"
+    },
+    {
+      "name": "forecast definition",
+      "passed": true,
+      "detail": "Forecast from unpaid scheduled payments"
+    },
+    {
+      "name": "financial health index",
+      "passed": true,
+      "detail": "Financial Health Index"
+    },
+    {
+      "name": "health informational only",
+      "passed": true,
+      "detail": "Informational only"
+    },
+    {
+      "name": "financial audit",
+      "passed": true,
+      "detail": "Financial Audit"
+    },
+    {
+      "name": "billing route link",
+      "passed": true,
+      "detail": "/admin/billing"
+    },
+    {
+      "name": "/admin/finance loads",
+      "passed": true,
+      "detail": "Financial Operations"
+    },
+    {
+      "name": "/admin/payments loads",
+      "passed": true,
+      "detail": "Paiements"
+    },
+    {
+      "name": "/admin/billing loads",
+      "passed": true,
+      "detail": "Facturation"
+    },
+    {
+      "name": "/admin/billing/wallets loads",
+      "passed": true,
+      "detail": "Portefeuilles"
+    },
+    {
+      "name": "mobile financial operations route",
+      "passed": true,
+      "detail": "Financial Operations"
+    },
+    {
+      "name": "mobile daily rental visible",
+      "passed": true,
+      "detail": "Daily Rental Command Center"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": []
+}

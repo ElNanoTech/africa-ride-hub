@@ -98,6 +98,7 @@ export function useFinancialRealtime({
       'admin-wallets-list',
       'admin-payments',
       'admin-stats',
+      'financial-operations',
       'invoice',
       'invoice-linked-payment',
       'invoice-linked-payments-batch',
