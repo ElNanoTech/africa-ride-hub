@@ -1162,10 +1162,10 @@ export default function AdminBilling() {
             </DialogDescription>
           </DialogHeader>
           {isEditMode && editingInvoice?.status === "issued" && (
-            <Alert className="border-warning/40 bg-warning/10 text-warning-foreground">
-              <AlertTriangle className="h-4 w-4 text-warning" />
-              <AlertTitle>Facture déjà émise</AlertTitle>
-              <AlertDescription>
+            <Alert className="border-warning/40 bg-warning/10 text-amber-950 dark:text-amber-100">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-300" />
+              <AlertTitle className="text-amber-950 dark:text-amber-100">Facture déjà émise</AlertTitle>
+              <AlertDescription className="text-amber-900 dark:text-amber-200">
                 Attention : cette facture a déjà été émise au conducteur. Les modifications seront immédiatement visibles.
               </AlertDescription>
             </Alert>
