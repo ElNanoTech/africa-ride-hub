@@ -216,7 +216,7 @@ export function buildFinancialOverviewMetrics(input: {
     outstandingBalance: sumOutstandingBalance(input.invoices),
     driversOverdue: countDriversOverdue(input.payments, input.today),
     walletBalanceExposure: input.wallets.reduce((sum, wallet) => sum + Math.max(0, Number(wallet.available_balance ?? 0)), 0),
-    activeRentals: input.rentals.filter((rental) => OPEN_RENTAL_STATUSES.includes(rental.status ?? '')).length,
+    activeRentals: input.rentals.filter((rental) => (OPEN_RENTAL_STATUSES as readonly string[]).includes(rental.status ?? '')).length,
     overdueBalance: overduePayments.reduce((sum, payment) => sum + getPaymentRemaining(payment), 0),
   };
 }

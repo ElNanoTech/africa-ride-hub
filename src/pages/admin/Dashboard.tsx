@@ -1,4 +1,5 @@
 import { useMemo, type ComponentType } from 'react';
+import type { LucideIcon } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -46,7 +47,7 @@ const categoryMeta: Record<AttentionCategory, { label: string; icon: ComponentTy
   growth: { label: 'Croissance', icon: ArrowRight, className: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
 };
 
-const kpiIcons: Record<AttentionFilter, ComponentType<{ className?: string }>> = {
+const kpiIcons: Record<AttentionFilter, LucideIcon> = {
   all: Filter,
   today_cash: Wallet,
   overdue: AlertTriangle,
