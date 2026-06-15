@@ -194,7 +194,7 @@ export function useDriverActivityTimeline(driverId: string | null | undefined, l
             .select('id,status,due_at,submitted_at,reviewed_at,rejection_reason,created_at,updated_at')
             .eq('driver_id', driverId)
             .order('updated_at', { ascending: false })
-            .limit(8),
+            .limit(8) as unknown as PromiseLike<QueryResponse<InspectionRow>>,
           'inspections',
         ),
       ]);

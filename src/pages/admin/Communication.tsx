@@ -316,7 +316,7 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
       duration_minutes: Number(form.duration_minutes) || 0,
       order_index: Number(form.order_index) || 0,
       is_mandatory: !!form.is_mandatory, is_published: !!form.is_published,
-      due_days: form.due_days === "" || form.due_days == null ? null : Number(form.due_days),
+      due_days: form.due_days == null ? null : Number(form.due_days),
     };
     const res = editing
       ? await supabase.from("training_modules").update(payload).eq("id", editing.id)
@@ -381,7 +381,7 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
                   <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label>Durée (min)</Label><Input type="number" value={form.duration_minutes ?? 0} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value })} /></div>
+              <div><Label>Durée (min)</Label><Input type="number" value={form.duration_minutes ?? 0} onChange={(e) => setForm({ ...form, duration_minutes: e.target.value === '' ? 0 : Number(e.target.value) })} /></div>
             </div>
             <div><Label>Lien vidéo (YouTube/MP4)</Label><Input value={form.video_url ?? ""} onChange={(e) => setForm({ ...form, video_url: e.target.value })} placeholder="https://" /></div>
             <div><Label>Contenu texte</Label><Textarea rows={4} value={form.content ?? ""} onChange={(e) => setForm({ ...form, content: e.target.value })} /></div>
@@ -392,7 +392,7 @@ function ModulesTab({ modules, loading, reload }: { modules: Module[]; loading: 
             {form.is_mandatory && (
               <div>
                 <Label>Délai (jours après publication)</Label>
-                <Input type="number" min={1} placeholder="Ex: 14" value={form.due_days ?? ""} onChange={(e) => setForm({ ...form, due_days: e.target.value })} />
+                <Input type="number" min={1} placeholder="Ex: 14" value={form.due_days ?? ""} onChange={(e) => setForm({ ...form, due_days: e.target.value === '' ? null : Number(e.target.value) })} />
                 <p className="text-xs text-muted-foreground mt-1">Rappels automatiques envoyés aux chauffeurs qui n'ont pas terminé.</p>
               </div>
             )}
@@ -588,7 +588,7 @@ function AdsTab({ ads, loading, reload }: { ads: Ad[]; loading: boolean; reload:
                   </SelectContent>
                 </Select>
               </div>
-              <div><Label>Priorité</Label><Input type="number" value={form.priority ?? 0} onChange={(e) => setForm({ ...form, priority: e.target.value })} /></div>
+              <div><Label>Priorité</Label><Input type="number" value={form.priority ?? 0} onChange={(e) => setForm({ ...form, priority: e.target.value === '' ? 0 : Number(e.target.value) })} /></div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Début</Label><Input type="datetime-local" value={form.starts_at ?? ""} onChange={(e) => setForm({ ...form, starts_at: e.target.value })} /></div>
