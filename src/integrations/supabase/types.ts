@@ -1363,6 +1363,111 @@ export type Database = {
           },
         ]
       }
+      contract_audit_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          contract_id: string | null
+          created_at: string
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          reason: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_audit_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "contract_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_files: {
+        Row: {
+          contract_id: string
+          created_at: string
+          customer_id: string | null
+          file_hash: string
+          file_id: string
+          file_type: string
+          generated_at: string
+          storage_reference: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          customer_id?: string | null
+          file_hash: string
+          file_id?: string
+          file_type: string
+          generated_at?: string
+          storage_reference: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          customer_id?: string | null
+          file_hash?: string
+          file_id?: string
+          file_type?: string
+          generated_at?: string
+          storage_reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_files_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "contract_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_milestones: {
         Row: {
           contract_id: string
@@ -1445,6 +1550,191 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "rent_to_own_contracts"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_signature_events: {
+        Row: {
+          audit_event_id: string | null
+          consent_summary_version: string | null
+          consent_text_snapshot: string | null
+          contract_id: string
+          created_at: string
+          customer_id: string | null
+          device_metadata_json: Json
+          event_at: string
+          idempotency_key: string
+          ip_address_encrypted: string | null
+          language_displayed: string
+          signature_event_id: string
+          signature_method: string
+          signature_provider: string
+          signature_status: string
+          signed_at: string | null
+          signed_contract_hash: string | null
+          signer_id: string | null
+          signer_sequence: number
+          signer_type: string
+        }
+        Insert: {
+          audit_event_id?: string | null
+          consent_summary_version?: string | null
+          consent_text_snapshot?: string | null
+          contract_id: string
+          created_at?: string
+          customer_id?: string | null
+          device_metadata_json?: Json
+          event_at?: string
+          idempotency_key: string
+          ip_address_encrypted?: string | null
+          language_displayed?: string
+          signature_event_id?: string
+          signature_method?: string
+          signature_provider?: string
+          signature_status: string
+          signed_at?: string | null
+          signed_contract_hash?: string | null
+          signer_id?: string | null
+          signer_sequence?: number
+          signer_type: string
+        }
+        Update: {
+          audit_event_id?: string | null
+          consent_summary_version?: string | null
+          consent_text_snapshot?: string | null
+          contract_id?: string
+          created_at?: string
+          customer_id?: string | null
+          device_metadata_json?: Json
+          event_at?: string
+          idempotency_key?: string
+          ip_address_encrypted?: string | null
+          language_displayed?: string
+          signature_event_id?: string
+          signature_method?: string
+          signature_provider?: string
+          signature_status?: string
+          signed_at?: string | null
+          signed_contract_hash?: string | null
+          signer_id?: string | null
+          signer_sequence?: number
+          signer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_signature_events_audit_event_id_fkey"
+            columns: ["audit_event_id"]
+            isOneToOne: false
+            referencedRelation: "contract_audit_events"
+            referencedColumns: ["audit_event_id"]
+          },
+          {
+            foreignKeyName: "contract_signature_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "contract_signature_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_templates: {
+        Row: {
+          country: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          effective_from: string
+          effective_to: string | null
+          language: string
+          plain_language_summary: string
+          product_id: string
+          product_version_id: string | null
+          required_fields_json: Json
+          required_signers_json: Json
+          status: string
+          summary_version: string
+          template_body: string
+          template_id: string
+          template_name: string
+          template_type: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          language?: string
+          plain_language_summary?: string
+          product_id: string
+          product_version_id?: string | null
+          required_fields_json?: Json
+          required_signers_json?: Json
+          status?: string
+          summary_version?: string
+          template_body: string
+          template_id?: string
+          template_name: string
+          template_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          language?: string
+          plain_language_summary?: string
+          product_id?: string
+          product_version_id?: string | null
+          required_fields_json?: Json
+          required_signers_json?: Json
+          status?: string
+          summary_version?: string
+          template_body?: string
+          template_id?: string
+          template_name?: string
+          template_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_templates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "contract_templates_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
           },
         ]
       }
@@ -1549,43 +1839,86 @@ export type Database = {
         Row: {
           agreement_id: string
           agreement_snapshot: Json
+          agreement_status: string
           application_id: string
+          asset_id: string | null
+          contract_hash: string | null
+          contract_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string | null
+          decision_id: string | null
+          final_pdf_hash: string | null
+          product_id: string | null
+          product_version_id: string | null
+          signature_hash: string | null
           signed_at: string | null
           signed_by_admin_id: string | null
           signed_by_driver_at: string | null
+          snapshot_hash: string | null
+          template_id: string | null
+          template_version: number | null
         }
         Insert: {
           agreement_id?: string
           agreement_snapshot: Json
+          agreement_status?: string
           application_id: string
+          asset_id?: string | null
+          contract_hash?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_id?: string | null
+          final_pdf_hash?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          signature_hash?: string | null
           signed_at?: string | null
           signed_by_admin_id?: string | null
           signed_by_driver_at?: string | null
+          snapshot_hash?: string | null
+          template_id?: string | null
+          template_version?: number | null
         }
         Update: {
           agreement_id?: string
           agreement_snapshot?: Json
+          agreement_status?: string
           application_id?: string
+          asset_id?: string | null
+          contract_hash?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_id?: string | null
+          final_pdf_hash?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          signature_hash?: string | null
           signed_at?: string | null
           signed_by_admin_id?: string | null
           signed_by_driver_at?: string | null
+          snapshot_hash?: string | null
+          template_id?: string | null
+          template_version?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "credit_agreements_application_id_fkey"
             columns: ["application_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "credit_applications"
             referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "credit_agreements_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "credit_agreements_customer_id_fkey"
@@ -1841,6 +2174,191 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_contracts: {
+        Row: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          admin_signed_at?: string | null
+          application_id: string
+          asset_id?: string | null
+          contract_hash: string
+          contract_id?: string
+          contract_snapshot_json: Json
+          contract_status?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string | null
+          customer_id?: string | null
+          decision_id: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          driver_id: string
+          driver_signed_at?: string | null
+          expires_at?: string | null
+          final_pdf_hash?: string | null
+          fully_executed_at?: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at?: string | null
+          signature_hash?: string | null
+          signature_provider?: string
+          snapshot_hash: string
+          status_changed_at?: string
+          superseded_by_contract_id?: string | null
+          template_id: string
+          template_version: number
+          updated_at?: string
+          updated_by?: string | null
+          viewed_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          admin_signed_at?: string | null
+          application_id?: string
+          asset_id?: string | null
+          contract_hash?: string
+          contract_id?: string
+          contract_snapshot_json?: Json
+          contract_status?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string | null
+          customer_id?: string | null
+          decision_id?: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          driver_id?: string
+          driver_signed_at?: string | null
+          expires_at?: string | null
+          final_pdf_hash?: string | null
+          fully_executed_at?: string | null
+          idempotency_key?: string
+          product_id?: string
+          product_version_id?: string
+          sent_at?: string | null
+          signature_hash?: string | null
+          signature_provider?: string
+          snapshot_hash?: string
+          status_changed_at?: string
+          superseded_by_contract_id?: string | null
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+          updated_by?: string | null
+          viewed_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_contracts_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_superseded_by_contract_id_fkey"
+            columns: ["superseded_by_contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["template_id"]
           },
         ]
       }
@@ -4919,6 +5437,7 @@ export type Database = {
       }
       product_versions: {
         Row: {
+          contract_requirements_json: Json
           created_at: string
           created_by: string | null
           customer_id: string | null
@@ -4933,6 +5452,7 @@ export type Database = {
           version_number: number
         }
         Insert: {
+          contract_requirements_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -4947,6 +5467,7 @@ export type Database = {
           version_number: number
         }
         Update: {
+          contract_requirements_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
@@ -7080,6 +7601,57 @@ export type Database = {
         Args: { p_driver_id: string; p_rate: number; p_vehicle_id: string }
         Returns: string
       }
+      admin_sign_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason?: string
+          p_signer_type?: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       apply_rental_adjustment: {
         Args: {
           p_action: string
@@ -7363,6 +7935,79 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      contract_apply_signature_progress: {
+        Args: { p_contract_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      contract_audit: {
+        Args: {
+          p_actor_id: string
+          p_actor_type: string
+          p_after?: Json
+          p_before?: Json
+          p_contract_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_reason?: string
+        }
+        Returns: string
+      }
+      contract_decrypt_signature_ip: {
+        Args: { p_idempotency_key?: string; p_signature_event_id: string }
+        Returns: string
+      }
+      contract_encrypt_ip: { Args: { p_ip: string }; Returns: string }
+      contract_normalize_required_signers: {
+        Args: { p_required: Json }
+        Returns: Json
+      }
+      contract_signer_sequence: {
+        Args: { p_contract_id: string; p_signer_type: string }
+        Returns: number
+      }
+      contract_status_label: { Args: { p_status: string }; Returns: string }
       create_activation_package: {
         Args: {
           p_application_id: string
@@ -7548,6 +8193,56 @@ export type Database = {
         Args: { p_alert: string; p_status?: string }
         Returns: undefined
       }
+      driver_decline_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason?: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       driver_generate_access_code: {
         Args: { p_driver: string }
         Returns: {
@@ -7582,9 +8277,106 @@ export type Database = {
         }
         Returns: Json
       }
+      driver_sign_credit_contract: {
+        Args: {
+          p_consent_confirmed?: boolean
+          p_contract_id: string
+          p_device_metadata_json?: Json
+          p_idempotency_key?: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       driver_suspend: {
         Args: { p_driver: string; p_reason: string }
         Returns: undefined
+      }
+      driver_view_credit_contract: {
+        Args: { p_contract_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       drivers_risk_summary: {
         Args: never
@@ -7712,6 +8504,52 @@ export type Database = {
         }
       }
       generate_accident_case_number: { Args: never; Returns: string }
+      generate_credit_contract: {
+        Args: { p_application_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       generate_fleet_alerts: { Args: never; Returns: number }
       get_driver_360_summary: { Args: { p_driver_id: string }; Returns: Json }
       get_driver_activity_timeline: {
@@ -7726,6 +8564,25 @@ export type Database = {
         }[]
       }
       get_driver_auth_mode: { Args: never; Returns: string }
+      get_driver_contract_statuses: {
+        Args: never
+        Returns: {
+          application_id: string
+          asset_label: string
+          can_decline: boolean
+          can_sign: boolean
+          can_view: boolean
+          contract_id: string
+          expires_at: string
+          primary_action_label: string
+          product_name: string
+          required_actions_json: Json
+          signed_at: string
+          status_label: string
+          status_tone: string
+          summary_json: Json
+        }[]
+      }
       get_driver_displayed_score: {
         Args: { p_driver_id: string }
         Returns: number
@@ -7797,6 +8654,10 @@ export type Database = {
           }
         | { Args: { role: string }; Returns: boolean }
       has_admin_role_in: { Args: { roles: string[] }; Returns: boolean }
+      has_contract_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
       has_underwriting_permission: {
         Args: { permission: string }
@@ -7901,6 +8762,81 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "driver_wallet_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      record_manual_contract_file: {
+        Args: {
+          p_contract_id: string
+          p_file_hash: string
+          p_idempotency_key?: string
+          p_reason: string
+          p_storage_reference: string
+        }
+        Returns: {
+          contract_id: string
+          created_at: string
+          customer_id: string | null
+          file_hash: string
+          file_id: string
+          file_type: string
+          generated_at: string
+          storage_reference: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contract_files"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reissue_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -8076,6 +9012,52 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      send_credit_contract: {
+        Args: { p_contract_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -8327,6 +9309,56 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "rentals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
           isOneToOne: true
           isSetofReturn: false
         }
