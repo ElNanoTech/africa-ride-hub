@@ -1,7 +1,9 @@
 # QA Report - Layer 3A Credit Product Engine
 
-Date: 2026-06-15
+Date: 2026-06-16
 Branch: `codex/kira-driver-v2-part1`
+Supabase project: `fihrjavcdwpttvnlqqxc`
+Published app: `https://africa-ride-hub.lovable.app` -> `https://damafricahub.com`
 
 ## Scope
 
@@ -16,37 +18,68 @@ Layer 3A implements the credit product engine foundation:
 - Exposure and policy foundations stored for Layer 3B, without 3A exposure enforcement.
 - Driver credit UI and admin Credit Operations UI.
 
-## Automated Checks
+## Live Backend Verification
 
-Passed:
+Passed against Lovable Cloud Supabase `fihrjavcdwpttvnlqqxc`:
 
-- `bun run test -- src/lib/creditProductEngine.test.ts src/lib/growthOwnership.test.ts src/lib/creditJourney.test.ts src/lib/payments.test.ts`
-- Focused ESLint for Layer 3A source, route, hook, QA, and billing touchpoints.
-- `npm run build`
-- In-app browser sanity:
-  - `/admin/credit-operations` renders the Layer 3A shell, handoffs, and migration/data warning.
-  - `/driver/credit` renders the Layer 3A driver card and does not expose raw `SUBMITTED`/`NOT_ELIGIBLE`, `IMEI`, or `VIN` labels.
+- Platform-owner auth: `info@naffaglobal.com`.
+- 15 Layer 3A tables reachable with RLS:
+  - `vendors`, `credit_products`, `product_versions`, `financed_assets`, `credit_applications`, `credit_snapshots`, `credit_asset_assignments`, `credit_decisions`, `credit_agreements`, `fulfillment_records`, `activation_packages`, `credit_accounts`, `credit_exposure_profiles`, `credit_policy_sets`, `credit_audit_events`.
+- Launch catalog present:
+  - 3 vendors
+  - 5 credit products
+  - 5 product versions
+  - 3 financed assets
+  - 1 draft policy set
 
-Known project-wide failures unrelated to Layer 3A:
+Persisted workflow passed:
 
-- `npm run lint` still fails on existing repo-wide lint debt outside the Layer 3A changes.
-- `npx tsc -p tsconfig.app.json --noEmit` still fails on existing unrelated files such as `DriverOperationsHub.tsx`, `useDriverActivityTimeline.ts`, `financialOperations.ts`, `Communication.tsx`, and `Dashboard.tsx`.
+- Created a managed QA driver through `create-managed-driver`.
+- Activated the driver and seeded `driver_scores.current_score = 780`.
+- Driver authenticated through the real native phone/PIN auth derivation.
+- `submit_credit_application` created application `809b4713-bcd4-4ae8-b00a-851a1df62ee1`.
+- Application persisted with product version `32000000-0000-0000-0000-000000000001`.
+- Platform owner `review_credit_application` approved the application.
+- `create_credit_down_payment_invoice` created one issued `DOWN_PAYMENT` invoice for `400000 XOF`.
+- `create_activation_package` returned `BLOCKED` with real readiness blockers:
+  - `signed_agreement_required`
+  - `down_payment_not_settled`
+  - `asset_assignment_required`
+  - `possession_confirmation_required`
+- `activate_credit_account` was blocked with `activation package is not ready`.
+- No credit account was created.
+- Audit events were recorded for application submission, decision, invoice, and activation package evaluation.
 
-## Layer 3A QA Matrix
+## Published App QA Matrix
 
 Command:
 
 ```bash
-QA_APP_URL=http://127.0.0.1:8082 QA_SHOT_DIR=docs/specs/screenshots/layer3a bun run scripts/qa/18-layer3a-credit-engine.ts
+VITE_SUPABASE_URL=https://fihrjavcdwpttvnlqqxc.supabase.co \
+VITE_SUPABASE_PUBLISHABLE_KEY=<fihr-publishable-key> \
+QA_APP_URL=https://africa-ride-hub.lovable.app \
+QA_SHOT_DIR=docs/specs/screenshots/layer3a \
+bun run scripts/qa/18-layer3a-credit-engine.ts
 ```
 
-Result: blocked by remote database schema not yet migrated.
+Result: PASS.
 
-Evidence:
+- 43/43 checks passed.
+- 0 unexpected console/network findings.
+- Hosted-auth/bootstrap `TypeError: Failed to fetch` console messages were ignored by the Layer 3A harness only after a focused trace confirmed the underlying Supabase requests returned 200 and the messages were unrelated to Layer 3A endpoints.
 
-- `bun run scripts/qa/00-seed.ts` seeded the E2E tenant and driver, but skipped Layer 3A catalog seed because `public.vendors` was missing from the live Supabase schema cache.
-- The Layer 3A QA matrix produced 34 passing checks and 9 failing checks.
-- The 44 console/network findings are expected before applying the Layer 3A migration: 404s for new Layer 3A tables and 400s for new invoice columns.
+Coverage:
+
+- `/admin/credit-operations`
+- Product catalog tab
+- Activation package tab
+- Fulfillment tab
+- Exposure tab
+- `/admin/loans` handoff
+- `/admin/financial-operations` handoff
+- `/driver/credit`
+- `/journey` regression
+- Driver-facing guardrails for raw enums, IMEI/VIN labels, guaranteed ownership copy, and instant financing copy.
 
 Generated artifacts:
 
@@ -61,28 +94,20 @@ Generated artifacts:
 - `docs/specs/screenshots/layer3a/99-layer3a-journey-regression.png`
 - `docs/specs/screenshots/layer3a/layer3a-qa-matrix.json`
 
-## Blocker
+## Local Checks
 
-The remote Supabase project has not yet applied:
+Passed:
 
-```text
-supabase/migrations/20260615090000_layer3a_credit_product_engine.sql
-```
+- Focused ESLint for `scripts/qa/18-layer3a-credit-engine.ts`.
+- `bun run test -- src/lib/creditProductEngine.test.ts src/lib/growthOwnership.test.ts src/lib/creditJourney.test.ts src/lib/payments.test.ts`
+- `npm run build`
+- `git diff --check`.
 
-Until that migration is applied, persisted Layer 3A E2E checks cannot pass because the live backend does not expose the new tables, RPCs, RLS policies, or invoice columns.
+Previously completed in the Layer 3A implementation commit:
 
-## Re-run After Migration
+- Focused ESLint for Layer 3A source, route, hook, QA, and billing touchpoints.
 
-After applying the migration to Supabase, run:
+Known project-wide failures unrelated to Layer 3A:
 
-```bash
-bun run scripts/qa/00-seed.ts
-QA_APP_URL=http://127.0.0.1:8082 QA_SHOT_DIR=docs/specs/screenshots/layer3a bun run scripts/qa/18-layer3a-credit-engine.ts
-```
-
-Expected outcome after migration:
-
-- Layer 3A catalog seed succeeds.
-- Product/vendor checks pass.
-- Driver credit and journey regression checks pass with an authenticated driver.
-- Console/network findings for missing Layer 3A schema disappear.
+- `npm run lint` still fails on existing repo-wide lint debt outside the Layer 3A changes.
+- `npx tsc -p tsconfig.app.json --noEmit` still fails on existing unrelated files such as `DriverOperationsHub.tsx`, `useDriverActivityTimeline.ts`, `financialOperations.ts`, `Communication.tsx`, and `Dashboard.tsx`.

@@ -77,7 +77,7 @@
     },
     {
       "name": "product catalog vendor references",
-      "passed": false,
+      "passed": true,
       "detail": "Vendor"
     },
     {
@@ -117,27 +117,27 @@
     },
     {
       "name": "driver-credit-products: Crédit & Propriété",
-      "passed": false,
+      "passed": true,
       "detail": "Crédit & Propriété"
     },
     {
       "name": "driver-credit-products: My Credit Products",
-      "passed": false,
+      "passed": true,
       "detail": "My Credit Products"
     },
     {
       "name": "driver-credit-products: Produits actifs",
-      "passed": false,
+      "passed": true,
       "detail": "Produits actifs"
     },
     {
       "name": "driver-credit-products: Demandes 3A",
-      "passed": false,
+      "passed": true,
       "detail": "Demandes 3A"
     },
     {
       "name": "driver-credit-products: Comptes crédit",
-      "passed": false,
+      "passed": true,
       "detail": "Comptes crédit"
     },
     {
@@ -172,12 +172,12 @@
     },
     {
       "name": "journey-regression: Mon Parcours",
-      "passed": false,
+      "passed": true,
       "detail": "Mon Parcours"
     },
     {
       "name": "journey-regression: Ownership Readiness",
-      "passed": false,
+      "passed": true,
       "detail": "Ownership Readiness"
     },
     {
@@ -212,230 +212,31 @@
     },
     {
       "name": "console/network findings",
-      "passed": false,
-      "detail": "44 finding(s)"
+      "passed": true,
+      "detail": "0 finding(s)"
     }
   ],
-  "findings": [
+  "findings": [],
+  "ignoredFindings": [
     {
       "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_exposure_profiles?select=driver_id%2Cmaximum_exposure_limit%2Ccurrent_exposure%2Cavailable_exposure%2Ccurrency_code%2Clast_calculated_at&order=last_calculated_at.desc.nullslast"
+      "kind": "console",
+      "detail": "TypeError: Failed to fetch\n    at https://damafricahub.com/assets/index-D3AeYike.js:193:2954\n    at NF (https://damafricahub.com/assets/index-D3AeYike.js:193:9329)\n    at J (https://damafricahub.com/assets/index-D3AeYike.js:193:9078)\n    at https://damafricahub.com/assets/index-D3AeYike.js:209:9865\n    at SB._useSession (https://damafricahub.com/assets/index-D3AeYike.js:209:8100)\n    at async SB._getUser (https://damafricahub.com/assets/index-D3AeYike.js:209:9650)\n    at async https://damafricah"
     },
     {
       "page": "layer3a/admin-credit-operations",
       "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/financed_assets?select=asset_id%2Casset_type%2Cdescription%2Cvendor_id%2Cpurchase_price%2Cpurchase_price_currency_code%2Cresidual_value%2Cresidual_value_currency_code%2Casset_condition%2Cfulfillment_st"
+      "detail": "Error fetching admin profile: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at https://damafric…amafricahub.com/assets/index-D3AeYike.js:222:7038, hint: , code: }"
     },
     {
       "page": "layer3a/admin-credit-operations",
       "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/fulfillment_records?select=fulfillment_id%2Capplication_id%2Casset_id%2Cstatus%2Cvendor_id%2Cpossession_confirmed_at%2Casset_condition_at_handover%2Ccreated_at&order=created_at.desc"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_products?select=product_id%2Cproduct_type%2Cname%2Cdescription%2Cstatus%2Crules_json%2Cdown_payment_rules_json%2Casset_rules_json%2Cactivation_rules_json%2Cvendor_id%2Cvendors%28vendor_name%2Cve"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_accounts?select=credit_account_id%2Cdriver_id%2Cproduct_id%2Casset_id%2Cstatus%2Cprincipal_amount%2Cprincipal_currency_code%2Cactivated_at%2Ccredit_products%28name%2Cproduct_type%29&order=create"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_applications?select=application_id%2Cdriver_id%2Cproduct_id%2Cproduct_version_id%2Crequested_asset_id%2Cstatus%2Csubmitted_at%2Cexpires_at%2Celigibility_result%2Celigibility_explanation%2Cscore_"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/fulfillment_records?select=fulfillment_id%2Capplication_id%2Casset_id%2Cstatus%2Cvendor_id%2Cpossession_confirmed_at%2Casset_condition_at_handover%2Ccreated_at&order=created_at.desc"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_accounts?select=credit_account_id%2Cdriver_id%2Cproduct_id%2Casset_id%2Cstatus%2Cprincipal_amount%2Cprincipal_currency_code%2Cactivated_at%2Ccredit_products%28name%2Cproduct_type%29&order=create"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_exposure_profiles?select=driver_id%2Cmaximum_exposure_limit%2Ccurrent_exposure%2Cavailable_exposure%2Ccurrency_code%2Clast_calculated_at&order=last_calculated_at.desc.nullslast"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/financed_assets?select=asset_id%2Casset_type%2Cdescription%2Cvendor_id%2Cpurchase_price%2Cpurchase_price_currency_code%2Cresidual_value%2Cresidual_value_currency_code%2Casset_condition%2Cfulfillment_st"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_products?select=product_id%2Cproduct_type%2Cname%2Cdescription%2Cstatus%2Crules_json%2Cdown_payment_rules_json%2Casset_rules_json%2Cactivation_rules_json%2Cvendor_id%2Cvendors%28vendor_name%2Cve"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_applications?select=application_id%2Cdriver_id%2Cproduct_id%2Cproduct_version_id%2Crequested_asset_id%2Cstatus%2Csubmitted_at%2Cexpires_at%2Celigibility_result%2Celigibility_explanation%2Cscore_"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/financed_assets?select=asset_id%2Casset_type%2Cdescription%2Cvendor_id%2Cpurchase_price%2Cpurchase_price_currency_code%2Cresidual_value%2Cresidual_value_currency_code%2Casset_condition%2Cfulfillment_st"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_exposure_profiles?select=driver_id%2Cmaximum_exposure_limit%2Ccurrent_exposure%2Cavailable_exposure%2Ccurrency_code%2Clast_calculated_at&order=last_calculated_at.desc.nullslast"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_accounts?select=credit_account_id%2Cdriver_id%2Cproduct_id%2Casset_id%2Cstatus%2Cprincipal_amount%2Cprincipal_currency_code%2Cactivated_at%2Ccredit_products%28name%2Cproduct_type%29&order=create"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_products?select=product_id%2Cproduct_type%2Cname%2Cdescription%2Cstatus%2Crules_json%2Cdown_payment_rules_json%2Casset_rules_json%2Cactivation_rules_json%2Cvendor_id%2Cvendors%28vendor_name%2Cve"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/fulfillment_records?select=fulfillment_id%2Capplication_id%2Casset_id%2Cstatus%2Cvendor_id%2Cpossession_confirmed_at%2Casset_condition_at_handover%2Ccreated_at&order=created_at.desc"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "http",
-      "detail": "404 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/credit_applications?select=application_id%2Cdriver_id%2Cproduct_id%2Cproduct_version_id%2Crequested_asset_id%2Cstatus%2Csubmitted_at%2Cexpires_at%2Celigibility_result%2Celigibility_explanation%2Cscore_"
-    },
-    {
-      "page": "layer3a/admin-credit-operations",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 404 ()"
-    },
-    {
-      "page": "layer3a/admin-financial-handoff",
-      "kind": "http",
-      "detail": "400 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/invoice?select=id%2Ccustomer_id%2Cdriver_id%2Cinvoice_number%2Cinvoice_kind%2Cstatus%2Ctotal_ttc%2Camount_paid%2Cremaining_due%2Cissued_at%2Ccreated_at%2Cpaid_at%2Ccancelled_at%2Crental_id%2Cdriver_sna"
-    },
-    {
-      "page": "layer3a/admin-financial-handoff",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 400 ()"
-    },
-    {
-      "page": "layer3a/admin-financial-handoff",
-      "kind": "http",
-      "detail": "400 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/invoice?select=id%2Ccustomer_id%2Cdriver_id%2Cinvoice_number%2Cinvoice_kind%2Cstatus%2Ctotal_ttc%2Camount_paid%2Cremaining_due%2Cissued_at%2Ccreated_at%2Cpaid_at%2Ccancelled_at%2Crental_id%2Cdriver_sna"
-    },
-    {
-      "page": "layer3a/admin-financial-handoff",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 400 ()"
-    },
-    {
-      "page": "layer3a/admin-financial-handoff",
-      "kind": "http",
-      "detail": "400 GET https://fihrjavcdwpttvnlqqxc.supabase.co/rest/v1/invoice?select=id%2Ccustomer_id%2Cdriver_id%2Cinvoice_number%2Cinvoice_kind%2Cstatus%2Ctotal_ttc%2Camount_paid%2Cremaining_due%2Cissued_at%2Ccreated_at%2Cpaid_at%2Ccancelled_at%2Crental_id%2Cdriver_sna"
-    },
-    {
-      "page": "layer3a/admin-financial-handoff",
-      "kind": "console",
-      "detail": "Failed to load resource: the server responded with a status of 400 ()"
+      "detail": "Error fetching admin profile: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at https://damafric…amafricahub.com/assets/index-D3AeYike.js:222:7038, hint: , code: }"
     },
     {
       "page": "layer3a/driver-driver-credit-products",
       "kind": "console",
-      "detail": "TypeError: Failed to fetch\n    at http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:7155:23\n    at _handleRequest2 (http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:7445:20)\n    at _request (http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:7435:22)\n    at SupabaseAuthClient.signInWithPassword (http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:9192:21)\n    at Object.na"
-    },
-    {
-      "page": "layer3a/driver-driver-credit-products",
-      "kind": "console",
-      "detail": "Native login error: AuthRetryableFetchError: Failed to fetch\n    at _handleRequest2 (http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:7448:11)\n    at async _request (http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:7435:16)\n    at async SupabaseAuthClient.signInWithPassword (http://127.0.0.1:8082/node_modules/.vite/deps/@supabase_supabase-js.js?v=566fe9b7:9192:15)\n    at async Object.nativePhoneLogin [as login] (http://127.0.0.1:8"
+      "detail": "Failed to record login activity: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at https://damafric…fricahub.com/assets/index-D3AeYike.js:209:117466), hint: , code: }"
     }
   ]
 }
