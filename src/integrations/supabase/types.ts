@@ -1957,46 +1957,61 @@ export type Database = {
       }
       credit_policy_sets: {
         Row: {
+          approval_authority_json: Json
           created_at: string
           created_by: string | null
           customer_id: string | null
+          decision_matrix_json: Json
           effective_from: string
           effective_to: string | null
           policy_id: string
           policy_json: Json
           policy_name: string
           policy_type: string
+          product_id: string | null
+          rules_json: Json
           status: string
           updated_at: string
           updated_by: string | null
+          version: number
         }
         Insert: {
+          approval_authority_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_matrix_json?: Json
           effective_from?: string
           effective_to?: string | null
           policy_id?: string
           policy_json?: Json
           policy_name: string
           policy_type: string
+          product_id?: string | null
+          rules_json?: Json
           status?: string
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Update: {
+          approval_authority_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_matrix_json?: Json
           effective_from?: string
           effective_to?: string | null
           policy_id?: string
           policy_json?: Json
           policy_name?: string
           policy_type?: string
+          product_id?: string | null
+          rules_json?: Json
           status?: string
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Relationships: [
           {
@@ -2005,6 +2020,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_policy_sets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -4821,6 +4843,80 @@ export type Database = {
           },
         ]
       }
+      product_underwriting_extensions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          extension_config_json: Json
+          extension_id: string
+          extension_key: string
+          policy_set_id: string | null
+          product_id: string | null
+          product_version_id: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          extension_config_json?: Json
+          extension_id?: string
+          extension_key: string
+          policy_set_id?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          extension_config_json?: Json
+          extension_id?: string
+          extension_key?: string
+          policy_set_id?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_underwriting_extensions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_policy_set_id_fkey"
+            columns: ["policy_set_id"]
+            isOneToOne: false
+            referencedRelation: "credit_policy_sets"
+            referencedColumns: ["policy_id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+        ]
+      }
       product_versions: {
         Row: {
           created_at: string
@@ -5201,6 +5297,162 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reunderwriting_triggers: {
+        Row: {
+          application_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          idempotency_key: string
+          prior_decision_id: string | null
+          required_snapshot_at: string
+          resolution_decision_id: string | null
+          status: string
+          status_changed_at: string
+          trigger_id: string
+          trigger_payload_json: Json
+          trigger_source: string
+          trigger_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          idempotency_key: string
+          prior_decision_id?: string | null
+          required_snapshot_at?: string
+          resolution_decision_id?: string | null
+          status?: string
+          status_changed_at?: string
+          trigger_id?: string
+          trigger_payload_json?: Json
+          trigger_source?: string
+          trigger_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          idempotency_key?: string
+          prior_decision_id?: string | null
+          required_snapshot_at?: string
+          resolution_decision_id?: string | null
+          status?: string
+          status_changed_at?: string
+          trigger_id?: string
+          trigger_payload_json?: Json
+          trigger_source?: string
+          trigger_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reunderwriting_triggers_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_prior_decision_id_fkey"
+            columns: ["prior_decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_resolution_decision_id_fkey"
+            columns: ["resolution_decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+        ]
+      }
+      review_assignments: {
+        Row: {
+          application_id: string
+          assigned_at: string
+          assignment_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          due_by: string | null
+          idempotency_key: string
+          reviewer_id: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          application_id: string
+          assigned_at?: string
+          assignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          due_by?: string | null
+          idempotency_key: string
+          reviewer_id?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          application_id?: string
+          assigned_at?: string
+          assignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          due_by?: string | null
+          idempotency_key?: string
+          reviewer_id?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_assignments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "review_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_assignments_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
         ]
@@ -5716,6 +5968,308 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      underwriting_conditions: {
+        Row: {
+          condition_id: string
+          condition_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          decision_id: string
+          description: string
+          fulfilled_at: string | null
+          fulfilled_by: string | null
+          idempotency_key: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          condition_id?: string
+          condition_type: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id: string
+          description: string
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          idempotency_key?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          condition_id?: string
+          condition_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id?: string
+          description?: string
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          idempotency_key?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "underwriting_conditions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_conditions_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "underwriting_conditions_fulfilled_by_fkey"
+            columns: ["fulfilled_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      underwriting_decisions: {
+        Row: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount?: number
+          available_exposure_currency_code?: string
+          created_at?: string
+          created_by?: string | null
+          current_exposure_amount?: number
+          current_exposure_currency_code?: string
+          customer_id?: string | null
+          decision: string
+          decision_id?: string
+          decision_risk_level?: string | null
+          decision_risk_snapshot_json?: Json
+          decision_score_grade?: string | null
+          decision_score_value?: number | null
+          decision_timestamp?: string
+          decision_valid_until?: string | null
+          driver_explanation: string
+          evaluated_policy_set_id?: string | null
+          evaluated_policy_snapshot_json?: Json
+          evaluated_policy_version?: number
+          exposure_assessment: string
+          extension_results_json?: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount?: number
+          maximum_exposure_currency_code?: string
+          reason_codes_json?: Json
+          requested_exposure_amount?: number
+          requested_exposure_currency_code?: string
+          reviewer_id?: string | null
+          risk_assessment: string
+          status_changed_at?: string
+          trust_assessment: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_explanation?: string
+          application_id?: string
+          available_exposure_amount?: number
+          available_exposure_currency_code?: string
+          created_at?: string
+          created_by?: string | null
+          current_exposure_amount?: number
+          current_exposure_currency_code?: string
+          customer_id?: string | null
+          decision?: string
+          decision_id?: string
+          decision_risk_level?: string | null
+          decision_risk_snapshot_json?: Json
+          decision_score_grade?: string | null
+          decision_score_value?: number | null
+          decision_timestamp?: string
+          decision_valid_until?: string | null
+          driver_explanation?: string
+          evaluated_policy_set_id?: string | null
+          evaluated_policy_snapshot_json?: Json
+          evaluated_policy_version?: number
+          exposure_assessment?: string
+          extension_results_json?: Json
+          financial_assessment?: string
+          idempotency_key?: string
+          maximum_exposure_amount?: number
+          maximum_exposure_currency_code?: string
+          reason_codes_json?: Json
+          requested_exposure_amount?: number
+          requested_exposure_currency_code?: string
+          reviewer_id?: string | null
+          risk_assessment?: string
+          status_changed_at?: string
+          trust_assessment?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "underwriting_decisions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_evaluated_policy_set_id_fkey"
+            columns: ["evaluated_policy_set_id"]
+            isOneToOne: false
+            referencedRelation: "credit_policy_sets"
+            referencedColumns: ["policy_id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      underwriting_overrides: {
+        Row: {
+          affected_policies_json: Json
+          after_state_json: Json
+          before_state_json: Json
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          decision_id: string
+          idempotency_key: string
+          override_id: string
+          reason: string
+          reviewer_id: string | null
+          second_approver_id: string | null
+          timestamp: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          affected_policies_json?: Json
+          after_state_json?: Json
+          before_state_json?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id: string
+          idempotency_key: string
+          override_id?: string
+          reason: string
+          reviewer_id?: string | null
+          second_approver_id?: string | null
+          timestamp?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          affected_policies_json?: Json
+          after_state_json?: Json
+          before_state_json?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id?: string
+          idempotency_key?: string
+          override_id?: string
+          reason?: string
+          reviewer_id?: string | null
+          second_approver_id?: string | null
+          timestamp?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "underwriting_overrides_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_second_approver_id_fkey"
+            columns: ["second_approver_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
         ]
@@ -6438,6 +6992,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      activate_credit_account_3a_core: {
+        Args: {
+          p_application_id: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          activated_at: string
+          activation_package_id: string
+          asset_id: string | null
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          idempotency_key: string
+          principal_amount: number
+          principal_currency_code: string
+          product_id: string
+          product_version_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       adjust_rental_deadlines: {
         Args: {
           p_new_final_deadline?: string
@@ -7011,6 +7595,53 @@ export type Database = {
           reasons: string[]
         }[]
       }
+      evaluate_underwriting_decision: {
+        Args: { p_application_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       fc_require_admin: { Args: { p_customer: string }; Returns: undefined }
       fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
       fleet_control_create_manual: {
@@ -7051,6 +7682,35 @@ export type Database = {
         Args: { p_customer_id: string; p_n: number; p_year: number }
         Returns: string
       }
+      fulfill_underwriting_condition: {
+        Args: {
+          p_condition_id: string
+          p_idempotency_key?: string
+          p_status?: string
+        }
+        Returns: {
+          condition_id: string
+          condition_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          decision_id: string
+          description: string
+          fulfilled_at: string | null
+          fulfilled_by: string | null
+          idempotency_key: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_conditions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       generate_accident_case_number: { Args: never; Returns: string }
       generate_fleet_alerts: { Args: never; Returns: number }
       get_driver_360_summary: { Args: { p_driver_id: string }; Returns: Json }
@@ -7081,6 +7741,20 @@ export type Database = {
           score: number
           score_change: number
           tier: string
+        }[]
+      }
+      get_driver_underwriting_decisions: {
+        Args: never
+        Returns: {
+          application_id: string
+          decision_id: string
+          decision_label: string
+          decision_timestamp: string
+          decision_valid_until: string
+          driver_explanation: string
+          is_reunderwriting_required: boolean
+          pending_conditions: number
+          required_actions_json: Json
         }[]
       }
       get_module_completion_stats: {
@@ -7124,6 +7798,10 @@ export type Database = {
         | { Args: { role: string }; Returns: boolean }
       has_admin_role_in: { Args: { roles: string[] }; Returns: boolean }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
+      has_underwriting_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
@@ -7348,6 +8026,60 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      review_underwriting_application: {
+        Args: {
+          p_admin_explanation: string
+          p_application_id: string
+          p_conditions_json?: Json
+          p_decision: string
+          p_driver_explanation: string
+          p_idempotency_key?: string
+        }
+        Returns: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       settle_rental_payment: {
         Args: {
           p_amount: number
@@ -7444,6 +8176,117 @@ export type Database = {
       trigger_apply_wallet_credit: {
         Args: { p_driver_id: string }
         Returns: undefined
+      }
+      trigger_reunderwriting: {
+        Args: {
+          p_application_id: string
+          p_idempotency_key?: string
+          p_prior_decision_id: string
+          p_trigger_payload_json?: Json
+          p_trigger_source?: string
+          p_trigger_type: string
+        }
+        Returns: {
+          application_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          idempotency_key: string
+          prior_decision_id: string | null
+          required_snapshot_at: string
+          resolution_decision_id: string | null
+          status: string
+          status_changed_at: string
+          trigger_id: string
+          trigger_payload_json: Json
+          trigger_source: string
+          trigger_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reunderwriting_triggers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      underwriting_application_status: {
+        Args: { p_decision: string }
+        Returns: string
+      }
+      underwriting_apply_product_extensions: {
+        Args: { p_application_id: string; p_policy_set_id: string }
+        Returns: Json
+      }
+      underwriting_financial_assessment: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
+      underwriting_latest_decision: {
+        Args: { p_application_id: string }
+        Returns: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      underwriting_matrix_outcome: {
+        Args: {
+          p_exposure: string
+          p_financial: string
+          p_matrix: Json
+          p_risk: string
+          p_trust: string
+        }
+        Returns: string
+      }
+      underwriting_risk_assessment: {
+        Args: { p_risk_level: string }
+        Returns: string
+      }
+      underwriting_trust_assessment: {
+        Args: { p_grade: string }
+        Returns: string
       }
       update_rental_fee: {
         Args: { p_new_rate: number; p_reason: string; p_rental_id: string }
