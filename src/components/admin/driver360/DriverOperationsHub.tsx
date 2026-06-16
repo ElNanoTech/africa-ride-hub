@@ -34,6 +34,7 @@ import {
   buildOwnershipReadiness,
   type HealthCard,
 } from '@/lib/driverOperationsHub';
+import type { PaymentLike } from '@/lib/creditJourney';
 import type { Database } from '@/integrations/supabase/types';
 
 type DriverRow = Database['public']['Tables']['drivers']['Row'] & {
