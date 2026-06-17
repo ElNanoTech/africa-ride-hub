@@ -1,0 +1,246 @@
+{
+  "checks": [
+    {
+      "name": "fresh QA driver isolated",
+      "passed": true,
+      "detail": "30af43a5-8ba8-4ac3-9f1c-b6cfd3de8c61"
+    },
+    {
+      "name": "schedule generation blocked before activation",
+      "passed": true,
+      "detail": "active credit account required before schedule generation"
+    },
+    {
+      "name": "QA asset created",
+      "passed": true,
+      "detail": "da06576d-7e81-4d3a-87d7-93902d5d854a"
+    },
+    {
+      "name": "driver submitted application",
+      "passed": true,
+      "detail": "c9761aa4-2023-4edb-a955-a53a938385cc"
+    },
+    {
+      "name": "Layer 3B approval available",
+      "passed": true,
+      "detail": "APPROVED_WITH_CONDITIONS"
+    },
+    {
+      "name": "contract fully executed for activation",
+      "passed": true,
+      "detail": "b6adae7e-c14b-4ad0-a39e-96cc20ca9510"
+    },
+    {
+      "name": "underwriting conditions fulfilled",
+      "passed": true,
+      "detail": "2 condition(s)"
+    },
+    {
+      "name": "down payment paid through Financial Engine invoice",
+      "passed": true,
+      "detail": "510988e0-8023-4528-8d1b-ee44e6b8d364"
+    },
+    {
+      "name": "possession confirmed for activation",
+      "passed": true,
+      "detail": "8476fbc3-ddc8-458b-a959-88d6cf1a1695"
+    },
+    {
+      "name": "activation package ready",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "credit account activated",
+      "passed": true,
+      "detail": "e36805c7-4ed1-4fa1-b307-1df5d91c00da"
+    },
+    {
+      "name": "active credit account generates schedule",
+      "passed": true,
+      "detail": "75b842aa-e5a6-4a5a-81ef-ef034f0db355"
+    },
+    {
+      "name": "schedule pins fully executed contract",
+      "passed": true,
+      "detail": "b6adae7e-c14b-4ad0-a39e-96cc20ca9510"
+    },
+    {
+      "name": "schedule pins product version",
+      "passed": true,
+      "detail": "35200000-0000-0000-0000-000000000001"
+    },
+    {
+      "name": "schedule term count matches config",
+      "passed": true,
+      "detail": "4"
+    },
+    {
+      "name": "schedule total uses integer money",
+      "passed": true,
+      "detail": "4000000"
+    },
+    {
+      "name": "schedule generation idempotency",
+      "passed": true,
+      "detail": "75b842aa-e5a6-4a5a-81ef-ef034f0db355"
+    },
+    {
+      "name": "obligations generated correctly",
+      "passed": true,
+      "detail": "4 / 4000000"
+    },
+    {
+      "name": "no floats or decimals for money",
+      "passed": true,
+      "detail": "integer minor units"
+    },
+    {
+      "name": "invoice generated through Financial Engine",
+      "passed": true,
+      "detail": "9eccddf9-af29-4395-8602-a18c398ca4d7"
+    },
+    {
+      "name": "duplicate invoice retry prevented",
+      "passed": true,
+      "detail": "9eccddf9-af29-4395-8602-a18c398ca4d7"
+    },
+    {
+      "name": "invoice payable row linked",
+      "passed": true,
+      "detail": "df4a61d0-6985-4825-917c-017272a5e946"
+    },
+    {
+      "name": "payment sync updates obligation",
+      "passed": true,
+      "detail": "paid invoice -> paid obligation"
+    },
+    {
+      "name": "schedule amendment supersedes old schedule",
+      "passed": true,
+      "detail": "b114310c-e0a2-4619-bb51-d1774183eb9e"
+    },
+    {
+      "name": "old schedule immutable and superseded",
+      "passed": true,
+      "detail": "SUPERSEDED"
+    },
+    {
+      "name": "reconciliation detects schedule anomaly",
+      "passed": true,
+      "detail": "4 anomaly row(s)"
+    },
+    {
+      "name": "driver sees French-first schedule",
+      "passed": true,
+      "detail": "driver DTO"
+    },
+    {
+      "name": "driver schedule DTO masks internals",
+      "passed": true,
+      "detail": "masked payload"
+    },
+    {
+      "name": "admin page title",
+      "passed": true,
+      "detail": "Repayment Schedule Operations"
+    },
+    {
+      "name": "admin schedules tab",
+      "passed": true,
+      "detail": "Schedules"
+    },
+    {
+      "name": "admin obligations tab",
+      "passed": true,
+      "detail": "Obligations"
+    },
+    {
+      "name": "admin invoice linkage tab",
+      "passed": true,
+      "detail": "Invoice Linkage"
+    },
+    {
+      "name": "financial engine source copy",
+      "passed": true,
+      "detail": "Financial Engine remains the payment source of truth"
+    },
+    {
+      "name": "obligations shown",
+      "passed": true,
+      "detail": "Scheduled Obligations"
+    },
+    {
+      "name": "invoice linkage shown",
+      "passed": true,
+      "detail": "Invoice Linkage"
+    },
+    {
+      "name": "reconciliation shown",
+      "passed": true,
+      "detail": "Reconciliation Anomalies"
+    },
+    {
+      "name": "driver credit route",
+      "passed": true,
+      "detail": "Crédit & Propriété"
+    },
+    {
+      "name": "driver repayment card",
+      "passed": true,
+      "detail": "Calendrier de paiement"
+    },
+    {
+      "name": "driver next due label",
+      "passed": true,
+      "detail": "Prochaine échéance"
+    },
+    {
+      "name": "driver no terms snapshot",
+      "passed": true,
+      "detail": "absent: terms_snapshot"
+    },
+    {
+      "name": "driver no source snapshot",
+      "passed": true,
+      "detail": "absent: source_snapshot"
+    },
+    {
+      "name": "driver no policy internals",
+      "passed": true,
+      "detail": "absent: policy"
+    },
+    {
+      "name": "driver no audit internals",
+      "passed": true,
+      "detail": "absent: audit"
+    },
+    {
+      "name": "driver no raw active enum",
+      "passed": true,
+      "detail": "absent: ACTIVE"
+    },
+    {
+      "name": "driver no raw scheduled enum",
+      "passed": true,
+      "detail": "absent: SCHEDULED"
+    },
+    {
+      "name": "driver finance available",
+      "passed": true,
+      "detail": "Finance"
+    },
+    {
+      "name": "driver finance invoices",
+      "passed": true,
+      "detail": "Factures ouvertes"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": [],
+  "ignoredFindings": []
+}

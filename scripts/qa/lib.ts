@@ -132,10 +132,10 @@ export async function driverLogin(h: Harness, creds: Creds) {
   // otherwise click the phone button.
   const phoneInput = p.locator('input[type="tel"]');
   try {
-    await phoneInput.waitFor({ timeout: 4000 });
+    await phoneInput.waitFor({ timeout: 12000 });
   } catch {
-    await p.getByRole("button", { name: /Connexion avec téléphone/i }).click();
-    await phoneInput.waitFor({ timeout: 5000 });
+    await p.getByText(/Connexion avec téléphone/i).click();
+    await phoneInput.waitFor({ timeout: 8000 });
   }
   const localDigits = creds.driver_phone.replace(/\D/g, "").replace(/^225/, "");
   await phoneInput.fill(localDigits);
