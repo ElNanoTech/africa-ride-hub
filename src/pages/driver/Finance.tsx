@@ -27,6 +27,7 @@ import { useDriverFullProfile } from '@/hooks/useDriverProfile';
 import { useDriverCreditScores, useDriverCurrentScore } from '@/hooks/useDriverData';
 import { useDriverInvoices } from '@/hooks/useBilling';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
+import { useDriverCollectionsStatus } from '@/hooks/useCreditCollectionsData';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { getInvoiceRemainingDue, getPaymentRemaining } from '@/lib/financeAmounts';
 import { formatCurrency, formatDateShort } from '@/lib/format';
@@ -119,6 +120,7 @@ export default function DriverFinance() {
   const { data: creditScores = [] } = useDriverCreditScores();
   const { data: currentScore } = useDriverCurrentScore();
   const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useDriverInvoices(driver?.id);
+  const { data: collectionsStatuses = [] } = useDriverCollectionsStatus(!!driverId);
 
   const walletQuery = useQuery({
     queryKey: ['driver-finance-wallet', driverId],
@@ -160,6 +162,7 @@ export default function DriverFinance() {
   const reservedCredit = Math.min(walletBalance, totalDue);
   const availableBalance = Math.max(0, walletBalance - reservedCredit);
   const nextInvoice = openInvoices[0] ?? null;
+  const collectionsStatus = collectionsStatuses[0] ?? null;
   const overduePayments = (payments as DriverPaymentSummary[]).filter((payment) => payment.status === 'overdue');
   const activeLoans = (loans as DriverLoanSummary[]).filter((loan) => ['active', 'approved', 'pending'].includes(loan.status ?? ''));
   const nextPayment = (payments as NextPaymentSummary[])
@@ -285,6 +288,32 @@ export default function DriverFinance() {
             )}
           </CardContent>
         </Card>
+
+        {collectionsStatus && (
+          <Card className={cn(collectionsStatus.status_tone === 'danger' ? 'border-destructive/50 bg-destructive/5' : 'border-warning/50 bg-warning/5')}>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold">Paiement crédit</p>
+                    <Badge variant={collectionsStatus.status_tone === 'danger' ? 'destructive' : 'secondary'}>
+                      {collectionsStatus.status_label}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{collectionsStatus.driver_message}</p>
+                  <p className="mt-1 text-sm font-semibold">{formatCurrency(collectionsStatus.late_amount)} à régulariser</p>
+                </div>
+              </div>
+              <Button asChild className="mt-4 min-h-12 w-full">
+                <Link to={collectionsStatus.invoice_id ? `/driver/factures/${collectionsStatus.invoice_id}` : '/driver/credit'}>
+                  {collectionsStatus.payment_action_label}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <Card>

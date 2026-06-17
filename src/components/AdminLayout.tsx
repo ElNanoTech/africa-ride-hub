@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Car, FileText, Wallet, CreditCard, 
   Settings, LogOut, Menu, ChevronLeft, BarChart3, MessageSquare,
-  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock
+  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock, MessageCircleWarning
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -75,6 +75,8 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/contracts',
   '/admin/repayment-operations',
   '/admin/repayment',
+  '/admin/credit-collections',
+  '/admin/collections',
   '/admin/trust-risk',
   '/admin/scoring',
   '/admin/driving-behavior',
@@ -309,6 +311,14 @@ const sidebarItems: SidebarItem[] = [
     label: 'Repayment',
     aliases: ['/admin/repayment'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'growth_ownership',
+  },
+  {
+    to: '/admin/credit-collections',
+    icon: MessageCircleWarning,
+    label: 'Collections',
+    aliases: ['/admin/collections'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret', 'agent_support'],
     section: 'growth_ownership',
   },
   { 

@@ -72,7 +72,7 @@ const Landing = () => {
                   width={112}
                   height={112}
                   loading="eager"
-                  fetchPriority="high"
+                  fetchpriority="high"
                   className="relative z-10 h-full w-full rounded-2xl object-contain shadow-xl"
                 />
               </div>

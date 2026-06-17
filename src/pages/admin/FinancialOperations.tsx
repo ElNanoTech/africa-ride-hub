@@ -91,6 +91,7 @@ type UntypedQueryBuilder<T = unknown> = PromiseLike<UntypedQueryResult<T>> & {
   select: (columns?: string, options?: Record<string, unknown>) => UntypedQueryBuilder<T>;
   order: (column: string, options?: Record<string, unknown>) => UntypedQueryBuilder<T>;
   range: (from: number, to: number) => UntypedQueryBuilder<T>;
+  limit: (count: number) => UntypedQueryBuilder<T>;
 };
 
 const financialSupabase = supabase as unknown as {
@@ -259,6 +260,24 @@ type SettlementAnomalyRow = {
   recommended_action: string | null;
 };
 
+type CreditCollectionsRow = {
+  case_id: string;
+  driver_id: string;
+  driver_name: string | null;
+  driver_phone: string | null;
+  product_name: string | null;
+  current_status_label: string | null;
+  delinquency_status_label: string | null;
+  severity: string;
+  total_past_due_amount: number;
+  days_past_due: number;
+  priority_score: number;
+  invoice_number: string | null;
+  active_promise_id: string | null;
+  promised_payment_date: string | null;
+  opened_at: string;
+};
+
 type ReconciliationItem = {
   id: string;
   severity: 'Critical' | 'High' | 'Medium' | 'Low';
@@ -297,6 +316,7 @@ const EMPTY_CREDIT_SCORES: CreditScoreRow[] = [];
 const EMPTY_DRIVER_AUDIT: DriverAuditRow[] = [];
 const EMPTY_INVOICE_AUDIT: InvoiceAuditRow[] = [];
 const EMPTY_ANOMALIES: SettlementAnomalyRow[] = [];
+const EMPTY_CREDIT_COLLECTIONS: CreditCollectionsRow[] = [];
 const EXPECTED_PAYMENT_STATUS_FILTER = [...EXPECTED_TODAY_PAYMENT_STATUSES];
 
 function addDays(date: string, days: number) {
@@ -867,6 +887,20 @@ export default function AdminFinancialOperations() {
     },
   });
 
+  const creditCollectionsQuery = useQuery({
+    queryKey: ['financial-operations', 'credit-collections'],
+    enabled: canAccessFinancialOps,
+    queryFn: async () => {
+      const { data, error } = await financialSupabase
+        .from<CreditCollectionsRow[]>('v_credit_collections_queue')
+        .select('case_id, driver_id, driver_name, driver_phone, product_name, current_status_label, delinquency_status_label, severity, total_past_due_amount, days_past_due, priority_score, invoice_number, active_promise_id, promised_payment_date, opened_at')
+        .order('priority_score', { ascending: false })
+        .limit(120);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const riskSummary = useDriversRiskSummary(canAccessFinancialOps);
 
   const payments = paymentsQuery.data ?? EMPTY_PAYMENTS;
@@ -881,6 +915,9 @@ export default function AdminFinancialOperations() {
   const driverAudit = driverAuditQuery.data ?? EMPTY_DRIVER_AUDIT;
   const invoiceAudit = invoiceAuditQuery.data ?? EMPTY_INVOICE_AUDIT;
   const settlementAnomalies = anomaliesQuery.data ?? EMPTY_ANOMALIES;
+  const creditCollections = creditCollectionsQuery.data ?? EMPTY_CREDIT_COLLECTIONS;
+  const creditCollectionsPastDue = creditCollections.reduce((sum, row) => sum + row.total_past_due_amount, 0);
+  const criticalCreditCollections = creditCollections.filter((row) => ['CRITICAL', 'HIGH'].includes(row.severity)).length;
 
   const paymentsById = useMemo(() => {
     const map = new Map<string, PaymentRow>();
@@ -1075,7 +1112,7 @@ export default function AdminFinancialOperations() {
     },
   });
 
-  const isLoading = guard.isLoading || paymentsQuery.isLoading || metricPaymentsQuery.isLoading || receiptsQuery.isLoading || invoicesQuery.isLoading || walletBalancesQuery.isLoading || rentalsQuery.isLoading;
+  const isLoading = guard.isLoading || paymentsQuery.isLoading || metricPaymentsQuery.isLoading || receiptsQuery.isLoading || invoicesQuery.isLoading || walletBalancesQuery.isLoading || rentalsQuery.isLoading || creditCollectionsQuery.isLoading;
 
   const toggleDriver = (driverId: string, checked: boolean) => {
     setSelectedDrivers((prev) => {
@@ -1137,6 +1174,9 @@ export default function AdminFinancialOperations() {
               <Button variant="outline" asChild>
                 <Link to="/admin/payments"><CircleDollarSign className="mr-2 h-4 w-4" /> Payments</Link>
               </Button>
+              <Button variant="outline" asChild>
+                <Link to="/admin/credit-collections"><ShieldCheck className="mr-2 h-4 w-4" /> Credit Collections</Link>
+              </Button>
             </div>
           )}
         />
@@ -1145,7 +1185,7 @@ export default function AdminFinancialOperations() {
           <LoadingState message="Loading financial operations..." />
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
               <MetricCard
                 label="Collected Today"
                 value={formatCurrency(overview.collectedToday)}
@@ -1174,6 +1214,13 @@ export default function AdminFinancialOperations() {
                 icon={AlertTriangle}
                 tone={overview.outstandingBalance > 0 ? 'danger' : 'success'}
               />
+              <MetricCard
+                label="Credit Collections"
+                value={formatCurrency(creditCollectionsPastDue)}
+                detail={`${creditCollections.length} open case(s), ${criticalCreditCollections} high priority`}
+                icon={ShieldCheck}
+                tone={creditCollectionsPastDue > 0 ? 'warning' : 'success'}
+              />
             </div>
 
             <DailyRentalCommandCenter metrics={dailyRental} />
@@ -1196,6 +1243,36 @@ export default function AdminFinancialOperations() {
                   <MetricCard label="Wallet Balance Exposure" value={formatCurrency(overview.walletBalanceExposure)} detail="Positive wallet credit outstanding" icon={Wallet} tone="warning" />
                   <MetricCard label="Active Rentals" value={String(overview.activeRentals)} detail="Open rental statuses only" icon={ShieldCheck} />
                 </div>
+                {creditCollections.length > 0 && (
+                  <Card>
+                    <CardHeader className="gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <CardTitle className="text-base">Credit Collections Snapshot</CardTitle>
+                        <CardDescription>Open Layer 3E cases tied to Financial Engine invoices.</CardDescription>
+                      </div>
+                      <Button variant="outline" asChild>
+                        <Link to="/admin/credit-collections">Open queue <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                      </Button>
+                    </CardHeader>
+                    <CardContent className="grid gap-3 md:grid-cols-3">
+                      {creditCollections.slice(0, 3).map((row) => (
+                        <div key={row.case_id} className="rounded-lg border p-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div>
+                              <p className="font-medium">{row.driver_name ?? 'Driver'}</p>
+                              <p className="text-xs text-muted-foreground">{row.product_name ?? 'Credit'} · {row.invoice_number ?? 'No invoice number'}</p>
+                            </div>
+                            <Badge variant={row.severity === 'CRITICAL' || row.severity === 'HIGH' ? 'destructive' : 'secondary'}>
+                              {row.delinquency_status_label ?? row.current_status_label ?? 'Open'}
+                            </Badge>
+                          </div>
+                          <p className="mt-3 text-lg font-bold">{formatCurrency(row.total_past_due_amount)}</p>
+                          <p className="text-xs text-muted-foreground">{row.days_past_due} day(s) late · priority {row.priority_score}</p>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
                 <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
                   <Card>
                     <CardHeader>

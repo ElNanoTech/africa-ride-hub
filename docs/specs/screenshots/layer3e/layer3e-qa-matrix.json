@@ -1,0 +1,197 @@
+{
+  "checks": [
+    {
+      "name": "fresh QA driver isolated",
+      "passed": true,
+      "detail": "14b4cda8-e5ef-45c2-992d-ca3fbbda056e"
+    },
+    {
+      "name": "Layer 3B approval available",
+      "passed": true,
+      "detail": "APPROVED_WITH_CONDITIONS"
+    },
+    {
+      "name": "contract fully executed for activation",
+      "passed": true,
+      "detail": "f04b5332-3334-4560-80bf-7ea8492d3b3d"
+    },
+    {
+      "name": "credit account and schedule ready",
+      "passed": true,
+      "detail": "71a1e8be-cd5d-4769-8384-12a3240083b5"
+    },
+    {
+      "name": "repayment invoice created",
+      "passed": true,
+      "detail": "f2d84dce-bbab-4827-a665-2985006669e2"
+    },
+    {
+      "name": "scheduled obligation seeded past due",
+      "passed": true,
+      "detail": "2026-06-10"
+    },
+    {
+      "name": "Financial Engine invoice aged past due",
+      "passed": true,
+      "detail": "2026-06-10"
+    },
+    {
+      "name": "sync creates collections case",
+      "passed": true,
+      "detail": "f599c109-4218-420e-9b56-740cadd611d7"
+    },
+    {
+      "name": "case ranked as overdue",
+      "passed": true,
+      "detail": "COLLECTIONS_QUEUE"
+    },
+    {
+      "name": "one open case per obligation",
+      "passed": true,
+      "detail": "1"
+    },
+    {
+      "name": "contact action idempotent",
+      "passed": true,
+      "detail": "243d9d5a-ee7d-44ba-a787-f59d9ae3949e"
+    },
+    {
+      "name": "driver reminder logged",
+      "passed": true,
+      "detail": "f11341e4-0e95-4b54-a29c-3762cd339416"
+    },
+    {
+      "name": "partial recovery state detected",
+      "passed": true,
+      "detail": "PARTIALLY_RECOVERED"
+    },
+    {
+      "name": "promise-to-pay idempotent",
+      "passed": true,
+      "detail": "17ecae9d-b579-494e-aeff-66a365a21b17"
+    },
+    {
+      "name": "broken promise escalates promise status",
+      "passed": true,
+      "detail": "BROKEN"
+    },
+    {
+      "name": "risk escalation creates score event",
+      "passed": true,
+      "detail": "1019eeed-db11-412e-943a-6f3c6e4161bd"
+    },
+    {
+      "name": "priority review opens without legal workflow",
+      "passed": true,
+      "detail": "DEFAULT_REVIEW"
+    },
+    {
+      "name": "paid invoice resolves case",
+      "passed": true,
+      "detail": "paid_invoice_synced"
+    },
+    {
+      "name": "reconciliation detects overdue obligation without case",
+      "passed": true,
+      "detail": "2 anomaly row(s)"
+    },
+    {
+      "name": "driver collections DTO masks internals",
+      "passed": true,
+      "detail": "masked payload"
+    },
+    {
+      "name": "admin collections page title",
+      "passed": true,
+      "detail": "Credit Collections"
+    },
+    {
+      "name": "admin queue tab",
+      "passed": true,
+      "detail": "Queue"
+    },
+    {
+      "name": "admin reconciliation tab",
+      "passed": true,
+      "detail": "Reconciliation"
+    },
+    {
+      "name": "financial engine guardrail copy",
+      "passed": true,
+      "detail": "Financial Engine remains the source of truth"
+    },
+    {
+      "name": "case workbench actions visible",
+      "passed": true,
+      "detail": "Contact & Reminders"
+    },
+    {
+      "name": "promise workflow visible",
+      "passed": true,
+      "detail": "Promise & Recovery"
+    },
+    {
+      "name": "collections reconciliation visible",
+      "passed": true,
+      "detail": "Collections Reconciliation"
+    },
+    {
+      "name": "driver360 collections signal",
+      "passed": true,
+      "detail": "Collections"
+    },
+    {
+      "name": "financial ops collections bridge",
+      "passed": true,
+      "detail": "Credit Collections"
+    },
+    {
+      "name": "driver credit route",
+      "passed": true,
+      "detail": "Crédit & Propriété"
+    },
+    {
+      "name": "driver-safe collections card",
+      "passed": true,
+      "detail": "Paiement crédit"
+    },
+    {
+      "name": "driver no raw collections enum",
+      "passed": true,
+      "detail": "absent: COLLECTIONS_QUEUE"
+    },
+    {
+      "name": "driver no raw escalation enum",
+      "passed": true,
+      "detail": "absent: ESCALATED_RISK"
+    },
+    {
+      "name": "driver no raw review enum",
+      "passed": true,
+      "detail": "absent: DEFAULT_REVIEW"
+    },
+    {
+      "name": "driver no legal/repo language",
+      "passed": true,
+      "detail": "absent: repossession"
+    },
+    {
+      "name": "driver finance route",
+      "passed": true,
+      "detail": "Finance"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": [],
+  "ignoredFindings": [
+    {
+      "page": "layer3e/admin-collections",
+      "kind": "console",
+      "detail": "Error fetching admin profile: {message: TypeError: Failed to fetch, details: TypeError: Failed to fetch\n    at http://127.0.0.1…://127.0.0.1:8082/src/hooks/useAdminAuth.ts:28:60, hint: , code: }"
+    }
+  ]
+}

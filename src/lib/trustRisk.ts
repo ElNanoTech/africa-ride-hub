@@ -547,6 +547,24 @@ export function buildTrustOverview(input: {
   };
 }
 
+function scoreEventReasonLabel(reason: string | null | undefined) {
+  const eventType = reason?.split(':')[0];
+  switch (eventType) {
+    case 'CREDIT_PAYMENT_LATE':
+      return 'Credit Payment Late';
+    case 'PROMISE_TO_PAY_BROKEN':
+      return 'Promise To Pay Not Met';
+    case 'COLLECTIONS_ESCALATED':
+      return 'Collections Escalated';
+    case 'DEFAULT_REVIEW_OPENED':
+      return 'Priority Credit Review Opened';
+    case 'CREDIT_PAYMENT_RECOVERED':
+      return 'Credit Payment Recovered';
+    default:
+      return reason || 'Score Change';
+  }
+}
+
 export function buildTrustEvents(input: {
   drivers: DriverTrustLike[];
   scores: CreditScoreTrustLike[];
@@ -577,7 +595,7 @@ export function buildTrustEvents(input: {
   (input.scoreEvents ?? []).forEach((scoreEvent) => {
     events.push({
       id: `score-event-${scoreEvent.id}`,
-      event: scoreEvent.reason || 'Score Change',
+      event: scoreEventReasonLabel(scoreEvent.reason),
       driverId: scoreEvent.driver_id,
       driverName: driverName(driverById.get(scoreEvent.driver_id)),
       entity: scoreEvent.accident_id ? `Accident ${scoreEvent.accident_id}` : 'Driver score',

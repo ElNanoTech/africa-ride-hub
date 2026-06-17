@@ -194,6 +194,27 @@ type RiskSummaryRow = {
   reasons: string[] | null;
 };
 
+type CollectionsCaseRow = {
+  case_id: string;
+  driver_id: string;
+  driver_name: string | null;
+  product_name: string | null;
+  current_status: string;
+  current_status_label: string | null;
+  delinquency_status: string;
+  delinquency_status_label: string | null;
+  severity: string;
+  total_past_due_amount: number;
+  days_past_due: number;
+  priority_score: number;
+  invoice_number: string | null;
+  due_date: string | null;
+  active_promise_id: string | null;
+  promised_payment_date: string | null;
+  open_escalation_id: string | null;
+  opened_at: string;
+};
+
 type QueryWarning = { label: string; message: string };
 type QueryLike<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
 
@@ -303,6 +324,7 @@ export function useAttentionCenter() {
         loansResult,
         rentalsResult,
         riskResult,
+        collectionsResult,
       ] = await Promise.all([
         safeRows<PaymentRow>('Paiements', supabase
           .from('payments')
@@ -365,6 +387,11 @@ export function useAttentionCenter() {
           .order('payment_due_at', { ascending: true, nullsFirst: false })
           .limit(120) as unknown as QueryLike<RentalRow>),
         safeRpcRows<RiskSummaryRow>('Risque chauffeur', supabase.rpc('drivers_risk_summary') as unknown as QueryLike<RiskSummaryRow>),
+        safeRows<CollectionsCaseRow>('Collections crédit', supabase
+          .from('v_credit_collections_queue')
+          .select('case_id, driver_id, driver_name, product_name, current_status, current_status_label, delinquency_status, delinquency_status_label, severity, total_past_due_amount, days_past_due, priority_score, invoice_number, due_date, active_promise_id, promised_payment_date, open_escalation_id, opened_at')
+          .order('priority_score', { ascending: false })
+          .limit(80) as unknown as QueryLike<CollectionsCaseRow>),
       ]);
 
       const actions: AttentionAction[] = [];
@@ -381,6 +408,7 @@ export function useAttentionCenter() {
         loansResult.warning,
         rentalsResult.warning,
         riskResult.warning,
+        collectionsResult.warning,
       ]
         .filter((w): w is QueryWarning => !!w)
         .map((w) => `${w.label}: ${w.message}`);
@@ -683,6 +711,35 @@ export function useAttentionCenter() {
         });
       }
 
+      for (const collectionsCase of collectionsResult.rows) {
+        const priority: AttentionPriority = collectionsCase.severity === 'CRITICAL'
+          ? 'critical'
+          : collectionsCase.severity === 'HIGH'
+            ? 'high'
+            : collectionsCase.active_promise_id
+              ? 'medium'
+              : 'high';
+        const statusLabel = collectionsCase.delinquency_status_label || collectionsCase.current_status_label || 'Suivi crédit';
+        actions.push({
+          id: `collections-${collectionsCase.case_id}`,
+          priority,
+          category: 'growth',
+          filterTags: ['overdue', 'drivers_risk'],
+          issueType: collectionsCase.active_promise_id ? 'Promesse de paiement à suivre' : 'Dossier crédit en retard',
+          subject: collectionsCase.driver_name || collectionsCase.driver_id,
+          impact: `${currency(collectionsCase.total_past_due_amount)} · ${statusLabel}`,
+          age: collectionsCase.days_past_due > 0 ? `${collectionsCase.days_past_due} jour(s) de retard` : ageLabel(collectionsCase.opened_at),
+          recommendedAction: collectionsCase.open_escalation_id ? 'Traiter le suivi prioritaire' : 'Ouvrir la file collections',
+          ctaLabel: 'Ouvrir collections',
+          href: `/admin/credit-collections?driver=${collectionsCase.driver_id}`,
+          entityType: 'credit_collections_case',
+          entityId: collectionsCase.case_id,
+          permission: 'growth',
+          createdAt: collectionsCase.due_date ?? collectionsCase.opened_at,
+          sortValue: actionSort(priority, collectionsCase.due_date ?? collectionsCase.opened_at),
+        });
+      }
+
       const uniqueActions = Array.from(new Map(actions.map((a) => [a.id, a])).values())
         .sort((a, b) => a.sortValue - b.sortValue)
         .slice(0, 80);
@@ -692,7 +749,8 @@ export function useAttentionCenter() {
         .reduce((sum, p) => sum + outstanding(p.amount, p.amount_paid), 0);
       const overdueAmount = paymentsResult.rows
         .filter((p) => p.status === 'overdue' || isPastDate(p.due_date))
-        .reduce((sum, p) => sum + outstanding(p.amount, p.amount_paid), 0);
+        .reduce((sum, p) => sum + outstanding(p.amount, p.amount_paid), 0)
+        + collectionsResult.rows.reduce((sum, row) => sum + row.total_past_due_amount, 0);
       const controlsToReview = inspectionsResult.rows.filter((i) => i.status === 'submitted').length;
       const unavailableVehicles = new Set([
         ...vehiclesResult.rows.filter((v) => ['maintenance', 'unavailable', 'blocked', 'inactive'].includes(v.status)).map((v) => v.id),
@@ -703,13 +761,14 @@ export function useAttentionCenter() {
         kycResult.rows.filter((k) => k.status === 'pending').length +
         loansResult.rows.filter((l) => l.status === 'pending').length +
         rentalsResult.rows.filter((r) => r.status === 'pending').length;
+      const openCollections = collectionsResult.rows.length;
 
       const kpis: AttentionKpi[] = [
         { key: 'today_cash', label: "À encaisser aujourd'hui", value: currency(todayCash), hint: 'Paiements dus aujourd’hui', filter: 'today_cash', tone: 'green' },
         { key: 'overdue', label: 'En retard', value: currency(overdueAmount), hint: 'Paiements/factures à récupérer', filter: 'overdue', tone: 'orange' },
         { key: 'fleet_control', label: 'Contrôles à valider', value: controlsToReview, hint: 'Soumis par les chauffeurs', filter: 'fleet_control', tone: 'blue' },
         { key: 'vehicles', label: 'Véhicules indisponibles', value: unavailableVehicles, hint: 'Maintenance, blocage ou GPS', filter: 'vehicles', tone: 'purple' },
-        { key: 'drivers_risk', label: 'Chauffeurs à risque', value: riskyDrivers, hint: 'Risque, sinistres, contraventions', filter: 'drivers_risk', tone: 'yellow' },
+        { key: 'drivers_risk', label: 'Chauffeurs à risque', value: riskyDrivers, hint: `${openCollections} dossier(s) collections actif(s)`, filter: 'drivers_risk', tone: 'yellow' },
         { key: 'pending_requests', label: 'Demandes en attente', value: pendingRequests, hint: 'KYC, prêts, locations', filter: 'pending_requests', tone: 'slate' },
       ];
 
@@ -719,7 +778,7 @@ export function useAttentionCenter() {
         ['drivers', '/admin/drivers'],
         ['vehicles', '/admin/vehicles'],
         ['risk', '/admin/scoring'],
-        ['growth', '/admin/loans'],
+        ['growth', '/admin/credit-collections'],
       ] as Array<[AttentionCategory, string]>).map(([key, href]) => ({
         key,
         label: categoryLabel(key),

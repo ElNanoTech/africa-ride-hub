@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
+  AlertTriangle,
   Award,
   Bike,
   Calendar,
@@ -79,6 +80,11 @@ import {
   type CreditInvoiceRow,
   type DriverUnderwritingDecisionRow,
 } from '@/hooks/useCreditProductEngineData';
+import {
+  collectionsScoreReasonLabel,
+  useDriverCollectionsStatus,
+  type DriverCollectionsStatusRow,
+} from '@/hooks/useCreditCollectionsData';
 import {
   useDriverContractStatuses,
   useDriverDeclineCreditContract,
@@ -740,6 +746,138 @@ function RepaymentScheduleCard({ schedule }: { schedule: DriverRepaymentSchedule
   );
 }
 
+function CollectionsStatusCard({
+  statuses,
+  isError,
+}: {
+  statuses: DriverCollectionsStatusRow[];
+  isError: boolean;
+}) {
+  const status = statuses[0] ?? null;
+
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+        Statut de paiement crédit indisponible pour le moment.
+      </div>
+    );
+  }
+
+  if (!status) {
+    return (
+      <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3 text-sm">
+        <div className="flex items-start gap-3">
+          <CheckCircle2 className="mt-0.5 h-5 w-5 text-emerald-600" />
+          <div>
+            <p className="font-semibold">Paiements crédit à jour</p>
+            <p className="mt-1 text-muted-foreground">Continuez à payer à temps pour protéger votre progression KIRA.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const toneClass = status.status_tone === 'danger'
+    ? 'border-destructive/40 bg-destructive/5'
+    : status.status_tone === 'warning'
+      ? 'border-warning/40 bg-warning/5'
+      : status.status_tone === 'success'
+        ? 'border-emerald-500/25 bg-emerald-500/5'
+        : 'border-muted bg-muted/30';
+  const badgeVariant = status.status_tone === 'danger'
+    ? 'destructive'
+    : status.status_tone === 'success'
+      ? 'verified'
+      : 'secondary';
+  const promiseLabel = typeof status.active_promise_json?.label === 'string'
+    ? status.active_promise_json.label
+    : null;
+  const promisedAmount = Number(status.active_promise_json?.promised_amount ?? 0);
+  const promisedDate = typeof status.active_promise_json?.promised_payment_date === 'string'
+    ? status.active_promise_json.promised_payment_date
+    : null;
+  const voiceText = `${status.status_label}. ${status.driver_message} ${status.consequence_text}`;
+
+  return (
+    <div className={cn('rounded-lg border p-3 text-sm', toneClass)}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Paiement crédit</p>
+          <p className="mt-1 text-xs text-muted-foreground">{status.product_name ?? 'Produit crédit'}</p>
+        </div>
+        <Badge variant={badgeVariant as never}>{status.status_label}</Badge>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Montant à régulariser</p>
+          <p className="text-lg font-bold tabular-nums">{formatCurrency(status.late_amount)}</p>
+          <p className="text-xs text-muted-foreground">{status.days_late > 0 ? `${status.days_late} jour(s)` : 'À temps'}</p>
+        </div>
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Prochaine action</p>
+          <p className="text-sm font-semibold">{status.payment_action_label}</p>
+          {status.next_due_date && <p className="text-xs text-muted-foreground">{formatDateShort(status.next_due_date)}</p>}
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-lg border bg-background/80 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">{status.driver_message}</p>
+            <p className="mt-1 text-muted-foreground">{status.consequence_text}</p>
+          </div>
+          <KiraVoiceButton text={voiceText} compact />
+        </div>
+      </div>
+
+      {promiseLabel && (
+        <div className="mt-3 rounded-lg border bg-background/80 p-3">
+          <p className="font-semibold">{promiseLabel}</p>
+          <p className="text-xs text-muted-foreground">
+            {promisedAmount > 0 ? formatCurrency(promisedAmount) : 'Montant enregistré'}
+            {promisedDate ? ` · ${formatDateShort(promisedDate)}` : ''}
+          </p>
+        </div>
+      )}
+
+      <div className="mt-3 space-y-2">
+        <div className="flex justify-between text-xs text-muted-foreground">
+          <span>Progression de régularisation</span>
+          <span>{status.recovery_progress_pct}%</span>
+        </div>
+        <Progress value={status.recovery_progress_pct} />
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {status.invoice_id ? (
+          <Button asChild size="sm">
+            <Link to={`/driver/factures/${status.invoice_id}`}>
+              <Wallet className="h-4 w-4" />
+              Payer maintenant
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild size="sm">
+            <Link to="/driver/finance">
+              <Wallet className="h-4 w-4" />
+              Voir finance
+            </Link>
+          </Button>
+        )}
+        {status.can_request_promise && (
+          <Button asChild size="sm" variant="outline">
+            <Link to="/driver/support">
+              <MessageCircle className="h-4 w-4" />
+              Demander de l’aide
+            </Link>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CreditEngineFoundationCard({
   products,
   applications,
@@ -1009,7 +1147,7 @@ function ScoreHistoryCard({ events, creditScores }: { events: ScoreEvent[]; cred
     ? events.map((event) => ({
       id: event.id,
       delta: event.delta,
-      label: event.reason,
+      label: collectionsScoreReasonLabel(event.reason),
       date: event.created_at,
     }))
     : creditScores.slice(0, 4).map((score, index) => {
@@ -1161,6 +1299,7 @@ export default function DriverCredit() {
   const isLoading = driverIdLoading || loansLoading || paymentsLoading || scoresLoading || currentScoreLoading;
   const contractStatusesQuery = useDriverContractStatuses(!!driverId);
   const repaymentSchedulesQuery = useDriverRepaymentSchedules(!!driverId);
+  const collectionsStatusQuery = useDriverCollectionsStatus(!!driverId);
   const scoreSnapshots = creditScores as DriverCreditScoreSnapshot[];
   const latestScore = scoreSnapshots[0];
   const driverLoans = loans as DriverLoan[];
@@ -1183,6 +1322,7 @@ export default function DriverCredit() {
   const creditInvoices = creditEngine?.invoices ?? [];
   const contractStatuses = contractStatusesQuery.data ?? [];
   const repaymentSchedules = repaymentSchedulesQuery.data ?? [];
+  const collectionsStatuses = collectionsStatusQuery.data ?? [];
   const selectedProductType = selectedOffer ? offerTypeToProductType[selectedOffer.type] : null;
   const selectedProduct = selectedProductType
     ? creditProducts.find((product) => product.product_type === selectedProductType && product.status === 'ACTIVE') ?? null
@@ -1277,6 +1417,8 @@ export default function DriverCredit() {
             isLoading={creditEngineQuery.isLoading}
             isError={creditEngineQuery.isError}
           />
+
+          <CollectionsStatusCard statuses={collectionsStatuses} isError={collectionsStatusQuery.isError} />
 
           <NextUnlockCard offer={nextUnlock} score={score} weeksHistory={weeksHistory} paymentRate={paymentRate} />
 

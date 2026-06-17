@@ -50,6 +50,27 @@ type LoanRow = Pick<Database['public']['Tables']['loans']['Row'], 'id' | 'loan_t
 type InspectionRow = Pick<Database['public']['Tables']['vehicle_inspections']['Row'], 'id' | 'status' | 'due_at' | 'submitted_at' | 'reviewed_at' | 'immobilization_state' | 'vehicle_id'>;
 type DocumentRow = Pick<Database['public']['Tables']['driver_documents']['Row'], 'id' | 'document_type' | 'status' | 'expiry_date' | 'uploaded_at'>;
 type InvoiceRow = Pick<Database['public']['Tables']['invoice']['Row'], 'id' | 'status' | 'remaining_due' | 'total_ttc'>;
+type CollectionsCaseRow = {
+  case_id: string;
+  driver_id: string;
+  delinquency_status_label: string | null;
+  severity: string;
+  total_past_due_amount: number;
+  days_past_due: number;
+  active_promise_id: string | null;
+  priority_score: number;
+};
+
+type DriverOpsQueryBuilder<T = unknown> = PromiseLike<{ data: T | null; error: Error | null }> & {
+  select: (columns?: string, options?: Record<string, unknown>) => DriverOpsQueryBuilder<T>;
+  eq: (column: string, value: unknown) => DriverOpsQueryBuilder<T>;
+  order: (column: string, options?: Record<string, unknown>) => DriverOpsQueryBuilder<T>;
+  limit: (count: number) => DriverOpsQueryBuilder<T>;
+};
+
+const driverOpsClient = supabase as unknown as {
+  from: <T = unknown>(table: string) => DriverOpsQueryBuilder<T>;
+};
 
 interface DriverOperationsHubProps {
   driver: DriverRow;
@@ -187,6 +208,21 @@ export function DriverOperationsHub({
     },
   });
 
+  const collectionsCases = useQuery({
+    queryKey: ['driver-ops-credit-collections', driver.id],
+    staleTime: 60_000,
+    queryFn: async (): Promise<CollectionsCaseRow[]> => {
+      const { data, error } = await driverOpsClient
+        .from<CollectionsCaseRow[]>('v_credit_collections_queue')
+        .select('case_id, driver_id, delinquency_status_label, severity, total_past_due_amount, days_past_due, active_promise_id, priority_score')
+        .eq('driver_id', driver.id)
+        .order('priority_score', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const inspections = useQuery({
     queryKey: ['driver-ops-inspections', driver.id],
     staleTime: 60_000,
@@ -255,6 +291,9 @@ export function DriverOperationsHub({
   const openInvoices = (invoices.data ?? []).filter((invoice) =>
     ['issued', 'partial', 'overdue'].includes(invoice.status) && (invoice.remaining_due ?? invoice.total_ttc) > 0,
   );
+  const openCollectionsCases = collectionsCases.data ?? [];
+  const collectionsPastDue = openCollectionsCases.reduce((sum, row) => sum + row.total_past_due_amount, 0);
+  const primaryCollectionsCase = openCollectionsCases[0] ?? null;
   const weeksHistory = scores.data?.length ?? 0;
   const ownership = buildOwnershipReadiness({
     score: latestScore,
@@ -353,6 +392,13 @@ export function DriverOperationsHub({
                   detail={summary.data?.current_rental?.vehicle_plate ?? 'Aucune location active'}
                   icon={CreditCard}
                   loading={summary.isLoading}
+                />
+                <Signal
+                  label="Collections"
+                  value={openCollectionsCases.length}
+                  detail={primaryCollectionsCase ? `${formatCurrency(collectionsPastDue)} · ${primaryCollectionsCase.days_past_due} day(s)` : 'No active case'}
+                  icon={Wallet}
+                  loading={collectionsCases.isLoading}
                 />
               </div>
 
@@ -461,6 +507,7 @@ export function DriverOperationsHub({
               <ActionLine active={docsNeedingReview > 0 || driver.kyc_status !== 'verified'} label={`${docsNeedingReview} document item(s) to review`} to={`/admin/drivers/${driver.id}?tab=documents`} />
               <ActionLine active={activeInspectionState(activeInspection) !== 'ok' && activeInspectionState(activeInspection) !== 'none'} label={activeInspection ? `Fleet Control: ${activeInspection.status}` : 'No active Fleet Control cycle'} to={`/admin/drivers/${driver.id}?tab=fleet-control`} />
               <ActionLine active={ownership.vehicleScoreGap > 0 || ownership.vehicleWeeksGap > 0} label={`Ownership: ${ownership.progress}% ready`} to={`/admin/drivers/${driver.id}?tab=growth`} />
+              <ActionLine active={openCollectionsCases.length > 0} label={primaryCollectionsCase ? `Collections: ${primaryCollectionsCase.delinquency_status_label ?? 'active'} · ${formatCurrency(collectionsPastDue)}` : 'No active collections case'} to={`/admin/credit-collections?driver=${driver.id}`} />
             </div>
           </CardContent>
         </Card>
