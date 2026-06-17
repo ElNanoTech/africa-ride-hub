@@ -1363,6 +1363,111 @@ export type Database = {
           },
         ]
       }
+      contract_audit_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          contract_id: string | null
+          created_at: string
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          reason: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          reason?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          contract_id?: string | null
+          created_at?: string
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          reason?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_audit_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "contract_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_files: {
+        Row: {
+          contract_id: string
+          created_at: string
+          customer_id: string | null
+          file_hash: string
+          file_id: string
+          file_type: string
+          generated_at: string
+          storage_reference: string
+        }
+        Insert: {
+          contract_id: string
+          created_at?: string
+          customer_id?: string | null
+          file_hash: string
+          file_id?: string
+          file_type: string
+          generated_at?: string
+          storage_reference: string
+        }
+        Update: {
+          contract_id?: string
+          created_at?: string
+          customer_id?: string | null
+          file_hash?: string
+          file_id?: string
+          file_type?: string
+          generated_at?: string
+          storage_reference?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_files_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "contract_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contract_milestones: {
         Row: {
           contract_id: string
@@ -1445,6 +1550,191 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "rent_to_own_contracts"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_signature_events: {
+        Row: {
+          audit_event_id: string | null
+          consent_summary_version: string | null
+          consent_text_snapshot: string | null
+          contract_id: string
+          created_at: string
+          customer_id: string | null
+          device_metadata_json: Json
+          event_at: string
+          idempotency_key: string
+          ip_address_encrypted: string | null
+          language_displayed: string
+          signature_event_id: string
+          signature_method: string
+          signature_provider: string
+          signature_status: string
+          signed_at: string | null
+          signed_contract_hash: string | null
+          signer_id: string | null
+          signer_sequence: number
+          signer_type: string
+        }
+        Insert: {
+          audit_event_id?: string | null
+          consent_summary_version?: string | null
+          consent_text_snapshot?: string | null
+          contract_id: string
+          created_at?: string
+          customer_id?: string | null
+          device_metadata_json?: Json
+          event_at?: string
+          idempotency_key: string
+          ip_address_encrypted?: string | null
+          language_displayed?: string
+          signature_event_id?: string
+          signature_method?: string
+          signature_provider?: string
+          signature_status: string
+          signed_at?: string | null
+          signed_contract_hash?: string | null
+          signer_id?: string | null
+          signer_sequence?: number
+          signer_type: string
+        }
+        Update: {
+          audit_event_id?: string | null
+          consent_summary_version?: string | null
+          consent_text_snapshot?: string | null
+          contract_id?: string
+          created_at?: string
+          customer_id?: string | null
+          device_metadata_json?: Json
+          event_at?: string
+          idempotency_key?: string
+          ip_address_encrypted?: string | null
+          language_displayed?: string
+          signature_event_id?: string
+          signature_method?: string
+          signature_provider?: string
+          signature_status?: string
+          signed_at?: string | null
+          signed_contract_hash?: string | null
+          signer_id?: string | null
+          signer_sequence?: number
+          signer_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_signature_events_audit_event_id_fkey"
+            columns: ["audit_event_id"]
+            isOneToOne: false
+            referencedRelation: "contract_audit_events"
+            referencedColumns: ["audit_event_id"]
+          },
+          {
+            foreignKeyName: "contract_signature_events_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "contract_signature_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_templates: {
+        Row: {
+          country: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          effective_from: string
+          effective_to: string | null
+          language: string
+          plain_language_summary: string
+          product_id: string
+          product_version_id: string | null
+          required_fields_json: Json
+          required_signers_json: Json
+          status: string
+          summary_version: string
+          template_body: string
+          template_id: string
+          template_name: string
+          template_type: string
+          updated_at: string
+          updated_by: string | null
+          version: number
+        }
+        Insert: {
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          language?: string
+          plain_language_summary?: string
+          product_id: string
+          product_version_id?: string | null
+          required_fields_json?: Json
+          required_signers_json?: Json
+          status?: string
+          summary_version?: string
+          template_body: string
+          template_id?: string
+          template_name: string
+          template_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Update: {
+          country?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          effective_from?: string
+          effective_to?: string | null
+          language?: string
+          plain_language_summary?: string
+          product_id?: string
+          product_version_id?: string | null
+          required_fields_json?: Json
+          required_signers_json?: Json
+          status?: string
+          summary_version?: string
+          template_body?: string
+          template_id?: string
+          template_name?: string
+          template_type?: string
+          updated_at?: string
+          updated_by?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contract_templates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "contract_templates_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
           },
         ]
       }
@@ -1549,43 +1839,86 @@ export type Database = {
         Row: {
           agreement_id: string
           agreement_snapshot: Json
+          agreement_status: string
           application_id: string
+          asset_id: string | null
+          contract_hash: string | null
+          contract_id: string | null
           created_at: string
           created_by: string | null
           customer_id: string | null
+          decision_id: string | null
+          final_pdf_hash: string | null
+          product_id: string | null
+          product_version_id: string | null
+          signature_hash: string | null
           signed_at: string | null
           signed_by_admin_id: string | null
           signed_by_driver_at: string | null
+          snapshot_hash: string | null
+          template_id: string | null
+          template_version: number | null
         }
         Insert: {
           agreement_id?: string
           agreement_snapshot: Json
+          agreement_status?: string
           application_id: string
+          asset_id?: string | null
+          contract_hash?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_id?: string | null
+          final_pdf_hash?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          signature_hash?: string | null
           signed_at?: string | null
           signed_by_admin_id?: string | null
           signed_by_driver_at?: string | null
+          snapshot_hash?: string | null
+          template_id?: string | null
+          template_version?: number | null
         }
         Update: {
           agreement_id?: string
           agreement_snapshot?: Json
+          agreement_status?: string
           application_id?: string
+          asset_id?: string | null
+          contract_hash?: string | null
+          contract_id?: string | null
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_id?: string | null
+          final_pdf_hash?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          signature_hash?: string | null
           signed_at?: string | null
           signed_by_admin_id?: string | null
           signed_by_driver_at?: string | null
+          snapshot_hash?: string | null
+          template_id?: string | null
+          template_version?: number | null
         }
         Relationships: [
           {
             foreignKeyName: "credit_agreements_application_id_fkey"
             columns: ["application_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "credit_applications"
             referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "credit_agreements_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "credit_agreements_customer_id_fkey"
@@ -1844,6 +2177,191 @@ export type Database = {
           },
         ]
       }
+      credit_contracts: {
+        Row: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        Insert: {
+          admin_signed_at?: string | null
+          application_id: string
+          asset_id?: string | null
+          contract_hash: string
+          contract_id?: string
+          contract_snapshot_json: Json
+          contract_status?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string | null
+          customer_id?: string | null
+          decision_id: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          driver_id: string
+          driver_signed_at?: string | null
+          expires_at?: string | null
+          final_pdf_hash?: string | null
+          fully_executed_at?: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at?: string | null
+          signature_hash?: string | null
+          signature_provider?: string
+          snapshot_hash: string
+          status_changed_at?: string
+          superseded_by_contract_id?: string | null
+          template_id: string
+          template_version: number
+          updated_at?: string
+          updated_by?: string | null
+          viewed_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Update: {
+          admin_signed_at?: string | null
+          application_id?: string
+          asset_id?: string | null
+          contract_hash?: string
+          contract_id?: string
+          contract_snapshot_json?: Json
+          contract_status?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string | null
+          customer_id?: string | null
+          decision_id?: string
+          decline_reason?: string | null
+          declined_at?: string | null
+          driver_id?: string
+          driver_signed_at?: string | null
+          expires_at?: string | null
+          final_pdf_hash?: string | null
+          fully_executed_at?: string | null
+          idempotency_key?: string
+          product_id?: string
+          product_version_id?: string
+          sent_at?: string | null
+          signature_hash?: string | null
+          signature_provider?: string
+          snapshot_hash?: string
+          status_changed_at?: string
+          superseded_by_contract_id?: string | null
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+          updated_by?: string | null
+          viewed_at?: string | null
+          void_reason?: string | null
+          voided_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_contracts_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_superseded_by_contract_id_fkey"
+            columns: ["superseded_by_contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "contract_templates"
+            referencedColumns: ["template_id"]
+          },
+        ]
+      }
       credit_decisions: {
         Row: {
           application_id: string
@@ -1957,46 +2475,61 @@ export type Database = {
       }
       credit_policy_sets: {
         Row: {
+          approval_authority_json: Json
           created_at: string
           created_by: string | null
           customer_id: string | null
+          decision_matrix_json: Json
           effective_from: string
           effective_to: string | null
           policy_id: string
           policy_json: Json
           policy_name: string
           policy_type: string
+          product_id: string | null
+          rules_json: Json
           status: string
           updated_at: string
           updated_by: string | null
+          version: number
         }
         Insert: {
+          approval_authority_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_matrix_json?: Json
           effective_from?: string
           effective_to?: string | null
           policy_id?: string
           policy_json?: Json
           policy_name: string
           policy_type: string
+          product_id?: string | null
+          rules_json?: Json
           status?: string
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Update: {
+          approval_authority_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          decision_matrix_json?: Json
           effective_from?: string
           effective_to?: string | null
           policy_id?: string
           policy_json?: Json
           policy_name?: string
           policy_type?: string
+          product_id?: string | null
+          rules_json?: Json
           status?: string
           updated_at?: string
           updated_by?: string | null
+          version?: number
         }
         Relationships: [
           {
@@ -2005,6 +2538,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_policy_sets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -3850,6 +4390,7 @@ export type Database = {
           driver_snapshot_name: string | null
           driver_snapshot_nif: string | null
           driver_snapshot_phone: string | null
+          due_date: string | null
           id: string
           idempotency_key: string | null
           invoice_kind: string
@@ -3870,7 +4411,9 @@ export type Database = {
           rental_id: string | null
           source_application_id: string | null
           source_credit_account_id: string | null
+          source_obligation_id: string | null
           source_product_id: string | null
+          source_schedule_id: string | null
           status: string
           subtotal_ht: number
           tags: string[]
@@ -3893,6 +4436,7 @@ export type Database = {
           driver_snapshot_name?: string | null
           driver_snapshot_nif?: string | null
           driver_snapshot_phone?: string | null
+          due_date?: string | null
           id?: string
           idempotency_key?: string | null
           invoice_kind?: string
@@ -3913,7 +4457,9 @@ export type Database = {
           rental_id?: string | null
           source_application_id?: string | null
           source_credit_account_id?: string | null
+          source_obligation_id?: string | null
           source_product_id?: string | null
+          source_schedule_id?: string | null
           status?: string
           subtotal_ht?: number
           tags?: string[]
@@ -3936,6 +4482,7 @@ export type Database = {
           driver_snapshot_name?: string | null
           driver_snapshot_nif?: string | null
           driver_snapshot_phone?: string | null
+          due_date?: string | null
           id?: string
           idempotency_key?: string | null
           invoice_kind?: string
@@ -3956,7 +4503,9 @@ export type Database = {
           rental_id?: string | null
           source_application_id?: string | null
           source_credit_account_id?: string | null
+          source_obligation_id?: string | null
           source_product_id?: string | null
+          source_schedule_id?: string | null
           status?: string
           subtotal_ht?: number
           tags?: string[]
@@ -3990,11 +4539,25 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "invoice_source_obligation_id_fkey"
+            columns: ["source_obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+          {
             foreignKeyName: "invoice_source_product_id_fkey"
             columns: ["source_product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
             referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "invoice_source_schedule_id_fkey"
+            columns: ["source_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
           },
         ]
       }
@@ -4821,14 +5384,90 @@ export type Database = {
           },
         ]
       }
+      product_underwriting_extensions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          extension_config_json: Json
+          extension_id: string
+          extension_key: string
+          policy_set_id: string | null
+          product_id: string | null
+          product_version_id: string | null
+          status: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          extension_config_json?: Json
+          extension_id?: string
+          extension_key: string
+          policy_set_id?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          extension_config_json?: Json
+          extension_id?: string
+          extension_key?: string
+          policy_set_id?: string | null
+          product_id?: string | null
+          product_version_id?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_underwriting_extensions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_policy_set_id_fkey"
+            columns: ["policy_set_id"]
+            isOneToOne: false
+            referencedRelation: "credit_policy_sets"
+            referencedColumns: ["policy_id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+        ]
+      }
       product_versions: {
         Row: {
+          contract_requirements_json: Json
           created_at: string
           created_by: string | null
           customer_id: string | null
           effective_from: string
           effective_to: string | null
           product_id: string
+          repayment_terms_json: Json
           rules_snapshot_json: Json
           status: string
           updated_at: string
@@ -4837,12 +5476,14 @@ export type Database = {
           version_number: number
         }
         Insert: {
+          contract_requirements_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
           effective_from?: string
           effective_to?: string | null
           product_id: string
+          repayment_terms_json?: Json
           rules_snapshot_json?: Json
           status?: string
           updated_at?: string
@@ -4851,12 +5492,14 @@ export type Database = {
           version_number: number
         }
         Update: {
+          contract_requirements_json?: Json
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
           effective_from?: string
           effective_to?: string | null
           product_id?: string
+          repayment_terms_json?: Json
           rules_snapshot_json?: Json
           status?: string
           updated_at?: string
@@ -5202,6 +5845,560 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vehicles_public"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      repayment_audit_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          created_at: string
+          credit_account_id: string | null
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          obligation_id: string | null
+          reason: string | null
+          schedule_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          obligation_id?: string | null
+          reason?: string | null
+          schedule_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          obligation_id?: string | null
+          reason?: string | null
+          schedule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayment_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
+      repayment_schedule_amendments: {
+        Row: {
+          amendment_id: string
+          amendment_reason: string
+          amendment_type: string
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          new_schedule_id: string | null
+          original_schedule_id: string
+        }
+        Insert: {
+          amendment_id?: string
+          amendment_reason: string
+          amendment_type?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          new_schedule_id?: string | null
+          original_schedule_id: string
+        }
+        Update: {
+          amendment_id?: string
+          amendment_reason?: string
+          amendment_type?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          new_schedule_id?: string | null
+          original_schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayment_schedule_amendments_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_new_schedule_id_fkey"
+            columns: ["new_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_original_schedule_id_fkey"
+            columns: ["original_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
+      repayment_schedules: {
+        Row: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_prepayment?: boolean
+          allow_schedule_amendment?: boolean
+          application_id: string
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          currency_code?: string
+          customer_id?: string | null
+          final_due_date: string
+          financed_amount?: number
+          first_due_date: string
+          frequency?: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id?: string | null
+          grace_period_days?: number
+          idempotency_key: string
+          invoice_generation_days_before_due?: number
+          product_id: string
+          product_version_id: string
+          schedule_id?: string
+          schedule_status?: string
+          schedule_type: string
+          schedule_version?: number
+          source_snapshot_json?: Json
+          status_changed_at?: string
+          superseded_by_schedule_id?: string | null
+          term_count?: number
+          terms_snapshot_json?: Json
+          total_fees_amount?: number
+          total_interest_amount?: number
+          total_repayment_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_prepayment?: boolean
+          allow_schedule_amendment?: boolean
+          application_id?: string
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          currency_code?: string
+          customer_id?: string | null
+          final_due_date?: string
+          financed_amount?: number
+          first_due_date?: string
+          frequency?: string
+          generated_from_contract_hash?: string
+          generated_from_policy_snapshot_id?: string | null
+          grace_period_days?: number
+          idempotency_key?: string
+          invoice_generation_days_before_due?: number
+          product_id?: string
+          product_version_id?: string
+          schedule_id?: string
+          schedule_status?: string
+          schedule_type?: string
+          schedule_version?: number
+          source_snapshot_json?: Json
+          status_changed_at?: string
+          superseded_by_schedule_id?: string | null
+          term_count?: number
+          terms_snapshot_json?: Json
+          total_fees_amount?: number
+          total_interest_amount?: number
+          total_repayment_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayment_schedules_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_superseded_by_schedule_id_fkey"
+            columns: ["superseded_by_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
+      reunderwriting_triggers: {
+        Row: {
+          application_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          idempotency_key: string
+          prior_decision_id: string | null
+          required_snapshot_at: string
+          resolution_decision_id: string | null
+          status: string
+          status_changed_at: string
+          trigger_id: string
+          trigger_payload_json: Json
+          trigger_source: string
+          trigger_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          application_id: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          idempotency_key: string
+          prior_decision_id?: string | null
+          required_snapshot_at?: string
+          resolution_decision_id?: string | null
+          status?: string
+          status_changed_at?: string
+          trigger_id?: string
+          trigger_payload_json?: Json
+          trigger_source?: string
+          trigger_type: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          application_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          idempotency_key?: string
+          prior_decision_id?: string | null
+          required_snapshot_at?: string
+          resolution_decision_id?: string | null
+          status?: string
+          status_changed_at?: string
+          trigger_id?: string
+          trigger_payload_json?: Json
+          trigger_source?: string
+          trigger_type?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reunderwriting_triggers_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_prior_decision_id_fkey"
+            columns: ["prior_decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_resolution_decision_id_fkey"
+            columns: ["resolution_decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+        ]
+      }
+      review_assignments: {
+        Row: {
+          application_id: string
+          assigned_at: string
+          assignment_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          due_by: string | null
+          idempotency_key: string
+          reviewer_id: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          application_id: string
+          assigned_at?: string
+          assignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          due_by?: string | null
+          idempotency_key: string
+          reviewer_id?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          application_id?: string
+          assigned_at?: string
+          assignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          due_by?: string | null
+          idempotency_key?: string
+          reviewer_id?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "review_assignments_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "review_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_assignments_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_obligations: {
+        Row: {
+          amount: number
+          created_at: string
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          due_date: string
+          fee_amount: number
+          idempotency_key: string
+          interest_amount: number
+          invoice_generation_status: string
+          invoice_id: string | null
+          obligation_id: string
+          obligation_type: string
+          principal_amount: number
+          schedule_id: string
+          sequence_number: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          credit_account_id: string
+          currency_code?: string
+          customer_id?: string | null
+          due_date: string
+          fee_amount?: number
+          idempotency_key: string
+          interest_amount?: number
+          invoice_generation_status?: string
+          invoice_id?: string | null
+          obligation_id?: string
+          obligation_type: string
+          principal_amount?: number
+          schedule_id: string
+          sequence_number: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit_account_id?: string
+          currency_code?: string
+          customer_id?: string | null
+          due_date?: string
+          fee_amount?: number
+          idempotency_key?: string
+          interest_amount?: number
+          invoice_generation_status?: string
+          invoice_id?: string | null
+          obligation_id?: string
+          obligation_type?: string
+          principal_amount?: number
+          schedule_id?: string
+          sequence_number?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_obligations_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
           },
         ]
       }
@@ -5716,6 +6913,308 @@ export type Database = {
             columns: ["module_id"]
             isOneToOne: false
             referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      underwriting_conditions: {
+        Row: {
+          condition_id: string
+          condition_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          decision_id: string
+          description: string
+          fulfilled_at: string | null
+          fulfilled_by: string | null
+          idempotency_key: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          condition_id?: string
+          condition_type: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id: string
+          description: string
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          idempotency_key?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          condition_id?: string
+          condition_type?: string
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id?: string
+          description?: string
+          fulfilled_at?: string | null
+          fulfilled_by?: string | null
+          idempotency_key?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "underwriting_conditions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_conditions_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "underwriting_conditions_fulfilled_by_fkey"
+            columns: ["fulfilled_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      underwriting_decisions: {
+        Row: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount?: number
+          available_exposure_currency_code?: string
+          created_at?: string
+          created_by?: string | null
+          current_exposure_amount?: number
+          current_exposure_currency_code?: string
+          customer_id?: string | null
+          decision: string
+          decision_id?: string
+          decision_risk_level?: string | null
+          decision_risk_snapshot_json?: Json
+          decision_score_grade?: string | null
+          decision_score_value?: number | null
+          decision_timestamp?: string
+          decision_valid_until?: string | null
+          driver_explanation: string
+          evaluated_policy_set_id?: string | null
+          evaluated_policy_snapshot_json?: Json
+          evaluated_policy_version?: number
+          exposure_assessment: string
+          extension_results_json?: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount?: number
+          maximum_exposure_currency_code?: string
+          reason_codes_json?: Json
+          requested_exposure_amount?: number
+          requested_exposure_currency_code?: string
+          reviewer_id?: string | null
+          risk_assessment: string
+          status_changed_at?: string
+          trust_assessment: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          admin_explanation?: string
+          application_id?: string
+          available_exposure_amount?: number
+          available_exposure_currency_code?: string
+          created_at?: string
+          created_by?: string | null
+          current_exposure_amount?: number
+          current_exposure_currency_code?: string
+          customer_id?: string | null
+          decision?: string
+          decision_id?: string
+          decision_risk_level?: string | null
+          decision_risk_snapshot_json?: Json
+          decision_score_grade?: string | null
+          decision_score_value?: number | null
+          decision_timestamp?: string
+          decision_valid_until?: string | null
+          driver_explanation?: string
+          evaluated_policy_set_id?: string | null
+          evaluated_policy_snapshot_json?: Json
+          evaluated_policy_version?: number
+          exposure_assessment?: string
+          extension_results_json?: Json
+          financial_assessment?: string
+          idempotency_key?: string
+          maximum_exposure_amount?: number
+          maximum_exposure_currency_code?: string
+          reason_codes_json?: Json
+          requested_exposure_amount?: number
+          requested_exposure_currency_code?: string
+          reviewer_id?: string | null
+          risk_assessment?: string
+          status_changed_at?: string
+          trust_assessment?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "underwriting_decisions_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_evaluated_policy_set_id_fkey"
+            columns: ["evaluated_policy_set_id"]
+            isOneToOne: false
+            referencedRelation: "credit_policy_sets"
+            referencedColumns: ["policy_id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      underwriting_overrides: {
+        Row: {
+          affected_policies_json: Json
+          after_state_json: Json
+          before_state_json: Json
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          decision_id: string
+          idempotency_key: string
+          override_id: string
+          reason: string
+          reviewer_id: string | null
+          second_approver_id: string | null
+          timestamp: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          affected_policies_json?: Json
+          after_state_json?: Json
+          before_state_json?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id: string
+          idempotency_key: string
+          override_id?: string
+          reason: string
+          reviewer_id?: string | null
+          second_approver_id?: string | null
+          timestamp?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          affected_policies_json?: Json
+          after_state_json?: Json
+          before_state_json?: Json
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          decision_id?: string
+          idempotency_key?: string
+          override_id?: string
+          reason?: string
+          reviewer_id?: string | null
+          second_approver_id?: string | null
+          timestamp?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "underwriting_overrides_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "underwriting_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_second_approver_id_fkey"
+            columns: ["second_approver_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
         ]
@@ -6260,6 +7759,21 @@ export type Database = {
       }
     }
     Views: {
+      v_credit_schedule_reconciliation_anomalies: {
+        Row: {
+          anomaly_id: string | null
+          anomaly_type: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          details_json: Json | null
+          detected_at: string | null
+          invoice_id: string | null
+          obligation_id: string | null
+          schedule_id: string | null
+          severity: string | null
+        }
+        Relationships: []
+      }
       v_wallet_settlement_anomalies: {
         Row: {
           created_at: string | null
@@ -6438,6 +7952,36 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      activate_credit_account_3a_core: {
+        Args: {
+          p_application_id: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          activated_at: string
+          activation_package_id: string
+          asset_id: string | null
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          idempotency_key: string
+          principal_amount: number
+          principal_currency_code: string
+          product_id: string
+          product_version_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       adjust_rental_deadlines: {
         Args: {
           p_new_final_deadline?: string
@@ -6495,6 +8039,108 @@ export type Database = {
       admin_create_rental: {
         Args: { p_driver_id: string; p_rate: number; p_vehicle_id: string }
         Returns: string
+      }
+      admin_sign_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason?: string
+          p_signer_type?: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      amend_repayment_schedule: {
+        Args: {
+          p_amendment_type: string
+          p_idempotency_key?: string
+          p_new_terms_json?: Json
+          p_reason: string
+          p_schedule_id: string
+        }
+        Returns: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "repayment_schedules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       apply_rental_adjustment: {
         Args: {
@@ -6779,6 +8425,79 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      contract_apply_signature_progress: {
+        Args: { p_contract_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      contract_audit: {
+        Args: {
+          p_actor_id: string
+          p_actor_type: string
+          p_after?: Json
+          p_before?: Json
+          p_contract_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_reason?: string
+        }
+        Returns: string
+      }
+      contract_decrypt_signature_ip: {
+        Args: { p_idempotency_key?: string; p_signature_event_id: string }
+        Returns: string
+      }
+      contract_encrypt_ip: { Args: { p_ip: string }; Returns: string }
+      contract_normalize_required_signers: {
+        Args: { p_required: Json }
+        Returns: Json
+      }
+      contract_signer_sequence: {
+        Args: { p_contract_id: string; p_signer_type: string }
+        Returns: number
+      }
+      contract_status_label: { Args: { p_status: string }; Returns: string }
       create_activation_package: {
         Args: {
           p_application_id: string
@@ -6822,6 +8541,7 @@ export type Database = {
           driver_snapshot_name: string | null
           driver_snapshot_nif: string | null
           driver_snapshot_phone: string | null
+          due_date: string | null
           id: string
           idempotency_key: string | null
           invoice_kind: string
@@ -6842,7 +8562,9 @@ export type Database = {
           rental_id: string | null
           source_application_id: string | null
           source_credit_account_id: string | null
+          source_obligation_id: string | null
           source_product_id: string | null
+          source_schedule_id: string | null
           status: string
           subtotal_ht: number
           tags: string[]
@@ -6964,6 +8686,56 @@ export type Database = {
         Args: { p_alert: string; p_status?: string }
         Returns: undefined
       }
+      driver_decline_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason?: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       driver_generate_access_code: {
         Args: { p_driver: string }
         Returns: {
@@ -6998,9 +8770,106 @@ export type Database = {
         }
         Returns: Json
       }
+      driver_sign_credit_contract: {
+        Args: {
+          p_consent_confirmed?: boolean
+          p_contract_id: string
+          p_device_metadata_json?: Json
+          p_idempotency_key?: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       driver_suspend: {
         Args: { p_driver: string; p_reason: string }
         Returns: undefined
+      }
+      driver_view_credit_contract: {
+        Args: { p_contract_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       drivers_risk_summary: {
         Args: never
@@ -7010,6 +8879,53 @@ export type Database = {
           overdue_payments: number
           reasons: string[]
         }[]
+      }
+      evaluate_underwriting_decision: {
+        Args: { p_application_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       fc_require_admin: { Args: { p_customer: string }; Returns: undefined }
       fleet_control_approve: { Args: { p_control: string }; Returns: undefined }
@@ -7051,8 +8967,191 @@ export type Database = {
         Args: { p_customer_id: string; p_n: number; p_year: number }
         Returns: string
       }
+      fulfill_underwriting_condition: {
+        Args: {
+          p_condition_id: string
+          p_idempotency_key?: string
+          p_status?: string
+        }
+        Returns: {
+          condition_id: string
+          condition_type: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          decision_id: string
+          description: string
+          fulfilled_at: string | null
+          fulfilled_by: string | null
+          idempotency_key: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_conditions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       generate_accident_case_number: { Args: never; Returns: string }
+      generate_credit_contract: {
+        Args: { p_application_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      generate_due_repayment_invoices: {
+        Args: { p_idempotency_key?: string; p_schedule_id: string }
+        Returns: {
+          invoice_id: string
+          invoice_status: string
+          obligation_id: string
+        }[]
+      }
       generate_fleet_alerts: { Args: never; Returns: number }
+      generate_repayment_invoice: {
+        Args: { p_idempotency_key?: string; p_obligation_id: string }
+        Returns: {
+          amount_paid: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          currency_code: string
+          customer_id: string
+          driver_id: string
+          driver_snapshot_name: string | null
+          driver_snapshot_nif: string | null
+          driver_snapshot_phone: string | null
+          due_date: string | null
+          id: string
+          idempotency_key: string | null
+          invoice_kind: string
+          invoice_number: string | null
+          issued_at: string | null
+          legal_address_snapshot: string | null
+          legal_footer_snapshot: string | null
+          legal_name_snapshot: string | null
+          legal_nif_snapshot: string | null
+          legal_rccm_snapshot: string | null
+          notes: string | null
+          obligation_type: string | null
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          public_token: string
+          remaining_due: number | null
+          rental_id: string | null
+          source_application_id: string | null
+          source_credit_account_id: string | null
+          source_obligation_id: string | null
+          source_product_id: string | null
+          source_schedule_id: string | null
+          status: string
+          subtotal_ht: number
+          tags: string[]
+          token_expires_at: string
+          total_ttc: number
+          updated_at: string
+          vat_amount: number
+          vat_enabled_snapshot: boolean | null
+          vat_rate_snapshot: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoice"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      generate_repayment_schedule: {
+        Args: { p_credit_account_id: string; p_idempotency_key?: string }
+        Returns: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "repayment_schedules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_driver_360_summary: { Args: { p_driver_id: string }; Returns: Json }
       get_driver_activity_timeline: {
         Args: { p_driver_id: string; p_limit?: number }
@@ -7066,6 +9165,25 @@ export type Database = {
         }[]
       }
       get_driver_auth_mode: { Args: never; Returns: string }
+      get_driver_contract_statuses: {
+        Args: never
+        Returns: {
+          application_id: string
+          asset_label: string
+          can_decline: boolean
+          can_sign: boolean
+          can_view: boolean
+          contract_id: string
+          expires_at: string
+          primary_action_label: string
+          product_name: string
+          required_actions_json: Json
+          signed_at: string
+          status_label: string
+          status_tone: string
+          summary_json: Json
+        }[]
+      }
       get_driver_displayed_score: {
         Args: { p_driver_id: string }
         Returns: number
@@ -7081,6 +9199,39 @@ export type Database = {
           score: number
           score_change: number
           tier: string
+        }[]
+      }
+      get_driver_repayment_schedules: {
+        Args: never
+        Returns: {
+          allow_prepayment: boolean
+          credit_account_id: string
+          currency_code: string
+          next_due_amount: number
+          next_due_date: string
+          obligations_json: Json
+          paid_installments: number
+          product_name: string
+          remaining_balance: number
+          remaining_installments: number
+          schedule_id: string
+          schedule_label: string
+          schedule_status_label: string
+          status_tone: string
+        }[]
+      }
+      get_driver_underwriting_decisions: {
+        Args: never
+        Returns: {
+          application_id: string
+          decision_id: string
+          decision_label: string
+          decision_timestamp: string
+          decision_valid_until: string
+          driver_explanation: string
+          is_reunderwriting_required: boolean
+          pending_conditions: number
+          required_actions_json: Json
         }[]
       }
       get_module_completion_stats: {
@@ -7123,7 +9274,19 @@ export type Database = {
           }
         | { Args: { role: string }; Returns: boolean }
       has_admin_role_in: { Args: { roles: string[] }; Returns: boolean }
+      has_contract_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
+      has_repayment_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
+      has_underwriting_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       is_admin:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id: string }; Returns: boolean }
@@ -7180,6 +9343,55 @@ export type Database = {
         Returns: number
       }
       normalize_license_plate: { Args: { p: string }; Returns: string }
+      pause_repayment_schedule: {
+        Args: {
+          p_idempotency_key?: string
+          p_reason: string
+          p_schedule_id: string
+        }
+        Returns: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "repayment_schedules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       pending_adjustments_count: { Args: never; Returns: number }
       recompute_driver_current_score: {
         Args: { p_customer_id?: string; p_driver_id: string }
@@ -7223,6 +9435,81 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "driver_wallet_transactions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      record_manual_contract_file: {
+        Args: {
+          p_contract_id: string
+          p_file_hash: string
+          p_idempotency_key?: string
+          p_reason: string
+          p_storage_reference: string
+        }
+        Returns: {
+          contract_id: string
+          created_at: string
+          customer_id: string | null
+          file_hash: string
+          file_id: string
+          file_type: string
+          generated_at: string
+          storage_reference: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "contract_files"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      reissue_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -7271,6 +9558,38 @@ export type Database = {
         }
       }
       rental_amount_owed: { Args: { p_rental_id: string }; Returns: number }
+      repayment_audit: {
+        Args: {
+          p_after?: Json
+          p_before?: Json
+          p_credit_account_id: string
+          p_customer_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_obligation_id: string
+          p_reason?: string
+          p_schedule_id: string
+        }
+        Returns: string
+      }
+      repayment_due_date: {
+        Args: {
+          p_first_due_date: string
+          p_frequency: string
+          p_sequence: number
+        }
+        Returns: string
+      }
+      repayment_invoice_obligation_type: {
+        Args: {
+          p_obligation_type: string
+          p_product_type: string
+          p_sequence: number
+          p_term_count: number
+        }
+        Returns: string
+      }
+      repayment_status_label: { Args: { p_status: string }; Returns: string }
       return_rental: {
         Args: { p_rental_id: string }
         Returns: {
@@ -7344,6 +9663,106 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "credit_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      review_underwriting_application: {
+        Args: {
+          p_admin_explanation: string
+          p_application_id: string
+          p_conditions_json?: Json
+          p_decision: string
+          p_driver_explanation: string
+          p_idempotency_key?: string
+        }
+        Returns: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      send_credit_contract: {
+        Args: { p_contract_id: string; p_idempotency_key?: string }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -7440,10 +9859,130 @@ export type Database = {
         }
       }
       sweep_wallet_auto_apply: { Args: never; Returns: Json }
+      sync_repayment_obligation_statuses: {
+        Args: { p_idempotency_key?: string; p_schedule_id: string }
+        Returns: {
+          invoice_id: string
+          new_status: string
+          obligation_id: string
+          old_status: string
+        }[]
+      }
       test_wallet_settlement_paths: { Args: never; Returns: Json }
       trigger_apply_wallet_credit: {
         Args: { p_driver_id: string }
         Returns: undefined
+      }
+      trigger_reunderwriting: {
+        Args: {
+          p_application_id: string
+          p_idempotency_key?: string
+          p_prior_decision_id: string
+          p_trigger_payload_json?: Json
+          p_trigger_source?: string
+          p_trigger_type: string
+        }
+        Returns: {
+          application_id: string
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          idempotency_key: string
+          prior_decision_id: string | null
+          required_snapshot_at: string
+          resolution_decision_id: string | null
+          status: string
+          status_changed_at: string
+          trigger_id: string
+          trigger_payload_json: Json
+          trigger_source: string
+          trigger_type: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "reunderwriting_triggers"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      underwriting_application_status: {
+        Args: { p_decision: string }
+        Returns: string
+      }
+      underwriting_apply_product_extensions: {
+        Args: { p_application_id: string; p_policy_set_id: string }
+        Returns: Json
+      }
+      underwriting_financial_assessment: {
+        Args: { p_application_id: string }
+        Returns: string
+      }
+      underwriting_latest_decision: {
+        Args: { p_application_id: string }
+        Returns: {
+          admin_explanation: string
+          application_id: string
+          available_exposure_amount: number
+          available_exposure_currency_code: string
+          created_at: string
+          created_by: string | null
+          current_exposure_amount: number
+          current_exposure_currency_code: string
+          customer_id: string | null
+          decision: string
+          decision_id: string
+          decision_risk_level: string | null
+          decision_risk_snapshot_json: Json
+          decision_score_grade: string | null
+          decision_score_value: number | null
+          decision_timestamp: string
+          decision_valid_until: string | null
+          driver_explanation: string
+          evaluated_policy_set_id: string | null
+          evaluated_policy_snapshot_json: Json
+          evaluated_policy_version: number
+          exposure_assessment: string
+          extension_results_json: Json
+          financial_assessment: string
+          idempotency_key: string
+          maximum_exposure_amount: number
+          maximum_exposure_currency_code: string
+          reason_codes_json: Json
+          requested_exposure_amount: number
+          requested_exposure_currency_code: string
+          reviewer_id: string | null
+          risk_assessment: string
+          status_changed_at: string
+          trust_assessment: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "underwriting_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      underwriting_matrix_outcome: {
+        Args: {
+          p_exposure: string
+          p_financial: string
+          p_matrix: Json
+          p_risk: string
+          p_trust: string
+        }
+        Returns: string
+      }
+      underwriting_risk_assessment: {
+        Args: { p_risk_level: string }
+        Returns: string
+      }
+      underwriting_trust_assessment: {
+        Args: { p_grade: string }
+        Returns: string
       }
       update_rental_fee: {
         Args: { p_new_rate: number; p_reason: string; p_rental_id: string }
@@ -7484,6 +10023,56 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "rentals"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      void_credit_contract: {
+        Args: {
+          p_contract_id: string
+          p_idempotency_key?: string
+          p_reason: string
+        }
+        Returns: {
+          admin_signed_at: string | null
+          application_id: string
+          asset_id: string | null
+          contract_hash: string
+          contract_id: string
+          contract_snapshot_json: Json
+          contract_status: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          decision_id: string
+          decline_reason: string | null
+          declined_at: string | null
+          driver_id: string
+          driver_signed_at: string | null
+          expires_at: string | null
+          final_pdf_hash: string | null
+          fully_executed_at: string | null
+          idempotency_key: string
+          product_id: string
+          product_version_id: string
+          sent_at: string | null
+          signature_hash: string | null
+          signature_provider: string
+          snapshot_hash: string
+          status_changed_at: string
+          superseded_by_contract_id: string | null
+          template_id: string
+          template_version: number
+          updated_at: string
+          updated_by: string | null
+          viewed_at: string | null
+          void_reason: string | null
+          voided_at: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_contracts"
           isOneToOne: true
           isSetofReturn: false
         }
