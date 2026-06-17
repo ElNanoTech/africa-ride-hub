@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Car, FileText, Wallet, CreditCard, 
   Settings, LogOut, Menu, ChevronLeft, BarChart3, MessageSquare,
-  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench
+  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -73,6 +73,8 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/income-approvals',
   '/admin/pricing',
   '/admin/contracts',
+  '/admin/repayment-operations',
+  '/admin/repayment',
   '/admin/trust-risk',
   '/admin/scoring',
   '/admin/driving-behavior',
@@ -85,6 +87,8 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/growth',
   '/admin/credit-operations',
   '/admin/credit',
+  '/admin/underwriting-operations',
+  '/admin/underwriting',
   '/admin/loans',
   '/admin/kira',
   '/admin/analytics',
@@ -281,6 +285,29 @@ const sidebarItems: SidebarItem[] = [
     icon: CreditCard,
     label: 'Credit Operations',
     aliases: ['/admin/credit'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'growth_ownership',
+  },
+  {
+    to: '/admin/underwriting-operations',
+    icon: ShieldAlert,
+    label: 'Underwriting',
+    aliases: ['/admin/underwriting'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'growth_ownership',
+  },
+  {
+    to: '/admin/contracts',
+    icon: FileSignature,
+    label: 'Contracting',
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'growth_ownership',
+  },
+  {
+    to: '/admin/repayment-operations',
+    icon: CalendarClock,
+    label: 'Repayment',
+    aliases: ['/admin/repayment'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
   },

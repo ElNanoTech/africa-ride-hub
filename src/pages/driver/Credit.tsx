@@ -22,6 +22,7 @@ import {
   Tv,
   Wallet,
   WifiOff,
+  XCircle,
 } from 'lucide-react';
 import { DriverLayout, PageHeader } from '@/components/DriverLayout';
 import { DriverBreadcrumb } from '@/components/DriverBreadcrumb';
@@ -76,7 +77,19 @@ import {
   type CreditApplicationRow,
   type CreditAccountRow,
   type CreditInvoiceRow,
+  type DriverUnderwritingDecisionRow,
 } from '@/hooks/useCreditProductEngineData';
+import {
+  useDriverContractStatuses,
+  useDriverDeclineCreditContract,
+  useDriverSignCreditContract,
+  useDriverViewCreditContract,
+  type DriverContractStatusRow,
+} from '@/hooks/useContractingOperationsData';
+import {
+  useDriverRepaymentSchedules,
+  type DriverRepaymentScheduleRow,
+} from '@/hooks/useRepaymentOperationsData';
 import suzukiAlto from '@/assets/vehicles/suzuki-alto.png';
 
 type CoachTopic = 'car' | 'score' | 'next';
@@ -594,24 +607,176 @@ function ApplicationsCard({ loans }: { loans: DriverLoan[] }) {
   );
 }
 
+function ContractStatusCard({ contract }: { contract: DriverContractStatusRow }) {
+  const viewContract = useDriverViewCreditContract();
+  const signContract = useDriverSignCreditContract();
+  const declineContract = useDriverDeclineCreditContract();
+  const summary = contract.summary_json ?? {};
+  const summaryText = summary.summary_text || 'Resume du contrat indisponible pour le moment.';
+  const principal = typeof summary.principal_amount === 'number' ? summary.principal_amount : 0;
+  const downPayment = typeof summary.down_payment_amount === 'number' ? summary.down_payment_amount : 0;
+  const canAct = contract.can_view || contract.can_sign || contract.can_decline;
+
+  return (
+    <div className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Accord de crédit</p>
+          <p className="mt-1 text-xs text-muted-foreground">{contract.product_name} · {contract.asset_label}</p>
+        </div>
+        <Badge variant={contract.status_tone === 'success' ? 'verified' : contract.status_tone === 'danger' ? 'destructive' : 'secondary'}>
+          {contract.status_label}
+        </Badge>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Montant financé</p>
+          <p className="text-lg font-bold tabular-nums">{formatCurrency(principal)}</p>
+        </div>
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Apport</p>
+          <p className="text-lg font-bold tabular-nums">{formatCurrency(downPayment)}</p>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-lg border bg-background/80 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm leading-relaxed">{summaryText}</p>
+          <KiraVoiceButton text={summaryText} compact />
+        </div>
+        {contract.expires_at && <p className="mt-2 text-xs text-muted-foreground">Valide jusqu’au {formatDateShort(contract.expires_at)}</p>}
+      </div>
+
+      {contract.required_actions_json.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {contract.required_actions_json.slice(0, 4).map((action, index) => (
+            <div key={`${action.label}-${index}`} className="flex items-center justify-between rounded-lg border bg-background/70 p-2 text-xs">
+              <span>{action.label ?? 'Signature requise'}</span>
+              <span className={action.is_pending ? 'font-semibold text-warning' : 'font-semibold text-primary'}>{action.status_label ?? 'A faire'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {canAct && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled={!contract.can_view || viewContract.isPending} onClick={() => viewContract.mutate(contract.contract_id)}>
+            <FileText className="h-4 w-4" />
+            Lire
+          </Button>
+          <Button size="sm" disabled={!contract.can_sign || signContract.isPending} onClick={() => signContract.mutate(contract.contract_id)}>
+            <CheckCircle2 className="h-4 w-4" />
+            Signer
+          </Button>
+          <Button size="sm" variant="outline" disabled={!contract.can_decline || declineContract.isPending} onClick={() => declineContract.mutate(contract.contract_id)}>
+            <XCircle className="h-4 w-4" />
+            Refuser
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RepaymentScheduleCard({ schedule }: { schedule: DriverRepaymentScheduleRow }) {
+  const nextText = schedule.next_due_date
+    ? `${formatCurrency(schedule.next_due_amount)} le ${formatDateShort(schedule.next_due_date)}`
+    : 'Aucune échéance ouverte.';
+  const voiceText = `Votre calendrier de paiement est actif. Prochaine échéance: ${nextText}. Solde restant: ${formatCurrency(schedule.remaining_balance)}.`;
+
+  return (
+    <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3 text-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Calendrier de paiement</p>
+          <p className="mt-1 text-xs text-muted-foreground">{schedule.product_name}</p>
+        </div>
+        <Badge variant={schedule.status_tone === 'danger' ? 'destructive' : schedule.status_tone === 'success' ? 'verified' : 'secondary'}>
+          {schedule.schedule_status_label}
+        </Badge>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Prochaine échéance</p>
+          <p className="text-lg font-bold tabular-nums">{formatCurrency(schedule.next_due_amount)}</p>
+          {schedule.next_due_date && <p className="text-xs text-muted-foreground">{formatDateShort(schedule.next_due_date)}</p>}
+        </div>
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Solde restant</p>
+          <p className="text-lg font-bold tabular-nums">{formatCurrency(schedule.remaining_balance)}</p>
+          <p className="text-xs text-muted-foreground">{schedule.remaining_installments} échéance(s)</p>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-lg border bg-background/80 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm leading-relaxed">
+            Payé: {schedule.paid_installments} échéance(s). {schedule.allow_prepayment ? 'Paiement anticipé disponible sur les factures ouvertes.' : 'Paiement anticipé non disponible.'}
+          </p>
+          <KiraVoiceButton text={voiceText} compact />
+        </div>
+      </div>
+
+      {schedule.obligations_json.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {schedule.obligations_json.slice(0, 3).map((obligation, index) => (
+            <div key={`${schedule.schedule_id}-${obligation.sequence_number ?? index}`} className="flex items-center justify-between rounded-lg border bg-background/70 p-2 text-xs">
+              <span>{obligation.due_date ? formatDateShort(obligation.due_date) : `Échéance ${obligation.sequence_number ?? index + 1}`}</span>
+              <span className="font-semibold">{formatCurrency(Number(obligation.amount ?? 0))} · {obligation.status_label ?? 'Planifiée'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button asChild size="sm" variant="outline" className="mt-3">
+        <Link to="/driver/finance">
+          <Wallet className="h-4 w-4" />
+          Voir les factures
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 function CreditEngineFoundationCard({
   products,
   applications,
+  underwritingDecisions,
   accounts,
   invoices,
+  contractStatuses,
+  repaymentSchedules,
+  contractsError,
+  repaymentError,
   isLoading,
   isError,
 }: {
   products: CreditProductRow[];
   applications: CreditApplicationRow[];
+  underwritingDecisions: DriverUnderwritingDecisionRow[];
   accounts: CreditAccountRow[];
   invoices: CreditInvoiceRow[];
+  contractStatuses: DriverContractStatusRow[];
+  repaymentSchedules: DriverRepaymentScheduleRow[];
+  contractsError: boolean;
+  repaymentError: boolean;
   isLoading: boolean;
   isError: boolean;
 }) {
   const activeProducts = products.filter((product) => product.status === 'ACTIVE');
   const latestApplication = applications[0];
+  const latestUnderwriting = latestApplication
+    ? underwritingDecisions.find((decision) => decision.application_id === latestApplication.application_id) ?? underwritingDecisions[0]
+    : underwritingDecisions[0];
   const latestInvoice = invoices[0];
+  const latestContract = latestApplication
+    ? contractStatuses.find((contract) => contract.application_id === latestApplication.application_id) ?? null
+    : contractStatuses[0] ?? null;
+  const latestRepaymentSchedule = accounts[0]
+    ? repaymentSchedules.find((schedule) => schedule.credit_account_id === accounts[0].credit_account_id) ?? repaymentSchedules[0] ?? null
+    : repaymentSchedules[0] ?? null;
 
   return (
     <Card className="border-primary/25">
@@ -637,7 +802,7 @@ function CreditEngineFoundationCard({
             )}
             <div className="grid grid-cols-3 gap-2 text-xs">
               <MetricMini label="Produits actifs" value={`${activeProducts.length}`} />
-              <MetricMini label="Demandes 3A" value={`${applications.length}`} />
+              <MetricMini label="Demandes" value={`${applications.length}`} />
               <MetricMini label="Comptes crédit" value={`${accounts.length}`} />
             </div>
             {activeProducts.length > 0 && (
@@ -676,6 +841,50 @@ function CreditEngineFoundationCard({
                 Aucune demande Layer 3A soumise. Les opportunités ouvertes ci-dessous créent désormais une demande persistée et auditée.
               </p>
             )}
+            {latestUnderwriting && (
+              <div className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">Décision underwriting</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{latestUnderwriting.driver_explanation}</p>
+                  </div>
+                  <Badge variant={latestUnderwriting.is_reunderwriting_required ? 'secondary' : 'verified'}>
+                    {latestUnderwriting.is_reunderwriting_required ? 'À réévaluer' : latestUnderwriting.decision_label}
+                  </Badge>
+                </div>
+                {latestUnderwriting.decision_valid_until && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Valide jusqu’au {formatDateShort(latestUnderwriting.decision_valid_until)}
+                  </p>
+                )}
+                {latestUnderwriting.pending_conditions > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {latestUnderwriting.required_actions_json
+                      .filter((action) => action.is_pending)
+                      .slice(0, 3)
+                      .map((action, index) => (
+                        <div key={`${action.description}-${index}`} className="rounded-lg border bg-background/70 p-2 text-xs">
+                          <p>{action.description ?? 'Action requise avant activation.'}</p>
+                          <p className="mt-1 font-semibold text-warning">{action.status_label ?? 'Action requise'}</p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+            )}
+            {contractsError && (
+              <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+                Statut contrat indisponible pour le moment.
+              </div>
+            )}
+            {latestContract && <ContractStatusCard contract={latestContract} />}
+
+            {repaymentError && (
+              <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+                Calendrier de paiement indisponible pour le moment.
+              </div>
+            )}
+            {latestRepaymentSchedule && <RepaymentScheduleCard schedule={latestRepaymentSchedule} />}
             {latestInvoice && (
               <div className="rounded-lg border p-3 text-sm">
                 <div className="flex items-center justify-between gap-3">
@@ -950,6 +1159,8 @@ export default function DriverCredit() {
   useBadgeChecker();
 
   const isLoading = driverIdLoading || loansLoading || paymentsLoading || scoresLoading || currentScoreLoading;
+  const contractStatusesQuery = useDriverContractStatuses(!!driverId);
+  const repaymentSchedulesQuery = useDriverRepaymentSchedules(!!driverId);
   const scoreSnapshots = creditScores as DriverCreditScoreSnapshot[];
   const latestScore = scoreSnapshots[0];
   const driverLoans = loans as DriverLoan[];
@@ -967,8 +1178,11 @@ export default function DriverCredit() {
   const creditEngine = creditEngineQuery.data;
   const creditProducts = creditEngine?.products ?? [];
   const creditApplications = creditEngine?.applications ?? [];
+  const underwritingDecisions = creditEngine?.underwritingDecisions ?? [];
   const creditAccounts = creditEngine?.accounts ?? [];
   const creditInvoices = creditEngine?.invoices ?? [];
+  const contractStatuses = contractStatusesQuery.data ?? [];
+  const repaymentSchedules = repaymentSchedulesQuery.data ?? [];
   const selectedProductType = selectedOffer ? offerTypeToProductType[selectedOffer.type] : null;
   const selectedProduct = selectedProductType
     ? creditProducts.find((product) => product.product_type === selectedProductType && product.status === 'ACTIVE') ?? null
@@ -977,10 +1191,20 @@ export default function DriverCredit() {
   const carGap = getEligibilityGaps(carOffer, metrics);
   const hasNegativeScoreEvent = scoreEvents.some((event) => event.delta < 0);
   const existingSelectedOfferApplication = selectedOffer
-    ? creditApplications.some((application) =>
-      application.credit_products?.product_type === offerTypeToProductType[selectedOffer.type]
-      && ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED'].includes(application.status)
-    )
+    ? creditApplications.some((application) => {
+      const sameProduct = application.credit_products?.product_type === offerTypeToProductType[selectedOffer.type];
+      const activeApplication = [
+        'SUBMITTED',
+        'UNDER_REVIEW',
+        'APPROVED',
+        'UNDERWRITING_APPROVED',
+        'UNDERWRITING_CONDITIONAL',
+      ].includes(application.status);
+      const activeContract = contractStatuses.some((contract) =>
+        contract.application_id === application.application_id && contract.status_tone !== 'danger'
+      );
+      return sameProduct && (activeApplication || activeContract);
+    })
     : false;
   const controlStatus = (() => {
     const status = activeInspection?.effective_status;
@@ -1043,8 +1267,13 @@ export default function DriverCredit() {
           <CreditEngineFoundationCard
             products={creditProducts}
             applications={creditApplications}
+            underwritingDecisions={underwritingDecisions}
             accounts={creditAccounts}
             invoices={creditInvoices}
+            contractStatuses={contractStatuses}
+            repaymentSchedules={repaymentSchedules}
+            contractsError={contractStatusesQuery.isError}
+            repaymentError={repaymentSchedulesQuery.isError}
             isLoading={creditEngineQuery.isLoading}
             isError={creditEngineQuery.isError}
           />

@@ -1,0 +1,151 @@
+{
+  "checks": [
+    {
+      "name": "QA asset created",
+      "passed": true,
+      "detail": "2f15c3bb-ffa0-4d9b-869e-e0b091eca46a"
+    },
+    {
+      "name": "driver submitted application",
+      "passed": true,
+      "detail": "67182535-0e7f-4ae0-b866-3e4231dd63a7"
+    },
+    {
+      "name": "Layer 3B decision persisted",
+      "passed": true,
+      "detail": "APPROVED_WITH_CONDITIONS"
+    },
+    {
+      "name": "approval outcome owned by 3B",
+      "passed": true,
+      "detail": "APPROVED_WITH_CONDITIONS"
+    },
+    {
+      "name": "decision-time score snapshot",
+      "passed": true,
+      "detail": "820/A"
+    },
+    {
+      "name": "decision-time exposure snapshot",
+      "passed": true,
+      "detail": "4000000 XOF"
+    },
+    {
+      "name": "policy snapshot stored",
+      "passed": true,
+      "detail": "policy v1"
+    },
+    {
+      "name": "product extension constrained",
+      "passed": true,
+      "detail": "extension returned structured conditions"
+    },
+    {
+      "name": "decision idempotency",
+      "passed": true,
+      "detail": "30f77cec-bd50-4b32-b77a-0913ca400127"
+    },
+    {
+      "name": "re-underwriting trigger idempotency",
+      "passed": true,
+      "detail": "RISK_STATUS_CHANGED"
+    },
+    {
+      "name": "conditional activation lock",
+      "passed": true,
+      "detail": "reunderwriting_required, underwriting_conditions_pending, signed_agreement_required, down_payment_not_settled, possession_confirmation_required"
+    },
+    {
+      "name": "re-underwriting activation lock",
+      "passed": true,
+      "detail": "reunderwriting_required, underwriting_conditions_pending, signed_agreement_required, down_payment_not_settled, possession_confirmation_required"
+    },
+    {
+      "name": "driver-safe underwriting DTO",
+      "passed": true,
+      "detail": "masked payload"
+    },
+    {
+      "name": "driver sees explanation",
+      "passed": true,
+      "detail": "human-readable explanation"
+    },
+    {
+      "name": "admin page title",
+      "passed": true,
+      "detail": "Underwriting Operations"
+    },
+    {
+      "name": "admin owns approvals copy",
+      "passed": true,
+      "detail": "Layer 3B owns approvals"
+    },
+    {
+      "name": "admin queue tab",
+      "passed": true,
+      "detail": "Queue"
+    },
+    {
+      "name": "admin policy tab",
+      "passed": true,
+      "detail": "Policy"
+    },
+    {
+      "name": "decision evidence shown",
+      "passed": true,
+      "detail": "Decision Evidence"
+    },
+    {
+      "name": "policy versioned",
+      "passed": true,
+      "detail": "Active Underwriting Policies"
+    },
+    {
+      "name": "product extensions shown",
+      "passed": true,
+      "detail": "Product Extensions"
+    },
+    {
+      "name": "driver credit route",
+      "passed": true,
+      "detail": "Crédit & Propriété"
+    },
+    {
+      "name": "driver decision summary",
+      "passed": true,
+      "detail": "Décision underwriting"
+    },
+    {
+      "name": "driver explanation",
+      "passed": true,
+      "detail": "demande"
+    },
+    {
+      "name": "driver no raw policy",
+      "passed": true,
+      "detail": "absent: policy"
+    },
+    {
+      "name": "driver no raw matrix",
+      "passed": true,
+      "detail": "absent: matrix"
+    },
+    {
+      "name": "driver no reviewer note",
+      "passed": true,
+      "detail": "absent: reviewer"
+    },
+    {
+      "name": "driver no fraud internals",
+      "passed": true,
+      "detail": "absent: fraud"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": [],
+  "ignoredFindings": []
+}

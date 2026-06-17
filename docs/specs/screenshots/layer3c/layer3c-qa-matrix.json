@@ -1,0 +1,236 @@
+{
+  "checks": [
+    {
+      "name": "vehicle ownership template created",
+      "passed": true,
+      "detail": "template v1"
+    },
+    {
+      "name": "QA asset created",
+      "passed": true,
+      "detail": "d2fd0156-6348-4690-9cc4-b37682ba3908"
+    },
+    {
+      "name": "driver submitted application",
+      "passed": true,
+      "detail": "f7d7c53d-2339-4a01-85e3-682a8138aca6"
+    },
+    {
+      "name": "Layer 3B approval available for contracting",
+      "passed": true,
+      "detail": "APPROVED_WITH_CONDITIONS"
+    },
+    {
+      "name": "approved application generates contract",
+      "passed": true,
+      "detail": "DRAFT_CREATED"
+    },
+    {
+      "name": "contract references decision",
+      "passed": true,
+      "detail": "48b0a9c7-a1bc-4272-923b-477bbfc036b4"
+    },
+    {
+      "name": "contract pins product version",
+      "passed": true,
+      "detail": "35200000-0000-0000-0000-000000000001"
+    },
+    {
+      "name": "contract pins template version",
+      "passed": true,
+      "detail": "template 35700000-0000-0000-0000-000000000001"
+    },
+    {
+      "name": "money byte-exact to decision",
+      "passed": true,
+      "detail": "4000000"
+    },
+    {
+      "name": "contract snapshot immutable hash stored",
+      "passed": true,
+      "detail": "cd16613f20e212587aa2a5c658d38abf"
+    },
+    {
+      "name": "contract generation idempotency",
+      "passed": true,
+      "detail": "bfeb7300-7ab6-4842-8fd6-dede08ed7c55"
+    },
+    {
+      "name": "activation blocked before execution",
+      "passed": true,
+      "detail": "underwriting_conditions_pending, signed_agreement_required, down_payment_not_settled, possession_confirmation_required"
+    },
+    {
+      "name": "contract sent for signature",
+      "passed": true,
+      "detail": "SENT_FOR_SIGNATURE"
+    },
+    {
+      "name": "multi-signer sequencing blocks admin before driver",
+      "passed": true,
+      "detail": "previous required signer must sign first"
+    },
+    {
+      "name": "driver-safe contract DTO masks internals",
+      "passed": true,
+      "detail": "masked payload"
+    },
+    {
+      "name": "driver sees French summary",
+      "passed": true,
+      "detail": "summary visible"
+    },
+    {
+      "name": "driver viewed contract",
+      "passed": true,
+      "detail": "VIEWED"
+    },
+    {
+      "name": "driver signature captured",
+      "passed": true,
+      "detail": "PARTIALLY_EXECUTED"
+    },
+    {
+      "name": "admin countersignature captured",
+      "passed": true,
+      "detail": "PARTIALLY_EXECUTED"
+    },
+    {
+      "name": "fully executed after all required signers",
+      "passed": true,
+      "detail": "FULLY_EXECUTED"
+    },
+    {
+      "name": "executed PDF hash recorded",
+      "passed": true,
+      "detail": "c36291ee3f549627c65e0a54f83bd54e"
+    },
+    {
+      "name": "credit_agreements activation bridge inserted",
+      "passed": true,
+      "detail": "418ccf94-4d17-4fca-a368-1ce95be3ff18"
+    },
+    {
+      "name": "executed PDF file hash validation",
+      "passed": true,
+      "detail": "c36291ee3f549627c65e0a54f83bd54e"
+    },
+    {
+      "name": "executed agreement clears signature blocker",
+      "passed": true,
+      "detail": "underwriting_conditions_pending, down_payment_not_settled, possession_confirmation_required"
+    },
+    {
+      "name": "no fake activation created",
+      "passed": true,
+      "detail": "underwriting_conditions_pending, down_payment_not_settled, possession_confirmation_required"
+    },
+    {
+      "name": "signature evidence stored",
+      "passed": true,
+      "detail": "7 events"
+    },
+    {
+      "name": "consent bound to summary version",
+      "passed": true,
+      "detail": "summary version"
+    },
+    {
+      "name": "IP evidence stored as envelope",
+      "passed": true,
+      "detail": "encrypted envelope"
+    },
+    {
+      "name": "admin page title",
+      "passed": true,
+      "detail": "Contracting & E-Signature"
+    },
+    {
+      "name": "admin queue tab",
+      "passed": true,
+      "detail": "Contract Queue"
+    },
+    {
+      "name": "admin signer tab",
+      "passed": true,
+      "detail": "Signer Status"
+    },
+    {
+      "name": "admin template tab",
+      "passed": true,
+      "detail": "Templates"
+    },
+    {
+      "name": "activation source copy",
+      "passed": true,
+      "detail": "latest valid fully executed agreement"
+    },
+    {
+      "name": "signer status shown",
+      "passed": true,
+      "detail": "Signer Status"
+    },
+    {
+      "name": "evidence shown",
+      "passed": true,
+      "detail": "Signature Evidence"
+    },
+    {
+      "name": "driver credit route",
+      "passed": true,
+      "detail": "Crédit & Propriété"
+    },
+    {
+      "name": "driver contract status",
+      "passed": true,
+      "detail": "Accord de crédit"
+    },
+    {
+      "name": "driver signed summary",
+      "passed": true,
+      "detail": "Accord signé"
+    },
+    {
+      "name": "driver no contract snapshot",
+      "passed": true,
+      "detail": "absent: contract_snapshot"
+    },
+    {
+      "name": "driver no template body",
+      "passed": true,
+      "detail": "absent: template_body"
+    },
+    {
+      "name": "driver no raw policy",
+      "passed": true,
+      "detail": "absent: policy"
+    },
+    {
+      "name": "driver no reviewer note",
+      "passed": true,
+      "detail": "absent: reviewer"
+    },
+    {
+      "name": "driver no signature hash",
+      "passed": true,
+      "detail": "absent: signature_hash"
+    },
+    {
+      "name": "driver no ip evidence",
+      "passed": true,
+      "detail": "absent: ip_address"
+    },
+    {
+      "name": "driver no raw full enum",
+      "passed": true,
+      "detail": "absent: FULLY_EXECUTED"
+    },
+    {
+      "name": "console/network findings",
+      "passed": true,
+      "detail": "0 finding(s)"
+    }
+  ],
+  "findings": [],
+  "ignoredFindings": []
+}

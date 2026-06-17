@@ -29,6 +29,16 @@ export type Creds = {
     vehicleVersionId: string;
     assetId: string;
   } | null;
+  layer3b?: {
+    policyId: string;
+    extensionId: string;
+  } | null;
+  layer3c?: {
+    vehicleTemplateId: string;
+  } | null;
+  layer3d?: {
+    repaymentTermsId: string;
+  } | null;
 };
 
 export function loadCreds(): Creds {
@@ -116,7 +126,8 @@ export class Harness {
 export async function driverLogin(h: Harness, creds: Creds) {
   const p = h.page;
   h.label("driver/login");
-  await p.goto(`${APP_URL}/driver/login`, { waitUntil: "networkidle" });
+  await p.goto(`${APP_URL}/driver/login`, { waitUntil: "domcontentloaded" });
+  await settle(p, 800);
   // The page auto-routes to the 'native' form when auth mode = org_managed;
   // otherwise click the phone button.
   const phoneInput = p.locator('input[type="tel"]');

@@ -77,6 +77,18 @@ export type CreditDecisionRow = {
   decision_timestamp: string;
 };
 
+export type DriverUnderwritingDecisionRow = {
+  decision_id: string;
+  application_id: string;
+  decision_label: string;
+  driver_explanation: string;
+  decision_valid_until: string | null;
+  decision_timestamp: string;
+  required_actions_json: Array<{ description?: string; status_label?: string; is_pending?: boolean }>;
+  pending_conditions: number;
+  is_reunderwriting_required: boolean;
+};
+
 export type ActivationPackageRow = {
   package_id: string;
   application_id: string;
@@ -154,6 +166,7 @@ export type DriverCreditEngineData = {
   products: CreditProductRow[];
   applications: CreditApplicationRow[];
   decisions: CreditDecisionRow[];
+  underwritingDecisions: DriverUnderwritingDecisionRow[];
   activationPackages: ActivationPackageRow[];
   accounts: CreditAccountRow[];
   invoices: CreditInvoiceRow[];
@@ -179,10 +192,22 @@ export function creditStatusLabel(status: string | null | undefined) {
     case 'SUBMITTED': return 'Soumise';
     case 'UNDER_REVIEW': return 'En revue';
     case 'APPROVED': return 'Approuvée';
+    case 'APPROVED_WITH_CONDITIONS': return 'Pré-approuvée avec actions';
     case 'DECLINED': return 'Non retenue';
     case 'WITHDRAWN': return 'Retirée';
     case 'EXPIRED': return 'Expirée';
+    case 'UNDERWRITING_APPROVED': return 'Approuvée underwriting';
+    case 'UNDERWRITING_CONDITIONAL': return 'Actions requises';
+    case 'UNDERWRITING_DECLINED': return 'Non retenue underwriting';
+    case 'UNDERWRITING_REVIEW': return 'En revue underwriting';
+    case 'UNDERWRITING_ESCALATED': return 'Revue renforcée';
+    case 'ESCALATED': return 'Revue renforcée';
     case 'PENDING': return 'En attente';
+    case 'OPEN': return 'Ouverte';
+    case 'IN_REVIEW': return 'En revue';
+    case 'RESOLVED': return 'Résolue';
+    case 'FULFILLED': return 'Remplie';
+    case 'WAIVED': return 'Levée';
     case 'READY': return 'Prête';
     case 'BLOCKED': return 'Bloquée';
     case 'ACTIVATED': return 'Activée';
@@ -215,6 +240,30 @@ export function creditStatusLabel(status: string | null | undefined) {
     case 'ELIGIBLE_FOR_REVIEW': return 'Éligible pour revue';
     case 'ELIGIBLE': return 'Éligible';
     case 'MANUAL_REVIEW': return 'Revue manuelle';
+    case 'NOT_REQUIRED': return 'Contrat non requis';
+    case 'DRAFT_PENDING': return 'Préparation contrat';
+    case 'DRAFT_CREATED': return 'Prêt à envoyer';
+    case 'SENT_FOR_SIGNATURE': return 'Envoyé signature';
+    case 'VIEWED': return 'Consulté';
+    case 'PARTIALLY_EXECUTED': return 'Signatures en cours';
+    case 'FULLY_EXECUTED': return 'Accord signé';
+    case 'DECLINED_BY_DRIVER': return 'Refus conducteur';
+    case 'VOIDED': return 'Annulé';
+    case 'SUPERSEDED': return 'Remplacé';
+    case 'SIGNED': return 'Signé';
+    case 'SENT': return 'Envoyé';
+    case 'PAUSED': return 'Suspendue';
+    case 'SCHEDULED': return 'Planifiée';
+    case 'INVOICED': return 'Facturée';
+    case 'PAID': return 'Payée';
+    case 'PARTIALLY_PAID': return 'Paiement partiel';
+    case 'OVERDUE': return 'En retard';
+    case 'RETRY_REQUIRED': return 'Nouvelle tentative requise';
+    case 'GENERATED': return 'Générée';
+    case 'NOT_DUE': return 'Pas encore exigible';
+    case 'FIXED_INSTALLMENT': return 'Échéances fixes';
+    case 'ZERO_INTEREST_INSTALLMENT': return 'Échéances sans intérêt';
+    case 'ONE_TIME_PAYMENT': return 'Paiement unique';
     default: return status || 'En cours';
   }
 }
@@ -271,6 +320,12 @@ async function fetchDecisions(applicationIds: string[]): Promise<CreditDecisionR
   return data ?? [];
 }
 
+async function fetchDriverUnderwritingDecisions(): Promise<DriverUnderwritingDecisionRow[]> {
+  const { data, error } = await creditClient.rpc<DriverUnderwritingDecisionRow[]>('get_driver_underwriting_decisions');
+  if (error) throw error;
+  return data ?? [];
+}
+
 async function fetchActivationPackages(applicationIds: string[]): Promise<ActivationPackageRow[]> {
   if (applicationIds.length === 0) return [];
   const { data, error } = await creditClient
@@ -315,10 +370,11 @@ export function useDriverCreditEngineData() {
     queryKey: ['driver-credit-engine', driverId],
     enabled: !!driverId,
     queryFn: async (): Promise<DriverCreditEngineData> => {
-      const [products, applications, accounts] = await Promise.all([
+      const [products, applications, accounts, underwritingDecisions] = await Promise.all([
         fetchProducts(),
         fetchApplications(driverId),
         fetchAccounts(driverId),
+        fetchDriverUnderwritingDecisions(),
       ]);
       const applicationIds = applications.map((app) => app.application_id);
       const [decisions, activationPackages, invoices] = await Promise.all([
@@ -326,7 +382,7 @@ export function useDriverCreditEngineData() {
         fetchActivationPackages(applicationIds),
         fetchInvoices(applicationIds),
       ]);
-      return { products, applications, decisions, activationPackages, accounts, invoices };
+      return { products, applications, decisions, underwritingDecisions, activationPackages, accounts, invoices };
     },
     meta: { driverIdLoading },
   });
@@ -403,6 +459,7 @@ export function useAdminCreditEngineData() {
         products,
         applications,
         decisions,
+        underwritingDecisions: [],
         activationPackages,
         accounts,
         invoices,

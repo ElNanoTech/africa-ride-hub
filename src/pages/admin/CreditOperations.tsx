@@ -10,6 +10,7 @@ import {
   FileCheck2,
   PackageCheck,
   ShieldCheck,
+  ShieldAlert,
   Wallet,
   XCircle,
 } from 'lucide-react';
@@ -35,11 +36,12 @@ import {
   type CreditDecisionRow,
   type CreditInvoiceRow,
 } from '@/hooks/useCreditProductEngineData';
+import { useEvaluateUnderwritingDecision } from '@/hooks/useUnderwritingOperationsData';
 
 function statusVariant(status: string) {
-  if (['ACTIVE', 'APPROVED', 'READY', 'ACTIVATED', 'ELIGIBLE'].includes(status)) return 'verified';
-  if (['DECLINED', 'FAILED', 'CANCELLED', 'BLOCKED', 'NOT_ELIGIBLE'].includes(status)) return 'destructive';
-  if (['SUBMITTED', 'UNDER_REVIEW', 'PENDING', 'ALMOST_ELIGIBLE', 'ELIGIBLE_FOR_REVIEW'].includes(status)) return 'secondary';
+  if (['ACTIVE', 'APPROVED', 'UNDERWRITING_APPROVED', 'READY', 'ACTIVATED', 'ELIGIBLE'].includes(status)) return 'verified';
+  if (['DECLINED', 'UNDERWRITING_DECLINED', 'UNDERWRITING_ESCALATED', 'ESCALATED', 'FAILED', 'CANCELLED', 'BLOCKED', 'NOT_ELIGIBLE'].includes(status)) return 'destructive';
+  if (['SUBMITTED', 'UNDER_REVIEW', 'UNDERWRITING_REVIEW', 'UNDERWRITING_CONDITIONAL', 'APPROVED_WITH_CONDITIONS', 'PENDING', 'ALMOST_ELIGIBLE', 'ELIGIBLE_FOR_REVIEW'].includes(status)) return 'secondary';
   return 'outline';
 }
 
@@ -96,6 +98,7 @@ function ApplicationActions({
   invoice: CreditInvoiceRow | null;
 }) {
   const review = useReviewCreditApplication();
+  const evaluateUnderwriting = useEvaluateUnderwritingDecision();
   const createInvoice = useCreateDownPaymentInvoice();
   const evaluateActivation = useEvaluateActivationPackage();
   const activate = useActivateCreditAccount();
@@ -109,15 +112,11 @@ function ApplicationActions({
       <Button
         size="sm"
         variant="outline"
-        disabled={!canReview || review.isPending}
-        onClick={() => review.mutate({
-          applicationId: app.application_id,
-          decision: 'APPROVED',
-          explanation: 'Approuvé pour activation Layer 3A. Dette active uniquement après package prêt et possession confirmée.',
-        })}
+        disabled={!canReview || evaluateUnderwriting.isPending}
+        onClick={() => evaluateUnderwriting.mutate(app.application_id)}
       >
         <CheckCircle2 className="h-4 w-4" />
-        Approuver
+        Évaluer 3B
       </Button>
       <Button
         size="sm"
@@ -224,6 +223,7 @@ export default function CreditOperations() {
 
         <div className="flex flex-wrap gap-2">
           <Button asChild variant="outline" size="sm"><Link to="/admin/financial-operations"><CreditCard className="h-4 w-4" /> Financial Operations</Link></Button>
+          <Button asChild variant="outline" size="sm"><Link to="/admin/underwriting-operations"><ShieldAlert className="h-4 w-4" /> Underwriting</Link></Button>
           <Button asChild variant="outline" size="sm"><Link to="/admin/billing/wallets"><Wallet className="h-4 w-4" /> Wallets</Link></Button>
           <Button asChild variant="outline" size="sm"><Link to="/admin/trust-risk"><ShieldCheck className="h-4 w-4" /> Trust & Risk</Link></Button>
           <Button asChild variant="outline" size="sm"><Link to="/admin/growth-ownership"><BadgeCheck className="h-4 w-4" /> Growth</Link></Button>
