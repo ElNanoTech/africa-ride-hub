@@ -2177,6 +2177,307 @@ export type Database = {
           },
         ]
       }
+      credit_collection_actions: {
+        Row: {
+          action_id: string
+          action_note: string | null
+          action_type: string
+          actor_id: string | null
+          case_id: string
+          created_at: string
+          customer_id: string | null
+          driver_visible: boolean
+          idempotency_key: string | null
+        }
+        Insert: {
+          action_id?: string
+          action_note?: string | null
+          action_type: string
+          actor_id?: string | null
+          case_id: string
+          created_at?: string
+          customer_id?: string | null
+          driver_visible?: boolean
+          idempotency_key?: string | null
+        }
+        Update: {
+          action_id?: string
+          action_note?: string | null
+          action_type?: string
+          actor_id?: string | null
+          case_id?: string
+          created_at?: string
+          customer_id?: string | null
+          driver_visible?: boolean
+          idempotency_key?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_collection_actions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_collection_actions_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_collection_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_collections_audit_events: {
+        Row: {
+          actor_id: string | null
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          case_id: string | null
+          created_at: string
+          credit_account_id: string | null
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          obligation_id: string | null
+          reason: string | null
+          request_hash: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          case_id?: string | null
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          obligation_id?: string | null
+          reason?: string | null
+          request_hash?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          case_id?: string | null
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          obligation_id?: string | null
+          reason?: string | null
+          request_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_collections_audit_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_audit_events_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_audit_events_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+        ]
+      }
+      credit_collections_cases: {
+        Row: {
+          assigned_to: string | null
+          case_id: string
+          closed_at: string | null
+          closure_reason: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          current_status: string
+          customer_id: string | null
+          days_past_due: number
+          delinquency_status: string
+          driver_id: string
+          escalation_level: number
+          idempotency_key: string
+          invoice_id: string | null
+          obligation_id: string | null
+          opened_at: string
+          priority_score: number
+          product_id: string
+          product_version_id: string | null
+          request_hash: string | null
+          risk_level: string
+          rules_snapshot_json: Json
+          schedule_id: string | null
+          score_impact: number
+          severity: string
+          status_changed_at: string
+          total_past_due_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          case_id?: string
+          closed_at?: string | null
+          closure_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          currency_code?: string
+          current_status?: string
+          customer_id?: string | null
+          days_past_due?: number
+          delinquency_status?: string
+          driver_id: string
+          escalation_level?: number
+          idempotency_key: string
+          invoice_id?: string | null
+          obligation_id?: string | null
+          opened_at?: string
+          priority_score?: number
+          product_id: string
+          product_version_id?: string | null
+          request_hash?: string | null
+          risk_level?: string
+          rules_snapshot_json?: Json
+          schedule_id?: string | null
+          score_impact?: number
+          severity?: string
+          status_changed_at?: string
+          total_past_due_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          case_id?: string
+          closed_at?: string | null
+          closure_reason?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          currency_code?: string
+          current_status?: string
+          customer_id?: string | null
+          days_past_due?: number
+          delinquency_status?: string
+          driver_id?: string
+          escalation_level?: number
+          idempotency_key?: string
+          invoice_id?: string | null
+          obligation_id?: string | null
+          opened_at?: string
+          priority_score?: number
+          product_id?: string
+          product_version_id?: string | null
+          request_hash?: string | null
+          risk_level?: string
+          rules_snapshot_json?: Json
+          schedule_id?: string | null
+          score_impact?: number
+          severity?: string
+          status_changed_at?: string
+          total_past_due_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_collections_cases_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
       credit_contracts: {
         Row: {
           admin_signed_at: string | null
@@ -2626,6 +2927,280 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vendors"
             referencedColumns: ["vendor_id"]
+          },
+        ]
+      }
+      credit_promises_to_pay: {
+        Row: {
+          broken_at: string | null
+          case_id: string
+          created_at: string
+          created_by: string | null
+          currency_code: string
+          customer_id: string | null
+          driver_id: string
+          fulfilled_at: string | null
+          idempotency_key: string
+          promise_id: string
+          promise_status: string
+          promised_amount: number
+          promised_payment_date: string
+          request_hash: string | null
+          updated_at: string
+        }
+        Insert: {
+          broken_at?: string | null
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string
+          customer_id?: string | null
+          driver_id: string
+          fulfilled_at?: string | null
+          idempotency_key: string
+          promise_id?: string
+          promise_status?: string
+          promised_amount: number
+          promised_payment_date: string
+          request_hash?: string | null
+          updated_at?: string
+        }
+        Update: {
+          broken_at?: string | null
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          currency_code?: string
+          customer_id?: string | null
+          driver_id?: string
+          fulfilled_at?: string | null
+          idempotency_key?: string
+          promise_id?: string
+          promise_status?: string
+          promised_amount?: number
+          promised_payment_date?: string
+          request_hash?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_promises_to_pay_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_promises_to_pay_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_promises_to_pay_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_promises_to_pay_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_reminders: {
+        Row: {
+          case_id: string | null
+          channel: string
+          created_at: string
+          customer_id: string | null
+          driver_id: string
+          idempotency_key: string
+          notification_id: string | null
+          obligation_id: string | null
+          reminder_id: string
+          reminder_type: string
+          request_hash: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          case_id?: string | null
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          driver_id: string
+          idempotency_key: string
+          notification_id?: string | null
+          obligation_id?: string | null
+          reminder_id?: string
+          reminder_type: string
+          request_hash?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string | null
+          channel?: string
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string
+          idempotency_key?: string
+          notification_id?: string | null
+          obligation_id?: string | null
+          reminder_id?: string
+          reminder_type?: string
+          request_hash?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_reminders_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+        ]
+      }
+      credit_risk_escalations: {
+        Row: {
+          case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          escalation_id: string
+          escalation_type: string
+          idempotency_key: string
+          reason: string
+          request_hash: string | null
+          score_event_id: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          case_id: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          driver_id: string
+          escalation_id?: string
+          escalation_type: string
+          idempotency_key: string
+          reason: string
+          request_hash?: string | null
+          score_event_id?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          case_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          driver_id?: string
+          escalation_id?: string
+          escalation_type?: string
+          idempotency_key?: string
+          reason?: string
+          request_hash?: string | null
+          score_event_id?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_risk_escalations_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_case_id_fkey"
+            columns: ["case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_score_event_id_fkey"
+            columns: ["score_event_id"]
+            isOneToOne: false
+            referencedRelation: "driver_score_events"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -5460,6 +6035,7 @@ export type Database = {
       }
       product_versions: {
         Row: {
+          collections_rules_json: Json
           contract_requirements_json: Json
           created_at: string
           created_by: string | null
@@ -5476,6 +6052,7 @@ export type Database = {
           version_number: number
         }
         Insert: {
+          collections_rules_json?: Json
           contract_requirements_json?: Json
           created_at?: string
           created_by?: string | null
@@ -5492,6 +6069,7 @@ export type Database = {
           version_number: number
         }
         Update: {
+          collections_rules_json?: Json
           contract_requirements_json?: Json
           created_at?: string
           created_by?: string | null
@@ -7759,6 +8337,114 @@ export type Database = {
       }
     }
     Views: {
+      v_credit_collections_queue: {
+        Row: {
+          active_promise_id: string | null
+          assigned_to: string | null
+          case_id: string | null
+          created_at: string | null
+          credit_account_id: string | null
+          currency_code: string | null
+          current_status: string | null
+          current_status_label: string | null
+          customer_id: string | null
+          days_past_due: number | null
+          delinquency_status: string | null
+          delinquency_status_label: string | null
+          driver_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          due_date: string | null
+          escalation_level: number | null
+          invoice_id: string | null
+          invoice_number: string | null
+          invoice_status: string | null
+          obligation_id: string | null
+          open_escalation_id: string | null
+          open_escalation_type: string | null
+          opened_at: string | null
+          priority_score: number | null
+          product_id: string | null
+          product_name: string | null
+          product_type: string | null
+          promise_status: string | null
+          promised_amount: number | null
+          promised_payment_date: string | null
+          risk_level: string | null
+          schedule_id: string | null
+          score_impact: number | null
+          sequence_number: number | null
+          severity: string | null
+          total_past_due_amount: number | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_collections_cases_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
+      v_credit_collections_reconciliation_anomalies: {
+        Row: {
+          anomaly_id: string | null
+          anomaly_type: string | null
+          case_id: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          details_json: Json | null
+          detected_at: string | null
+          invoice_id: string | null
+          obligation_id: string | null
+          severity: string | null
+        }
+        Relationships: []
+      }
       v_credit_schedule_reconciliation_anomalies: {
         Row: {
           anomaly_id: string | null
@@ -8275,8 +8961,197 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_credit_collections_case: {
+        Args: {
+          p_assigned_to: string
+          p_case_id: string
+          p_idempotency_key?: string
+          p_note?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_to: string | null
+          case_id: string
+          closed_at: string | null
+          closure_reason: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          current_status: string
+          customer_id: string | null
+          days_past_due: number
+          delinquency_status: string
+          driver_id: string
+          escalation_level: number
+          idempotency_key: string
+          invoice_id: string | null
+          obligation_id: string | null
+          opened_at: string
+          priority_score: number
+          product_id: string
+          product_version_id: string | null
+          request_hash: string | null
+          risk_level: string
+          rules_snapshot_json: Json
+          schedule_id: string | null
+          score_impact: number
+          severity: string
+          status_changed_at: string
+          total_past_due_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_collections_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      break_promise_to_pay: {
+        Args: {
+          p_idempotency_key?: string
+          p_promise_id: string
+          p_reason?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          broken_at: string | null
+          case_id: string
+          created_at: string
+          created_by: string | null
+          currency_code: string
+          customer_id: string | null
+          driver_id: string
+          fulfilled_at: string | null
+          idempotency_key: string
+          promise_id: string
+          promise_status: string
+          promised_amount: number
+          promised_payment_date: string
+          request_hash: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_promises_to_pay"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       classify_adjustment: { Args: { actor_id: string }; Returns: string }
       cleanup_vehicle_history: { Args: never; Returns: undefined }
+      close_credit_collections_case: {
+        Args: {
+          p_case_id: string
+          p_closure_reason: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_to: string | null
+          case_id: string
+          closed_at: string | null
+          closure_reason: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          current_status: string
+          customer_id: string | null
+          days_past_due: number
+          delinquency_status: string
+          driver_id: string
+          escalation_level: number
+          idempotency_key: string
+          invoice_id: string | null
+          obligation_id: string | null
+          opened_at: string
+          priority_score: number
+          product_id: string
+          product_version_id: string | null
+          request_hash: string | null
+          risk_level: string
+          rules_snapshot_json: Json
+          schedule_id: string | null
+          score_impact: number
+          severity: string
+          status_changed_at: string
+          total_past_due_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_collections_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      collections_audit: {
+        Args: {
+          p_after?: Json
+          p_before?: Json
+          p_case_id: string
+          p_credit_account_id: string
+          p_customer_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_obligation_id: string
+          p_reason?: string
+          p_request_hash?: string
+        }
+        Returns: string
+      }
+      collections_case_status_label: {
+        Args: { p_status: string }
+        Returns: string
+      }
+      collections_days_past_due: {
+        Args: { p_due_date: string }
+        Returns: number
+      }
+      collections_delinquency_status: {
+        Args: {
+          p_amount_paid: number
+          p_due_date: string
+          p_invoice_status: string
+          p_remaining_due: number
+          p_rules: Json
+        }
+        Returns: string
+      }
+      collections_emit_score_event: {
+        Args: {
+          p_customer_id: string
+          p_delta: number
+          p_driver_id: string
+          p_entity_id: string
+          p_event_type: string
+        }
+        Returns: string
+      }
+      collections_priority_score: {
+        Args: {
+          p_active_asset?: boolean
+          p_amount: number
+          p_broken_promise?: boolean
+          p_days_past_due: number
+          p_multiple_overdue?: boolean
+          p_severity: string
+        }
+        Returns: number
+      }
+      collections_rules_for_account: {
+        Args: { p_credit_account_id: string }
+        Returns: Json
+      }
+      collections_severity: {
+        Args: { p_amount: number; p_days_past_due: number; p_status: string }
+        Returns: string
+      }
+      collections_status_label: { Args: { p_status: string }; Returns: string }
       confirm_rental_pickup:
         | {
             Args: {
@@ -8582,6 +9457,38 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_promise_to_pay: {
+        Args: {
+          p_case_id: string
+          p_idempotency_key?: string
+          p_promised_amount: number
+          p_promised_payment_date: string
+          p_request_hash?: string
+        }
+        Returns: {
+          broken_at: string | null
+          case_id: string
+          created_at: string
+          created_by: string | null
+          currency_code: string
+          customer_id: string | null
+          driver_id: string
+          fulfilled_at: string | null
+          idempotency_key: string
+          promise_id: string
+          promise_status: string
+          promised_amount: number
+          promised_payment_date: string
+          request_hash: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_promises_to_pay"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       credit_driver_wallet: {
         Args: {
           p_amount: number
@@ -8638,6 +9545,7 @@ export type Database = {
       current_driver_customer_id: { Args: never; Returns: string }
       current_driver_id: { Args: never; Returns: string }
       current_driver_is_active: { Args: never; Returns: boolean }
+      default_collections_rules: { Args: never; Returns: Json }
       disable_rental_vehicle: {
         Args: { p_reason: string; p_rental_id: string }
         Returns: {
@@ -8879,6 +9787,38 @@ export type Database = {
           overdue_payments: number
           reasons: string[]
         }[]
+      }
+      escalate_credit_risk: {
+        Args: {
+          p_case_id: string
+          p_escalation_type: string
+          p_idempotency_key?: string
+          p_reason: string
+          p_request_hash?: string
+        }
+        Returns: {
+          case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          escalation_id: string
+          escalation_type: string
+          idempotency_key: string
+          reason: string
+          request_hash: string | null
+          score_event_id: string | null
+          severity: string
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_risk_escalations"
+          isOneToOne: true
+          isSetofReturn: false
+        }
       }
       evaluate_underwriting_decision: {
         Args: { p_application_id: string; p_idempotency_key?: string }
@@ -9165,6 +10105,28 @@ export type Database = {
         }[]
       }
       get_driver_auth_mode: { Args: never; Returns: string }
+      get_driver_collections_status: {
+        Args: never
+        Returns: {
+          active_promise_json: Json
+          can_request_promise: boolean
+          case_id: string
+          consequence_text: string
+          credit_account_id: string
+          days_late: number
+          driver_message: string
+          grace_period_days: number
+          invoice_id: string
+          late_amount: number
+          next_due_amount: number
+          next_due_date: string
+          payment_action_label: string
+          product_name: string
+          recovery_progress_pct: number
+          status_label: string
+          status_tone: string
+        }[]
+      }
       get_driver_contract_statuses: {
         Args: never
         Returns: {
@@ -9274,6 +10236,10 @@ export type Database = {
           }
         | { Args: { role: string }; Returns: boolean }
       has_admin_role_in: { Args: { roles: string[] }; Returns: boolean }
+      has_collections_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_contract_permission: {
         Args: { permission: string }
         Returns: boolean
@@ -9294,6 +10260,33 @@ export type Database = {
       is_feature_enabled: { Args: { p_flag_key: string }; Returns: boolean }
       is_platform_owner: { Args: never; Returns: boolean }
       issue_daily_rental_invoices: { Args: never; Returns: number }
+      log_credit_collection_contact: {
+        Args: {
+          p_action_note: string
+          p_action_type?: string
+          p_case_id: string
+          p_driver_visible?: boolean
+          p_idempotency_key?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          action_id: string
+          action_note: string | null
+          action_type: string
+          actor_id: string | null
+          case_id: string
+          created_at: string
+          customer_id: string | null
+          driver_visible: boolean
+          idempotency_key: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_collection_actions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       mark_overdue_rentals: { Args: never; Returns: number }
       mark_rental_paid: {
         Args: { p_rental_id: string }
@@ -9343,6 +10336,101 @@ export type Database = {
         Returns: number
       }
       normalize_license_plate: { Args: { p: string }; Returns: string }
+      open_credit_collections_case: {
+        Args: {
+          p_credit_account_id: string
+          p_idempotency_key?: string
+          p_obligation_id?: string
+          p_reason?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_to: string | null
+          case_id: string
+          closed_at: string | null
+          closure_reason: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          current_status: string
+          customer_id: string | null
+          days_past_due: number
+          delinquency_status: string
+          driver_id: string
+          escalation_level: number
+          idempotency_key: string
+          invoice_id: string | null
+          obligation_id: string | null
+          opened_at: string
+          priority_score: number
+          product_id: string
+          product_version_id: string | null
+          request_hash: string | null
+          risk_level: string
+          rules_snapshot_json: Json
+          schedule_id: string | null
+          score_impact: number
+          severity: string
+          status_changed_at: string
+          total_past_due_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_collections_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      open_default_review: {
+        Args: {
+          p_case_id: string
+          p_idempotency_key?: string
+          p_reason: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_to: string | null
+          case_id: string
+          closed_at: string | null
+          closure_reason: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          current_status: string
+          customer_id: string | null
+          days_past_due: number
+          delinquency_status: string
+          driver_id: string
+          escalation_level: number
+          idempotency_key: string
+          invoice_id: string | null
+          obligation_id: string | null
+          opened_at: string
+          priority_score: number
+          product_id: string
+          product_version_id: string | null
+          request_hash: string | null
+          risk_level: string
+          rules_snapshot_json: Json
+          schedule_id: string | null
+          score_impact: number
+          severity: string
+          status_changed_at: string
+          total_past_due_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_collections_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       pause_repayment_schedule: {
         Args: {
           p_idempotency_key?: string
@@ -9721,6 +10809,37 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      send_credit_collection_reminder: {
+        Args: {
+          p_case_id: string
+          p_channel?: string
+          p_idempotency_key?: string
+          p_reminder_type: string
+          p_request_hash?: string
+        }
+        Returns: {
+          case_id: string | null
+          channel: string
+          created_at: string
+          customer_id: string | null
+          driver_id: string
+          idempotency_key: string
+          notification_id: string | null
+          obligation_id: string | null
+          reminder_id: string
+          reminder_type: string
+          request_hash: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_reminders"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       send_credit_contract: {
         Args: { p_contract_id: string; p_idempotency_key?: string }
         Returns: {
@@ -9859,6 +10978,15 @@ export type Database = {
         }
       }
       sweep_wallet_auto_apply: { Args: never; Returns: Json }
+      sync_credit_collections: {
+        Args: { p_credit_account_id?: string; p_idempotency_key?: string }
+        Returns: {
+          case_id: string
+          case_status: string
+          delinquency_status: string
+          obligation_id: string
+        }[]
+      }
       sync_repayment_obligation_statuses: {
         Args: { p_idempotency_key?: string; p_schedule_id: string }
         Returns: {
