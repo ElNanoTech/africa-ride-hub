@@ -4390,6 +4390,7 @@ export type Database = {
           driver_snapshot_name: string | null
           driver_snapshot_nif: string | null
           driver_snapshot_phone: string | null
+          due_date: string | null
           id: string
           idempotency_key: string | null
           invoice_kind: string
@@ -4410,7 +4411,9 @@ export type Database = {
           rental_id: string | null
           source_application_id: string | null
           source_credit_account_id: string | null
+          source_obligation_id: string | null
           source_product_id: string | null
+          source_schedule_id: string | null
           status: string
           subtotal_ht: number
           tags: string[]
@@ -4433,6 +4436,7 @@ export type Database = {
           driver_snapshot_name?: string | null
           driver_snapshot_nif?: string | null
           driver_snapshot_phone?: string | null
+          due_date?: string | null
           id?: string
           idempotency_key?: string | null
           invoice_kind?: string
@@ -4453,7 +4457,9 @@ export type Database = {
           rental_id?: string | null
           source_application_id?: string | null
           source_credit_account_id?: string | null
+          source_obligation_id?: string | null
           source_product_id?: string | null
+          source_schedule_id?: string | null
           status?: string
           subtotal_ht?: number
           tags?: string[]
@@ -4476,6 +4482,7 @@ export type Database = {
           driver_snapshot_name?: string | null
           driver_snapshot_nif?: string | null
           driver_snapshot_phone?: string | null
+          due_date?: string | null
           id?: string
           idempotency_key?: string | null
           invoice_kind?: string
@@ -4496,7 +4503,9 @@ export type Database = {
           rental_id?: string | null
           source_application_id?: string | null
           source_credit_account_id?: string | null
+          source_obligation_id?: string | null
           source_product_id?: string | null
+          source_schedule_id?: string | null
           status?: string
           subtotal_ht?: number
           tags?: string[]
@@ -4530,11 +4539,25 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "invoice_source_obligation_id_fkey"
+            columns: ["source_obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+          {
             foreignKeyName: "invoice_source_product_id_fkey"
             columns: ["source_product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
             referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "invoice_source_schedule_id_fkey"
+            columns: ["source_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
           },
         ]
       }
@@ -5444,6 +5467,7 @@ export type Database = {
           effective_from: string
           effective_to: string | null
           product_id: string
+          repayment_terms_json: Json
           rules_snapshot_json: Json
           status: string
           updated_at: string
@@ -5459,6 +5483,7 @@ export type Database = {
           effective_from?: string
           effective_to?: string | null
           product_id: string
+          repayment_terms_json?: Json
           rules_snapshot_json?: Json
           status?: string
           updated_at?: string
@@ -5474,6 +5499,7 @@ export type Database = {
           effective_from?: string
           effective_to?: string | null
           product_id?: string
+          repayment_terms_json?: Json
           rules_snapshot_json?: Json
           status?: string
           updated_at?: string
@@ -5822,6 +5848,312 @@ export type Database = {
           },
         ]
       }
+      repayment_audit_events: {
+        Row: {
+          actor_id: string | null
+          actor_type: string
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          created_at: string
+          credit_account_id: string | null
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          obligation_id: string | null
+          reason: string | null
+          schedule_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_type?: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          obligation_id?: string | null
+          reason?: string | null
+          schedule_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_type?: string
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          obligation_id?: string | null
+          reason?: string | null
+          schedule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayment_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_obligation_id_fkey"
+            columns: ["obligation_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_obligations"
+            referencedColumns: ["obligation_id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
+      repayment_schedule_amendments: {
+        Row: {
+          amendment_id: string
+          amendment_reason: string
+          amendment_type: string
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          new_schedule_id: string | null
+          original_schedule_id: string
+        }
+        Insert: {
+          amendment_id?: string
+          amendment_reason: string
+          amendment_type?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          new_schedule_id?: string | null
+          original_schedule_id: string
+        }
+        Update: {
+          amendment_id?: string
+          amendment_reason?: string
+          amendment_type?: string
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          new_schedule_id?: string | null
+          original_schedule_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayment_schedule_amendments_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_new_schedule_id_fkey"
+            columns: ["new_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_original_schedule_id_fkey"
+            columns: ["original_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
+      repayment_schedules: {
+        Row: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allow_prepayment?: boolean
+          allow_schedule_amendment?: boolean
+          application_id: string
+          contract_id: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          currency_code?: string
+          customer_id?: string | null
+          final_due_date: string
+          financed_amount?: number
+          first_due_date: string
+          frequency?: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id?: string | null
+          grace_period_days?: number
+          idempotency_key: string
+          invoice_generation_days_before_due?: number
+          product_id: string
+          product_version_id: string
+          schedule_id?: string
+          schedule_status?: string
+          schedule_type: string
+          schedule_version?: number
+          source_snapshot_json?: Json
+          status_changed_at?: string
+          superseded_by_schedule_id?: string | null
+          term_count?: number
+          terms_snapshot_json?: Json
+          total_fees_amount?: number
+          total_interest_amount?: number
+          total_repayment_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allow_prepayment?: boolean
+          allow_schedule_amendment?: boolean
+          application_id?: string
+          contract_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          currency_code?: string
+          customer_id?: string | null
+          final_due_date?: string
+          financed_amount?: number
+          first_due_date?: string
+          frequency?: string
+          generated_from_contract_hash?: string
+          generated_from_policy_snapshot_id?: string | null
+          grace_period_days?: number
+          idempotency_key?: string
+          invoice_generation_days_before_due?: number
+          product_id?: string
+          product_version_id?: string
+          schedule_id?: string
+          schedule_status?: string
+          schedule_type?: string
+          schedule_version?: number
+          source_snapshot_json?: Json
+          status_changed_at?: string
+          superseded_by_schedule_id?: string | null
+          term_count?: number
+          terms_snapshot_json?: Json
+          total_fees_amount?: number
+          total_interest_amount?: number
+          total_repayment_amount?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayment_schedules_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "credit_applications"
+            referencedColumns: ["application_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "credit_contracts"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_superseded_by_schedule_id_fkey"
+            columns: ["superseded_by_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
+          },
+        ]
+      }
       reunderwriting_triggers: {
         Row: {
           application_id: string
@@ -5975,6 +6307,98 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_obligations: {
+        Row: {
+          amount: number
+          created_at: string
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          due_date: string
+          fee_amount: number
+          idempotency_key: string
+          interest_amount: number
+          invoice_generation_status: string
+          invoice_id: string | null
+          obligation_id: string
+          obligation_type: string
+          principal_amount: number
+          schedule_id: string
+          sequence_number: number
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          credit_account_id: string
+          currency_code?: string
+          customer_id?: string | null
+          due_date: string
+          fee_amount?: number
+          idempotency_key: string
+          interest_amount?: number
+          invoice_generation_status?: string
+          invoice_id?: string | null
+          obligation_id?: string
+          obligation_type: string
+          principal_amount?: number
+          schedule_id: string
+          sequence_number: number
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credit_account_id?: string
+          currency_code?: string
+          customer_id?: string | null
+          due_date?: string
+          fee_amount?: number
+          idempotency_key?: string
+          interest_amount?: number
+          invoice_generation_status?: string
+          invoice_id?: string | null
+          obligation_id?: string
+          obligation_type?: string
+          principal_amount?: number
+          schedule_id?: string
+          sequence_number?: number
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_obligations_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoice"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_schedule_id_fkey"
+            columns: ["schedule_id"]
+            isOneToOne: false
+            referencedRelation: "repayment_schedules"
+            referencedColumns: ["schedule_id"]
           },
         ]
       }
@@ -7335,6 +7759,21 @@ export type Database = {
       }
     }
     Views: {
+      v_credit_schedule_reconciliation_anomalies: {
+        Row: {
+          anomaly_id: string | null
+          anomaly_type: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          details_json: Json | null
+          detected_at: string | null
+          invoice_id: string | null
+          obligation_id: string | null
+          schedule_id: string | null
+          severity: string | null
+        }
+        Relationships: []
+      }
       v_wallet_settlement_anomalies: {
         Row: {
           created_at: string | null
@@ -7648,6 +8087,57 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      amend_repayment_schedule: {
+        Args: {
+          p_amendment_type: string
+          p_idempotency_key?: string
+          p_new_terms_json?: Json
+          p_reason: string
+          p_schedule_id: string
+        }
+        Returns: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "repayment_schedules"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -8051,6 +8541,7 @@ export type Database = {
           driver_snapshot_name: string | null
           driver_snapshot_nif: string | null
           driver_snapshot_phone: string | null
+          due_date: string | null
           id: string
           idempotency_key: string | null
           invoice_kind: string
@@ -8071,7 +8562,9 @@ export type Database = {
           rental_id: string | null
           source_application_id: string | null
           source_credit_account_id: string | null
+          source_obligation_id: string | null
           source_product_id: string | null
+          source_schedule_id: string | null
           status: string
           subtotal_ht: number
           tags: string[]
@@ -8550,7 +9043,115 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      generate_due_repayment_invoices: {
+        Args: { p_idempotency_key?: string; p_schedule_id: string }
+        Returns: {
+          invoice_id: string
+          invoice_status: string
+          obligation_id: string
+        }[]
+      }
       generate_fleet_alerts: { Args: never; Returns: number }
+      generate_repayment_invoice: {
+        Args: { p_idempotency_key?: string; p_obligation_id: string }
+        Returns: {
+          amount_paid: number
+          cancel_reason: string | null
+          cancelled_at: string | null
+          cancelled_by: string | null
+          created_at: string
+          currency_code: string
+          customer_id: string
+          driver_id: string
+          driver_snapshot_name: string | null
+          driver_snapshot_nif: string | null
+          driver_snapshot_phone: string | null
+          due_date: string | null
+          id: string
+          idempotency_key: string | null
+          invoice_kind: string
+          invoice_number: string | null
+          issued_at: string | null
+          legal_address_snapshot: string | null
+          legal_footer_snapshot: string | null
+          legal_name_snapshot: string | null
+          legal_nif_snapshot: string | null
+          legal_rccm_snapshot: string | null
+          notes: string | null
+          obligation_type: string | null
+          paid_at: string | null
+          period_end: string | null
+          period_start: string | null
+          public_token: string
+          remaining_due: number | null
+          rental_id: string | null
+          source_application_id: string | null
+          source_credit_account_id: string | null
+          source_obligation_id: string | null
+          source_product_id: string | null
+          source_schedule_id: string | null
+          status: string
+          subtotal_ht: number
+          tags: string[]
+          token_expires_at: string
+          total_ttc: number
+          updated_at: string
+          vat_amount: number
+          vat_enabled_snapshot: boolean | null
+          vat_rate_snapshot: number | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "invoice"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      generate_repayment_schedule: {
+        Args: { p_credit_account_id: string; p_idempotency_key?: string }
+        Returns: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "repayment_schedules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       get_driver_360_summary: { Args: { p_driver_id: string }; Returns: Json }
       get_driver_activity_timeline: {
         Args: { p_driver_id: string; p_limit?: number }
@@ -8598,6 +9199,25 @@ export type Database = {
           score: number
           score_change: number
           tier: string
+        }[]
+      }
+      get_driver_repayment_schedules: {
+        Args: never
+        Returns: {
+          allow_prepayment: boolean
+          credit_account_id: string
+          currency_code: string
+          next_due_amount: number
+          next_due_date: string
+          obligations_json: Json
+          paid_installments: number
+          product_name: string
+          remaining_balance: number
+          remaining_installments: number
+          schedule_id: string
+          schedule_label: string
+          schedule_status_label: string
+          status_tone: string
         }[]
       }
       get_driver_underwriting_decisions: {
@@ -8659,6 +9279,10 @@ export type Database = {
         Returns: boolean
       }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
+      has_repayment_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_underwriting_permission: {
         Args: { permission: string }
         Returns: boolean
@@ -8719,6 +9343,55 @@ export type Database = {
         Returns: number
       }
       normalize_license_plate: { Args: { p: string }; Returns: string }
+      pause_repayment_schedule: {
+        Args: {
+          p_idempotency_key?: string
+          p_reason: string
+          p_schedule_id: string
+        }
+        Returns: {
+          allow_prepayment: boolean
+          allow_schedule_amendment: boolean
+          application_id: string
+          contract_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          final_due_date: string
+          financed_amount: number
+          first_due_date: string
+          frequency: string
+          generated_from_contract_hash: string
+          generated_from_policy_snapshot_id: string | null
+          grace_period_days: number
+          idempotency_key: string
+          invoice_generation_days_before_due: number
+          product_id: string
+          product_version_id: string
+          schedule_id: string
+          schedule_status: string
+          schedule_type: string
+          schedule_version: number
+          source_snapshot_json: Json
+          status_changed_at: string
+          superseded_by_schedule_id: string | null
+          term_count: number
+          terms_snapshot_json: Json
+          total_fees_amount: number
+          total_interest_amount: number
+          total_repayment_amount: number
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "repayment_schedules"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       pending_adjustments_count: { Args: never; Returns: number }
       recompute_driver_current_score: {
         Args: { p_customer_id?: string; p_driver_id: string }
@@ -8885,6 +9558,38 @@ export type Database = {
         }
       }
       rental_amount_owed: { Args: { p_rental_id: string }; Returns: number }
+      repayment_audit: {
+        Args: {
+          p_after?: Json
+          p_before?: Json
+          p_credit_account_id: string
+          p_customer_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_obligation_id: string
+          p_reason?: string
+          p_schedule_id: string
+        }
+        Returns: string
+      }
+      repayment_due_date: {
+        Args: {
+          p_first_due_date: string
+          p_frequency: string
+          p_sequence: number
+        }
+        Returns: string
+      }
+      repayment_invoice_obligation_type: {
+        Args: {
+          p_obligation_type: string
+          p_product_type: string
+          p_sequence: number
+          p_term_count: number
+        }
+        Returns: string
+      }
+      repayment_status_label: { Args: { p_status: string }; Returns: string }
       return_rental: {
         Args: { p_rental_id: string }
         Returns: {
@@ -9154,6 +9859,15 @@ export type Database = {
         }
       }
       sweep_wallet_auto_apply: { Args: never; Returns: Json }
+      sync_repayment_obligation_statuses: {
+        Args: { p_idempotency_key?: string; p_schedule_id: string }
+        Returns: {
+          invoice_id: string
+          new_status: string
+          obligation_id: string
+          old_status: string
+        }[]
+      }
       test_wallet_settlement_paths: { Args: never; Returns: Json }
       trigger_apply_wallet_credit: {
         Args: { p_driver_id: string }
