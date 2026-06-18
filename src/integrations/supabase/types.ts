@@ -1106,6 +1106,140 @@ export type Database = {
           },
         ]
       }
+      asset_transfer_records: {
+        Row: {
+          approved_by: string | null
+          asset_id: string
+          completed_at: string | null
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          decision_id: string | null
+          driver_id: string
+          idempotency_key: string
+          request_hash: string | null
+          reversal_reason: string | null
+          reversed_at: string | null
+          review_id: string
+          transfer_id: string
+          transfer_metadata_json: Json
+          transfer_status: string
+          transfer_type: string
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          asset_id: string
+          completed_at?: string | null
+          created_at?: string
+          credit_account_id: string
+          customer_id?: string | null
+          decision_id?: string | null
+          driver_id: string
+          idempotency_key: string
+          request_hash?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          review_id: string
+          transfer_id?: string
+          transfer_metadata_json?: Json
+          transfer_status?: string
+          transfer_type?: string
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          asset_id?: string
+          completed_at?: string | null
+          created_at?: string
+          credit_account_id?: string
+          customer_id?: string | null
+          decision_id?: string | null
+          driver_id?: string
+          idempotency_key?: string
+          request_hash?: string | null
+          reversal_reason?: string | null
+          reversed_at?: string | null
+          review_id?: string
+          transfer_id?: string
+          transfer_metadata_json?: Json
+          transfer_status?: string
+          transfer_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "asset_transfer_records_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_completion_decisions"
+            referencedColumns: ["decision_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_decision_id_fkey"
+            columns: ["decision_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["latest_decision_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_completion_reviews"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_driver_ownership_completion_status"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["completion_review_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["review_id"]
+          },
+        ]
+      }
       badge_definitions: {
         Row: {
           badge_key: string
@@ -6444,6 +6578,472 @@ export type Database = {
           },
         ]
       }
+      ownership_certificates: {
+        Row: {
+          asset_id: string
+          certificate_id: string
+          certificate_metadata_json: Json
+          certificate_number: string
+          certificate_status: string
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          document_reference: string | null
+          driver_id: string
+          idempotency_key: string
+          issued_at: string
+          issued_by: string | null
+          request_hash: string | null
+          review_id: string
+          transfer_id: string
+        }
+        Insert: {
+          asset_id: string
+          certificate_id?: string
+          certificate_metadata_json?: Json
+          certificate_number: string
+          certificate_status?: string
+          created_at?: string
+          credit_account_id: string
+          customer_id?: string | null
+          document_reference?: string | null
+          driver_id: string
+          idempotency_key: string
+          issued_at?: string
+          issued_by?: string | null
+          request_hash?: string | null
+          review_id: string
+          transfer_id: string
+        }
+        Update: {
+          asset_id?: string
+          certificate_id?: string
+          certificate_metadata_json?: Json
+          certificate_number?: string
+          certificate_status?: string
+          created_at?: string
+          credit_account_id?: string
+          customer_id?: string | null
+          document_reference?: string | null
+          driver_id?: string
+          idempotency_key?: string
+          issued_at?: string
+          issued_by?: string | null
+          request_hash?: string | null
+          review_id?: string
+          transfer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_certificates_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_completion_reviews"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_driver_ownership_completion_status"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["completion_review_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "asset_transfer_records"
+            referencedColumns: ["transfer_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "v_driver_ownership_completion_status"
+            referencedColumns: ["transfer_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_transfer_id_fkey"
+            columns: ["transfer_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["transfer_id"]
+          },
+        ]
+      }
+      ownership_completion_audit_events: {
+        Row: {
+          actor_id: string | null
+          after_json: Json
+          asset_id: string | null
+          audit_event_id: string
+          before_json: Json
+          created_at: string
+          credit_account_id: string | null
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          reason: string | null
+          request_hash: string | null
+          review_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          after_json?: Json
+          asset_id?: string | null
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          reason?: string | null
+          request_hash?: string | null
+          review_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          after_json?: Json
+          asset_id?: string | null
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          reason?: string | null
+          request_hash?: string | null
+          review_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_completion_audit_events_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_completion_reviews"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_driver_ownership_completion_status"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["completion_review_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["review_id"]
+          },
+        ]
+      }
+      ownership_completion_decisions: {
+        Row: {
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          decided_by: string | null
+          decision: string
+          decision_id: string
+          decision_metadata_json: Json
+          decision_reason: string
+          decision_summary: string | null
+          decision_timestamp: string
+          idempotency_key: string
+          request_hash: string | null
+          review_id: string
+          second_approver_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          credit_account_id: string
+          customer_id?: string | null
+          decided_by?: string | null
+          decision: string
+          decision_id?: string
+          decision_metadata_json?: Json
+          decision_reason: string
+          decision_summary?: string | null
+          decision_timestamp?: string
+          idempotency_key: string
+          request_hash?: string | null
+          review_id: string
+          second_approver_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          credit_account_id?: string
+          customer_id?: string | null
+          decided_by?: string | null
+          decision?: string
+          decision_id?: string
+          decision_metadata_json?: Json
+          decision_reason?: string
+          decision_summary?: string | null
+          decision_timestamp?: string
+          idempotency_key?: string
+          request_hash?: string | null
+          review_id?: string
+          second_approver_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_completion_decisions_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "ownership_completion_reviews"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_driver_ownership_completion_status"
+            referencedColumns: ["review_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["completion_review_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "v_ownership_completion_queue"
+            referencedColumns: ["review_id"]
+          },
+        ]
+      }
+      ownership_completion_reviews: {
+        Row: {
+          asset_id: string
+          assigned_reviewer: string | null
+          blocking_reasons_json: Json
+          cancelled_at: string | null
+          closure_reason: string | null
+          completed_at: string | null
+          completion_metadata_json: Json
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          eligibility_checked_at: string
+          eligibility_snapshot_json: Json
+          idempotency_key: string
+          obligation_summary_json: Json
+          opened_at: string | null
+          product_id: string
+          product_rules_snapshot_json: Json
+          product_version_id: string
+          request_hash: string | null
+          reversed_at: string | null
+          review_due_at: string | null
+          review_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          asset_id: string
+          assigned_reviewer?: string | null
+          blocking_reasons_json?: Json
+          cancelled_at?: string | null
+          closure_reason?: string | null
+          completed_at?: string | null
+          completion_metadata_json?: Json
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          driver_id: string
+          eligibility_checked_at?: string
+          eligibility_snapshot_json?: Json
+          idempotency_key: string
+          obligation_summary_json?: Json
+          opened_at?: string | null
+          product_id: string
+          product_rules_snapshot_json?: Json
+          product_version_id: string
+          request_hash?: string | null
+          reversed_at?: string | null
+          review_due_at?: string | null
+          review_id?: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          asset_id?: string
+          assigned_reviewer?: string | null
+          blocking_reasons_json?: Json
+          cancelled_at?: string | null
+          closure_reason?: string | null
+          completed_at?: string | null
+          completion_metadata_json?: Json
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          driver_id?: string
+          eligibility_checked_at?: string
+          eligibility_snapshot_json?: Json
+          idempotency_key?: string
+          obligation_summary_json?: Json
+          opened_at?: string | null
+          product_id?: string
+          product_rules_snapshot_json?: Json
+          product_version_id?: string
+          request_hash?: string | null
+          reversed_at?: string | null
+          review_due_at?: string | null
+          review_id?: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_completion_reviews_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+        ]
+      }
       payment_receipts: {
         Row: {
           amount: number
@@ -6693,6 +7293,7 @@ export type Database = {
           default_rules_json: Json
           effective_from: string
           effective_to: string | null
+          ownership_completion_rules_json: Json
           product_id: string
           repayment_terms_json: Json
           rules_snapshot_json: Json
@@ -6711,6 +7312,7 @@ export type Database = {
           default_rules_json?: Json
           effective_from?: string
           effective_to?: string | null
+          ownership_completion_rules_json?: Json
           product_id: string
           repayment_terms_json?: Json
           rules_snapshot_json?: Json
@@ -6729,6 +7331,7 @@ export type Database = {
           default_rules_json?: Json
           effective_from?: string
           effective_to?: string | null
+          ownership_completion_rules_json?: Json
           product_id?: string
           repayment_terms_json?: Json
           rules_snapshot_json?: Json
@@ -9207,6 +9810,164 @@ export type Database = {
         }
         Relationships: []
       }
+      v_driver_ownership_completion_status: {
+        Row: {
+          asset_description: string | null
+          asset_id: string | null
+          asset_type: string | null
+          blocking_reasons_json: Json | null
+          certificate_document_reference: string | null
+          certificate_id: string | null
+          certificate_number: string | null
+          created_at: string | null
+          credit_account_id: string | null
+          eligibility_checked_at: string | null
+          obligation_summary_json: Json | null
+          opened_at: string | null
+          ownership_date: string | null
+          product_name: string | null
+          review_id: string | null
+          status: string | null
+          status_label: string | null
+          status_tone: string | null
+          transfer_id: string | null
+          transfer_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_completion_reviews_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+        ]
+      }
+      v_ownership_completion_exceptions: {
+        Row: {
+          asset_id: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          details_json: Json | null
+          detected_at: string | null
+          exception_id: string | null
+          exception_type: string | null
+          review_id: string | null
+          severity: string | null
+        }
+        Relationships: []
+      }
+      v_ownership_completion_queue: {
+        Row: {
+          asset_description: string | null
+          asset_id: string | null
+          asset_type: string | null
+          assigned_reviewer: string | null
+          blocked_reasons_json: Json | null
+          blocker_count: number | null
+          blocking_reasons_json: Json | null
+          cancelled_at: string | null
+          certificate_id: string | null
+          certificate_issued_at: string | null
+          certificate_number: string | null
+          closure_reason: string | null
+          completed_at: string | null
+          completion_review_id: string | null
+          completion_status: string | null
+          created_at: string | null
+          credit_account_id: string | null
+          currency_code: string | null
+          customer_id: string | null
+          decision_timestamp: string | null
+          default_review_status: string | null
+          documentation_status: string | null
+          driver_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          eligibility_checked_at: string | null
+          fraud_review_status: string | null
+          imei: string | null
+          is_eligible: boolean | null
+          latest_decision: string | null
+          latest_decision_id: string | null
+          legal_hold_status: string | null
+          obligation_summary_json: Json | null
+          opened_at: string | null
+          outstanding_balance: number | null
+          paid_obligations_count: number | null
+          priority_score: number | null
+          product_id: string | null
+          product_name: string | null
+          product_rules_status: string | null
+          product_type: string | null
+          product_version_id: string | null
+          recovery_plan_status: string | null
+          reversed_at: string | null
+          review_due_at: string | null
+          review_id: string | null
+          serial_number: string | null
+          status: string | null
+          status_changed_at: string | null
+          status_label: string | null
+          total_obligations_count: number | null
+          transfer_id: string | null
+          transfer_status: string | null
+          transfer_type: string | null
+          updated_at: string | null
+          vin: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ownership_completion_reviews_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+        ]
+      }
       v_wallet_settlement_anomalies: {
         Row: {
           created_at: string | null
@@ -9793,6 +10554,51 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "credit_default_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      assign_ownership_completion_review: {
+        Args: {
+          p_assigned_to?: string
+          p_idempotency_key?: string
+          p_note?: string
+          p_request_hash?: string
+          p_review_id: string
+        }
+        Returns: {
+          asset_id: string
+          assigned_reviewer: string | null
+          blocking_reasons_json: Json
+          cancelled_at: string | null
+          closure_reason: string | null
+          completed_at: string | null
+          completion_metadata_json: Json
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          eligibility_checked_at: string
+          eligibility_snapshot_json: Json
+          idempotency_key: string
+          obligation_summary_json: Json
+          opened_at: string | null
+          product_id: string
+          product_rules_snapshot_json: Json
+          product_version_id: string
+          request_hash: string | null
+          reversed_at: string | null
+          review_due_at: string | null
+          review_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ownership_completion_reviews"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -10386,6 +11192,41 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_ownership_completion_decision: {
+        Args: {
+          p_decision: string
+          p_decision_metadata_json?: Json
+          p_decision_reason: string
+          p_decision_summary?: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_review_id: string
+          p_second_approver_id?: string
+        }
+        Returns: {
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          decided_by: string | null
+          decision: string
+          decision_id: string
+          decision_metadata_json: Json
+          decision_reason: string
+          decision_summary: string | null
+          decision_timestamp: string
+          idempotency_key: string
+          request_hash: string | null
+          review_id: string
+          second_approver_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ownership_completion_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_promise_to_pay: {
         Args: {
           p_case_id: string
@@ -10533,6 +11374,7 @@ export type Database = {
         Args: { p_notice_type: string }
         Returns: string
       }
+      default_ownership_completion_rules: { Args: never; Returns: Json }
       default_rules_for_account: {
         Args: { p_credit_account_id: string }
         Returns: Json
@@ -11173,6 +12015,27 @@ export type Database = {
           tier: string
         }[]
       }
+      get_driver_ownership_completion_status: {
+        Args: never
+        Returns: {
+          asset_id: string
+          asset_type: string
+          blocking_reasons_json: Json
+          certificate_document_reference: string
+          certificate_id: string
+          certificate_number: string
+          credit_account_id: string
+          driver_message: string
+          ownership_date: string
+          product_name: string
+          progress_json: Json
+          review_id: string
+          status: string
+          status_label: string
+          status_tone: string
+          transfer_id: string
+        }[]
+      }
       get_driver_repayment_schedules: {
         Args: never
         Returns: {
@@ -11256,6 +12119,10 @@ export type Database = {
       }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
       has_default_permission: { Args: { permission: string }; Returns: boolean }
+      has_ownership_completion_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_repayment_permission: {
         Args: { permission: string }
         Returns: boolean
@@ -11271,6 +12138,40 @@ export type Database = {
       is_feature_enabled: { Args: { p_flag_key: string }; Returns: boolean }
       is_platform_owner: { Args: never; Returns: boolean }
       issue_daily_rental_invoices: { Args: never; Returns: number }
+      issue_ownership_certificate: {
+        Args: {
+          p_certificate_metadata_json?: Json
+          p_document_reference?: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_review_id: string
+          p_transfer_type?: string
+        }
+        Returns: {
+          asset_id: string
+          certificate_id: string
+          certificate_metadata_json: Json
+          certificate_number: string
+          certificate_status: string
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          document_reference: string | null
+          driver_id: string
+          idempotency_key: string
+          issued_at: string
+          issued_by: string | null
+          request_hash: string | null
+          review_id: string
+          transfer_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ownership_certificates"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       log_credit_collection_contact: {
         Args: {
           p_action_note: string
@@ -11516,6 +12417,96 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      open_ownership_completion_review: {
+        Args: {
+          p_completion_metadata_json?: Json
+          p_credit_account_id: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_review_due_at?: string
+          p_trigger_reason?: string
+        }
+        Returns: {
+          asset_id: string
+          assigned_reviewer: string | null
+          blocking_reasons_json: Json
+          cancelled_at: string | null
+          closure_reason: string | null
+          completed_at: string | null
+          completion_metadata_json: Json
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          eligibility_checked_at: string
+          eligibility_snapshot_json: Json
+          idempotency_key: string
+          obligation_summary_json: Json
+          opened_at: string | null
+          product_id: string
+          product_rules_snapshot_json: Json
+          product_version_id: string
+          request_hash: string | null
+          reversed_at: string | null
+          review_due_at: string | null
+          review_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ownership_completion_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      ownership_certificate_number: {
+        Args: {
+          p_asset_id: string
+          p_credit_account_id: string
+          p_customer_id: string
+        }
+        Returns: string
+      }
+      ownership_completion_audit: {
+        Args: {
+          p_after?: Json
+          p_asset_id: string
+          p_before?: Json
+          p_credit_account_id: string
+          p_customer_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_reason?: string
+          p_request_hash?: string
+          p_review_id: string
+        }
+        Returns: string
+      }
+      ownership_completion_eligibility_snapshot: {
+        Args: { p_completion_metadata_json?: Json; p_credit_account_id: string }
+        Returns: Json
+      }
+      ownership_completion_rules_for_account: {
+        Args: { p_credit_account_id: string }
+        Returns: Json
+      }
+      ownership_completion_status_label: {
+        Args: { p_status: string }
+        Returns: string
+      }
+      ownership_jsonb_bool: {
+        Args: {
+          p_default: boolean
+          p_fallback: Json
+          p_key: string
+          p_primary: Json
+        }
+        Returns: boolean
       }
       pause_repayment_schedule: {
         Args: {
@@ -11852,6 +12843,52 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      reverse_ownership_completion: {
+        Args: {
+          p_idempotency_key?: string
+          p_reason: string
+          p_reopened_account_status?: string
+          p_request_hash?: string
+          p_review_id: string
+          p_second_approver_id: string
+        }
+        Returns: {
+          asset_id: string
+          assigned_reviewer: string | null
+          blocking_reasons_json: Json
+          cancelled_at: string | null
+          closure_reason: string | null
+          completed_at: string | null
+          completion_metadata_json: Json
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          driver_id: string
+          eligibility_checked_at: string
+          eligibility_snapshot_json: Json
+          idempotency_key: string
+          obligation_summary_json: Json
+          opened_at: string | null
+          product_id: string
+          product_rules_snapshot_json: Json
+          product_version_id: string
+          request_hash: string | null
+          reversed_at: string | null
+          review_due_at: string | null
+          review_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "ownership_completion_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_credit_application: {
         Args: {
           p_application_id: string
@@ -12154,6 +13191,21 @@ export type Database = {
           case_status: string
           delinquency_status: string
           obligation_id: string
+        }[]
+      }
+      sync_ownership_completion_candidates: {
+        Args: {
+          p_credit_account_id?: string
+          p_idempotency_key?: string
+          p_limit?: number
+          p_request_hash?: string
+        }
+        Returns: {
+          blocking_reasons_json: Json
+          credit_account_id: string
+          is_eligible: boolean
+          review_id: string
+          status: string
         }[]
       }
       sync_repayment_obligation_statuses: {
