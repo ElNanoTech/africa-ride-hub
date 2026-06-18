@@ -1,7 +1,7 @@
 export type TrustRiskLevel = 'Low' | 'Moderate' | 'High' | 'Critical';
 export type TrustHealthState = 'Healthy' | 'Warning' | 'Critical';
 export type TrustScoreBand = 'Excellent' | 'Good' | 'Average' | 'At Risk' | 'Critical';
-export type TrustEventSource = 'score' | 'payment' | 'kyc' | 'fleet_control' | 'contravention' | 'sinistre' | 'vehicle' | 'system';
+export type TrustEventSource = 'score' | 'payment' | 'kyc' | 'fleet_control' | 'contravention' | 'sinistre' | 'vehicle' | 'credit_default' | 'system';
 
 export type DriverTrustLike = {
   id: string;
@@ -95,6 +95,20 @@ export type AccidentTrustLike = {
   accident_datetime?: string | null;
   closed_at?: string | null;
   created_at?: string | null;
+};
+
+export type DefaultReviewTrustLike = {
+  default_review_id: string;
+  driver_id?: string | null;
+  status?: string | null;
+  status_label?: string | null;
+  latest_decision?: string | null;
+  past_due_amount?: number | null;
+  days_past_due?: number | null;
+  open_asset_review_id?: string | null;
+  opened_at?: string | null;
+  decision_due_at?: string | null;
+  updated_at?: string | null;
 };
 
 export type VehicleOperationRiskLike = {
@@ -241,6 +255,9 @@ export function riskFromScoreAndSignals(input: {
   kycIssue: boolean;
   fleetControlIssue: boolean;
   scoreDrop: number;
+  activeDefaultReviews?: number;
+  formalDefaultReviews?: number;
+  assetProtectionReviews?: number;
 }): TrustRiskLevel {
   let points = 0;
   const score = input.score ?? 500;
@@ -260,6 +277,9 @@ export function riskFromScoreAndSignals(input: {
   if (input.kycIssue) points += 1;
   if (input.fleetControlIssue) points += 1;
   if (input.scoreDrop > 50) points += 2;
+  if ((input.formalDefaultReviews ?? 0) > 0) points += 3;
+  else if ((input.activeDefaultReviews ?? 0) > 0) points += 2;
+  if ((input.assetProtectionReviews ?? 0) > 0) points += 1;
 
   if (points >= 5) return 'Critical';
   if (points >= 3) return 'High';
@@ -312,6 +332,9 @@ export function buildRiskReasons(input: {
   openAccidents: number;
   kycIssue: boolean;
   fleetControlIssue: boolean;
+  activeDefaultReviews?: number;
+  formalDefaultReviews?: number;
+  assetProtectionReviews?: number;
 }): string[] {
   const reasons: string[] = [];
   if (input.trend < -50) reasons.push(`Score dropped ${Math.abs(input.trend)} points`);
@@ -322,6 +345,9 @@ export function buildRiskReasons(input: {
   if (input.openAccidents > 0) reasons.push(input.openAccidents === 1 ? 'Recent accident' : `${input.openAccidents} open accidents`);
   if (input.kycIssue) reasons.push('KYC expired or pending');
   if (input.fleetControlIssue) reasons.push('Fleet control overdue');
+  if ((input.formalDefaultReviews ?? 0) > 0) reasons.push('Formal default review active');
+  else if ((input.activeDefaultReviews ?? 0) > 0) reasons.push('Default Recovery review active');
+  if ((input.assetProtectionReviews ?? 0) > 0) reasons.push('Asset protection review active');
   return reasons.length > 0 ? reasons : ['No active risk signal'];
 }
 
@@ -333,6 +359,9 @@ export function buildRecommendedActions(input: {
   fleetControlIssue: boolean;
   score: number | null;
   risk: TrustRiskLevel;
+  activeDefaultReviews?: number;
+  formalDefaultReviews?: number;
+  assetProtectionReviews?: number;
 }): string[] {
   const actions: string[] = [];
   if (input.latePayments > 0) actions.push('Relancer paiement');
@@ -341,6 +370,9 @@ export function buildRecommendedActions(input: {
   if (input.openAccidents > 0) actions.push('Examiner sinistre');
   if (input.fleetControlIssue) actions.push('Réassigner véhicule');
   if (input.openViolations > 0) actions.push('Assigner ou liquider contravention');
+  if ((input.formalDefaultReviews ?? 0) > 0) actions.push('Examiner le dossier DAM formel');
+  else if ((input.activeDefaultReviews ?? 0) > 0) actions.push('Ouvrir Default Recovery');
+  if ((input.assetProtectionReviews ?? 0) > 0) actions.push('Suivre la revue actif');
   if (actions.length === 0 && input.risk === 'Low') actions.push('Surveiller normalement');
   if (actions.length === 0) actions.push('Manual review required');
   return actions;
@@ -353,6 +385,7 @@ export function buildDriverRiskProfiles(input: {
   violations: ViolationTrustLike[];
   accidents: AccidentTrustLike[];
   controls: FleetControlTrustLike[];
+  defaultReviews?: DefaultReviewTrustLike[];
   events: TrustEvent[];
   today: string;
 }): DriverRiskProfile[] {
@@ -374,6 +407,13 @@ export function buildDriverRiskProfiles(input: {
     const openViolations = countBy(input.violations, (violation) => violation.driver_id === driver.id && isOpenViolation(violation));
     const openAccidents = countBy(input.accidents, (accident) => accident.driver_id === driver.id && isOpenAccident(accident));
     const fleetControlIssue = input.controls.some((control) => control.driver_id === driver.id && isFleetControlIssue(control, input.today));
+    const activeDefaultReviews = countBy(input.defaultReviews ?? [], (review) => review.driver_id === driver.id);
+    const formalDefaultReviews = countBy(input.defaultReviews ?? [], (review) =>
+      review.driver_id === driver.id && ['FORMAL_DEFAULT_PENDING_APPROVAL', 'FORMALLY_DEFAULTED'].includes(review.status ?? ''),
+    );
+    const assetProtectionReviews = countBy(input.defaultReviews ?? [], (review) =>
+      review.driver_id === driver.id && (!!review.open_asset_review_id || review.status === 'ASSET_PROTECTION_REVIEW'),
+    );
     const kycIssue = isKycIssue(driver);
     const risk = riskFromScoreAndSignals({
       score: currentScore,
@@ -383,6 +423,9 @@ export function buildDriverRiskProfiles(input: {
       kycIssue,
       fleetControlIssue,
       scoreDrop: trend < 0 ? Math.abs(trend) : 0,
+      activeDefaultReviews,
+      formalDefaultReviews,
+      assetProtectionReviews,
     });
     const reasons = buildRiskReasons({
       score: currentScore,
@@ -392,6 +435,9 @@ export function buildDriverRiskProfiles(input: {
       openAccidents,
       kycIssue,
       fleetControlIssue,
+      activeDefaultReviews,
+      formalDefaultReviews,
+      assetProtectionReviews,
     });
     const recommendedActions = buildRecommendedActions({
       latePayments,
@@ -401,6 +447,9 @@ export function buildDriverRiskProfiles(input: {
       fleetControlIssue,
       score: currentScore,
       risk,
+      activeDefaultReviews,
+      formalDefaultReviews,
+      assetProtectionReviews,
     });
     return {
       driverId: driver.id,
@@ -573,6 +622,7 @@ export function buildTrustEvents(input: {
   violations: ViolationTrustLike[];
   accidents: AccidentTrustLike[];
   controls: FleetControlTrustLike[];
+  defaultReviews?: DefaultReviewTrustLike[];
   today: string;
 }): TrustEvent[] {
   const driverById = new Map(input.drivers.map((driver) => [driver.id, driver]));
@@ -662,6 +712,23 @@ export function buildTrustEvents(input: {
       timestamp: control.validated_at ?? control.last_validated_at ?? control.due_at ?? control.created_at ?? input.today,
       source: 'fleet_control',
       route: '/admin/fleet-control',
+    });
+  });
+
+  (input.defaultReviews ?? []).forEach((review) => {
+    if (!review.driver_id) return;
+    const formal = ['FORMAL_DEFAULT_PENDING_APPROVAL', 'FORMALLY_DEFAULTED'].includes(review.status ?? '');
+    const asset = !!review.open_asset_review_id || review.status === 'ASSET_PROTECTION_REVIEW';
+    events.push({
+      id: `credit-default-${review.default_review_id}`,
+      event: formal ? 'Formal Default Review' : asset ? 'Asset Protection Review' : 'Default Recovery Review',
+      driverId: review.driver_id,
+      driverName: driverName(driverById.get(review.driver_id)),
+      entity: `${review.status_label ?? 'Dossier DAM'} · ${Number(review.past_due_amount ?? 0).toLocaleString('fr-FR')} FCFA`,
+      scoreImpact: formal ? -25 : asset ? -15 : -10,
+      timestamp: review.decision_due_at ?? review.updated_at ?? review.opened_at ?? input.today,
+      source: 'credit_default',
+      route: `/admin/default-recovery?review=${review.default_review_id}`,
     });
   });
 

@@ -1,0 +1,109 @@
+{
+  "passed": 21,
+  "failed": 0,
+  "checks": [
+    {
+      "name": "open_credit_default_review creates or returns active review",
+      "passed": true,
+      "detail": "df76ef07-3256-43af-a8b0-3834b0550540"
+    },
+    {
+      "name": "assign_credit_default_review audits ownership",
+      "passed": true
+    },
+    {
+      "name": "attach_credit_default_evidence covers checklist",
+      "passed": true,
+      "detail": "8 evidence rows"
+    },
+    {
+      "name": "create_credit_recovery_plan is operational only",
+      "passed": true,
+      "detail": "ACTIVE"
+    },
+    {
+      "name": "open_credit_asset_protection_review does not execute repossession",
+      "passed": true,
+      "detail": "OPEN"
+    },
+    {
+      "name": "create_credit_default_decision requires evidence and permission",
+      "passed": true
+    },
+    {
+      "name": "send_credit_default_notice is driver-safe",
+      "passed": true,
+      "detail": "FORMAL_DEFAULT_NOTICE"
+    },
+    {
+      "name": "declare_credit_formal_default guarded final state",
+      "passed": true,
+      "detail": "FORMALLY_DEFAULTED"
+    },
+    {
+      "name": "admin default recovery page loads",
+      "passed": true,
+      "detail": "Default Recovery"
+    },
+    {
+      "name": "admin default recovery human control copy",
+      "passed": true,
+      "detail": "Controle humain obligatoire"
+    },
+    {
+      "name": "admin page avoids forbidden repossession execution copy",
+      "passed": true,
+      "detail": "absent: reprise automatique declenchee"
+    },
+    {
+      "name": "evidence tab renders checklist",
+      "passed": true,
+      "detail": "Evidence Checklist"
+    },
+    {
+      "name": "decision tab renders controls",
+      "passed": true,
+      "detail": "Decision Screen"
+    },
+    {
+      "name": "formal declaration control renders",
+      "passed": true,
+      "detail": "Formal Default Confirmation"
+    },
+    {
+      "name": "collections links to default recovery",
+      "passed": true,
+      "detail": "Default Recovery"
+    },
+    {
+      "name": "attention center remains reachable",
+      "passed": true,
+      "detail": "Centre d’attention"
+    },
+    {
+      "name": "driver 360 remains reachable",
+      "passed": true,
+      "detail": "Driver Lifecycle"
+    },
+    {
+      "name": "driver finance page loads",
+      "passed": true,
+      "detail": "Finance"
+    },
+    {
+      "name": "driver credit page loads",
+      "passed": true,
+      "detail": "Credit"
+    },
+    {
+      "name": "reverse_credit_formal_default restores governed state",
+      "passed": true,
+      "detail": "DEFAULT_REVERSED"
+    },
+    {
+      "name": "no unexpected console/network findings",
+      "passed": true
+    }
+  ],
+  "findings": []
+}

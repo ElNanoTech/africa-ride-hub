@@ -374,6 +374,12 @@ export default function AdminDriverDetail() {
     () => queueInvalidate('driver-ops-credit-collections', 'driver-360', 'driver-activity-timeline'), !!id);
   useRealtimePostgresChanges<{ driver_id?: string }>('credit_risk_escalations', '*', matchesDriver,
     () => queueInvalidate('driver-ops-credit-collections', 'driver-risk', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('credit_default_reviews', '*', matchesDriver,
+    () => queueInvalidate('driver-ops-credit-defaults', 'driver-360', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('credit_recovery_plans', '*', matchesDriver,
+    () => queueInvalidate('driver-ops-credit-defaults', 'driver-360', 'driver-activity-timeline'), !!id);
+  useRealtimePostgresChanges<{ driver_id?: string }>('credit_default_notices', '*', matchesDriver,
+    () => queueInvalidate('driver-ops-credit-defaults', 'driver-360', 'driver-activity-timeline'), !!id);
   useRealtimePostgresChanges<{ driver_id?: string }>('driver_documents', '*', matchesDriver,
     () => queueInvalidate('driver-documents'), !!id);
   useRealtimePostgresChanges<{ driver_id?: string }>('kyc_submissions', '*', matchesDriver,

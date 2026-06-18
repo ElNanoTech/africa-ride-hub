@@ -204,6 +204,7 @@ function CaseWorkbench({
   const submitDefaultReview = () => {
     if (escalationReason.trim().length < 5) return;
     openDefaultReview.mutate({
+      creditAccountId: selectedCase.credit_account_id,
       caseId: selectedCase.case_id,
       reason: escalationReason.trim(),
     }, {
@@ -519,6 +520,12 @@ export default function CreditCollections() {
                 <RefreshCw className="h-4 w-4" />
                 Refresh
               </Button>
+              <Button variant="outline" asChild>
+                <Link to="/admin/default-recovery">
+                  <ShieldAlert className="h-4 w-4" />
+                  Default Recovery
+                </Link>
+              </Button>
               <Button disabled={syncCollections.isPending} onClick={() => syncCollections.mutate(null)}>
                 <SlidersHorizontal className="h-4 w-4" />
                 Sync collections
@@ -659,6 +666,11 @@ export default function CreditCollections() {
                         <TableCell>
                           <div className="flex flex-wrap gap-2">
                             <Button size="sm" variant="outline" onClick={() => setSelectedCaseId(row.case_id)}>Work</Button>
+                            {(row.current_status === 'DEFAULT_REVIEW' || row.delinquency_status === 'DEFAULT_REVIEW') && (
+                              <Button size="sm" variant="outline" asChild>
+                                <Link to={`/admin/default-recovery?case=${row.case_id}`}>Default queue</Link>
+                              </Button>
+                            )}
                             <Button size="sm" variant="outline" asChild>
                               <Link to={`/admin/drivers/${row.driver_id}`}>Driver 360</Link>
                             </Button>

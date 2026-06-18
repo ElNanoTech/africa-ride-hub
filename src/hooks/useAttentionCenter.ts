@@ -215,6 +215,29 @@ type CollectionsCaseRow = {
   opened_at: string;
 };
 
+type DefaultReviewRow = {
+  default_review_id: string;
+  credit_account_id: string;
+  collections_case_id: string | null;
+  driver_id: string;
+  driver_name: string | null;
+  product_name: string | null;
+  status: string;
+  status_label: string | null;
+  trigger_reason: string;
+  past_due_amount: number;
+  days_past_due: number;
+  evidence_status: string;
+  evidence_count: number;
+  latest_decision: string | null;
+  active_recovery_plan_id: string | null;
+  open_asset_review_id: string | null;
+  sent_notice_count: number;
+  formal_default_notice_sent: boolean;
+  decision_due_at: string | null;
+  opened_at: string;
+};
+
 type QueryWarning = { label: string; message: string };
 type QueryLike<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
 
@@ -325,6 +348,7 @@ export function useAttentionCenter() {
         rentalsResult,
         riskResult,
         collectionsResult,
+        defaultsResult,
       ] = await Promise.all([
         safeRows<PaymentRow>('Paiements', supabase
           .from('payments')
@@ -392,6 +416,11 @@ export function useAttentionCenter() {
           .select('case_id, driver_id, driver_name, product_name, current_status, current_status_label, delinquency_status, delinquency_status_label, severity, total_past_due_amount, days_past_due, priority_score, invoice_number, due_date, active_promise_id, promised_payment_date, open_escalation_id, opened_at')
           .order('priority_score', { ascending: false })
           .limit(80) as unknown as QueryLike<CollectionsCaseRow>),
+        safeRows<DefaultReviewRow>('Default Recovery', supabase
+          .from('v_credit_default_review_queue')
+          .select('default_review_id, credit_account_id, collections_case_id, driver_id, driver_name, product_name, status, status_label, trigger_reason, past_due_amount, days_past_due, evidence_status, evidence_count, latest_decision, active_recovery_plan_id, open_asset_review_id, sent_notice_count, formal_default_notice_sent, decision_due_at, opened_at')
+          .order('decision_due_at', { ascending: true, nullsFirst: false })
+          .limit(80) as unknown as QueryLike<DefaultReviewRow>),
       ]);
 
       const actions: AttentionAction[] = [];
@@ -409,6 +438,7 @@ export function useAttentionCenter() {
         rentalsResult.warning,
         riskResult.warning,
         collectionsResult.warning,
+        defaultsResult.warning,
       ]
         .filter((w): w is QueryWarning => !!w)
         .map((w) => `${w.label}: ${w.message}`);
@@ -740,6 +770,54 @@ export function useAttentionCenter() {
         });
       }
 
+      for (const review of defaultsResult.rows) {
+        const decisionDue = isPastDate(review.decision_due_at);
+        const noticeMissing = review.latest_decision === 'FORMAL_DEFAULT' && !review.formal_default_notice_sent;
+        const evidenceMissing = review.evidence_count === 0 || review.evidence_status === 'MISSING';
+        const assetReviewOpen = !!review.open_asset_review_id || review.status === 'ASSET_PROTECTION_REVIEW';
+        const formalPending = ['FORMAL_DEFAULT_PENDING_APPROVAL', 'FORMALLY_DEFAULTED'].includes(review.status);
+        const priority: AttentionPriority = noticeMissing || (formalPending && evidenceMissing)
+          ? 'critical'
+          : decisionDue || assetReviewOpen
+            ? 'high'
+            : evidenceMissing
+              ? 'medium'
+              : 'info';
+        const issueType = noticeMissing
+          ? 'Avis conducteur à envoyer'
+          : formalPending && evidenceMissing
+            ? 'Pièces manquantes avant décision'
+            : decisionDue
+              ? 'Décision DAM en retard'
+              : assetReviewOpen
+                ? 'Revue actif à suivre'
+                : review.active_recovery_plan_id
+                  ? 'Plan de régularisation à suivre'
+                  : 'Dossier DAM à examiner';
+        actions.push({
+          id: `default-${review.default_review_id}`,
+          priority,
+          category: assetReviewOpen || formalPending ? 'risk' : 'growth',
+          filterTags: ['overdue', 'drivers_risk', 'pending_requests'],
+          issueType,
+          subject: review.driver_name || review.driver_id,
+          impact: `${currency(review.past_due_amount)} · ${review.status_label || 'Suivi DAM'}`,
+          age: review.days_past_due > 0 ? `${review.days_past_due} jour(s) de retard` : ageLabel(review.opened_at),
+          recommendedAction: noticeMissing
+            ? 'Envoyer la notice depuis Default Recovery'
+            : assetReviewOpen
+              ? 'Vérifier la revue actif sans action automatique'
+              : 'Ouvrir le dossier DAM',
+          ctaLabel: 'Ouvrir dossier',
+          href: `/admin/default-recovery?review=${review.default_review_id}`,
+          entityType: 'credit_default_review',
+          entityId: review.default_review_id,
+          permission: assetReviewOpen || formalPending ? 'risk' : 'growth',
+          createdAt: review.decision_due_at ?? review.opened_at,
+          sortValue: actionSort(priority, review.decision_due_at ?? review.opened_at),
+        });
+      }
+
       const uniqueActions = Array.from(new Map(actions.map((a) => [a.id, a])).values())
         .sort((a, b) => a.sortValue - b.sortValue)
         .slice(0, 80);
@@ -760,15 +838,17 @@ export function useAttentionCenter() {
       const pendingRequests =
         kycResult.rows.filter((k) => k.status === 'pending').length +
         loansResult.rows.filter((l) => l.status === 'pending').length +
-        rentalsResult.rows.filter((r) => r.status === 'pending').length;
+        rentalsResult.rows.filter((r) => r.status === 'pending').length +
+        defaultsResult.rows.filter((r) => ['DEFAULT_REVIEW', 'EVIDENCE_GATHERING', 'RECOVERY_PLAN_PENDING'].includes(r.status)).length;
       const openCollections = collectionsResult.rows.length;
+      const openDefaults = defaultsResult.rows.length;
 
       const kpis: AttentionKpi[] = [
         { key: 'today_cash', label: "À encaisser aujourd'hui", value: currency(todayCash), hint: 'Paiements dus aujourd’hui', filter: 'today_cash', tone: 'green' },
         { key: 'overdue', label: 'En retard', value: currency(overdueAmount), hint: 'Paiements/factures à récupérer', filter: 'overdue', tone: 'orange' },
         { key: 'fleet_control', label: 'Contrôles à valider', value: controlsToReview, hint: 'Soumis par les chauffeurs', filter: 'fleet_control', tone: 'blue' },
         { key: 'vehicles', label: 'Véhicules indisponibles', value: unavailableVehicles, hint: 'Maintenance, blocage ou GPS', filter: 'vehicles', tone: 'purple' },
-        { key: 'drivers_risk', label: 'Chauffeurs à risque', value: riskyDrivers, hint: `${openCollections} dossier(s) collections actif(s)`, filter: 'drivers_risk', tone: 'yellow' },
+        { key: 'drivers_risk', label: 'Chauffeurs à risque', value: riskyDrivers, hint: `${openCollections} collections · ${openDefaults} default`, filter: 'drivers_risk', tone: 'yellow' },
         { key: 'pending_requests', label: 'Demandes en attente', value: pendingRequests, hint: 'KYC, prêts, locations', filter: 'pending_requests', tone: 'slate' },
       ];
 
