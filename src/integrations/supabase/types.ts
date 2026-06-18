@@ -2124,6 +2124,93 @@ export type Database = {
           },
         ]
       }
+      credit_asset_protection_reviews: {
+        Row: {
+          asset_id: string | null
+          asset_review_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          default_review_id: string
+          idempotency_key: string
+          inspection_due_at: string | null
+          inspection_required: boolean
+          request_hash: string | null
+          status: string
+          trigger_reason: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          asset_review_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          default_review_id: string
+          idempotency_key: string
+          inspection_due_at?: string | null
+          inspection_required?: boolean
+          request_hash?: string | null
+          status?: string
+          trigger_reason: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          asset_review_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          default_review_id?: string
+          idempotency_key?: string
+          inspection_due_at?: string | null
+          inspection_required?: boolean
+          request_hash?: string | null
+          status?: string
+          trigger_reason?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_asset_protection_reviews_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "financed_assets"
+            referencedColumns: ["asset_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_protection_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_protection_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_asset_protection_reviews_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "credit_default_reviews"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_protection_reviews_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_default_review_queue"
+            referencedColumns: ["default_review_id"]
+          },
+        ]
+      }
       credit_audit_events: {
         Row: {
           action: string
@@ -2723,6 +2810,166 @@ export type Database = {
           },
         ]
       }
+      credit_default_audit_events: {
+        Row: {
+          actor_id: string | null
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          created_at: string
+          credit_account_id: string | null
+          customer_id: string | null
+          default_review_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          reason: string | null
+          request_hash: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          default_review_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          reason?: string | null
+          request_hash?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          credit_account_id?: string | null
+          customer_id?: string | null
+          default_review_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          reason?: string | null
+          request_hash?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_default_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_audit_events_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "credit_default_reviews"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_default_audit_events_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_default_review_queue"
+            referencedColumns: ["default_review_id"]
+          },
+        ]
+      }
+      credit_default_decisions: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          decision: string
+          decision_reason: string
+          decision_summary: string | null
+          decision_timestamp: string
+          default_decision_id: string
+          default_review_id: string
+          driver_notice_required: boolean
+          driver_notice_sent_at: string | null
+          idempotency_key: string
+          request_hash: string | null
+          second_approver_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          credit_account_id: string
+          customer_id?: string | null
+          decision: string
+          decision_reason: string
+          decision_summary?: string | null
+          decision_timestamp?: string
+          default_decision_id?: string
+          default_review_id: string
+          driver_notice_required?: boolean
+          driver_notice_sent_at?: string | null
+          idempotency_key: string
+          request_hash?: string | null
+          second_approver_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          credit_account_id?: string
+          customer_id?: string | null
+          decision?: string
+          decision_reason?: string
+          decision_summary?: string | null
+          decision_timestamp?: string
+          default_decision_id?: string
+          default_review_id?: string
+          driver_notice_required?: boolean
+          driver_notice_sent_at?: string | null
+          idempotency_key?: string
+          request_hash?: string | null
+          second_approver_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_default_decisions_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_decisions_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "credit_default_reviews"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_default_decisions_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_default_review_queue"
+            referencedColumns: ["default_review_id"]
+          },
+        ]
+      }
       credit_default_evidence: {
         Row: {
           created_at: string
@@ -2790,6 +3037,128 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "credit_default_reviews"
             referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_default_evidence_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_default_review_queue"
+            referencedColumns: ["default_review_id"]
+          },
+        ]
+      }
+      credit_default_notices: {
+        Row: {
+          amount_affected: number
+          channel: string
+          created_at: string
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          deadline_at: string | null
+          default_review_id: string
+          driver_id: string
+          idempotency_key: string
+          notice_id: string
+          notice_status: string
+          notice_summary: string
+          notice_type: string
+          notification_id: string | null
+          reason: string
+          request_hash: string | null
+          required_action: string
+          sent_at: string | null
+          support_instruction: string
+          updated_at: string
+        }
+        Insert: {
+          amount_affected?: number
+          channel?: string
+          created_at?: string
+          credit_account_id: string
+          currency_code?: string
+          customer_id?: string | null
+          deadline_at?: string | null
+          default_review_id: string
+          driver_id: string
+          idempotency_key: string
+          notice_id?: string
+          notice_status?: string
+          notice_summary: string
+          notice_type: string
+          notification_id?: string | null
+          reason: string
+          request_hash?: string | null
+          required_action: string
+          sent_at?: string | null
+          support_instruction?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_affected?: number
+          channel?: string
+          created_at?: string
+          credit_account_id?: string
+          currency_code?: string
+          customer_id?: string | null
+          deadline_at?: string | null
+          default_review_id?: string
+          driver_id?: string
+          idempotency_key?: string
+          notice_id?: string
+          notice_status?: string
+          notice_summary?: string
+          notice_type?: string
+          notification_id?: string | null
+          reason?: string
+          request_hash?: string | null
+          required_action?: string
+          sent_at?: string | null
+          support_instruction?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_default_notices_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "credit_default_reviews"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_default_review_queue"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "notifications"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3200,6 +3569,93 @@ export type Database = {
           },
           {
             foreignKeyName: "credit_promises_to_pay_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      credit_recovery_plans: {
+        Row: {
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          default_review_id: string
+          driver_id: string
+          due_date: string
+          idempotency_key: string
+          plan_status: string
+          recovery_plan_id: string
+          request_hash: string | null
+          required_action_json: Json
+          updated_at: string
+        }
+        Insert: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          default_review_id: string
+          driver_id: string
+          due_date: string
+          idempotency_key: string
+          plan_status?: string
+          recovery_plan_id?: string
+          request_hash?: string | null
+          required_action_json?: Json
+          updated_at?: string
+        }
+        Update: {
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          default_review_id?: string
+          driver_id?: string
+          due_date?: string
+          idempotency_key?: string
+          plan_status?: string
+          recovery_plan_id?: string
+          request_hash?: string | null
+          required_action_json?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_recovery_plans_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_recovery_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_recovery_plans_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "credit_default_reviews"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_recovery_plans_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_default_review_queue"
+            referencedColumns: ["default_review_id"]
+          },
+          {
+            foreignKeyName: "credit_recovery_plans_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
@@ -8642,6 +9098,100 @@ export type Database = {
         }
         Relationships: []
       }
+      v_credit_default_reconciliation_anomalies: {
+        Row: {
+          anomaly_id: string | null
+          anomaly_type: string | null
+          credit_account_id: string | null
+          customer_id: string | null
+          default_review_id: string | null
+          details_json: Json | null
+          detected_at: string | null
+          severity: string | null
+        }
+        Relationships: []
+      }
+      v_credit_default_review_queue: {
+        Row: {
+          active_recovery_plan_id: string | null
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string | null
+          created_at: string | null
+          credit_account_id: string | null
+          currency_code: string | null
+          customer_id: string | null
+          days_past_due: number | null
+          decision_due_at: string | null
+          decision_timestamp: string | null
+          default_decision_id: string | null
+          default_review_id: string | null
+          driver_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          evidence_count: number | null
+          evidence_status: string | null
+          formal_default_notice_sent: boolean | null
+          latest_decision: string | null
+          open_asset_review_id: string | null
+          opened_at: string | null
+          past_due_amount: number | null
+          product_id: string | null
+          product_name: string | null
+          product_type: string | null
+          sent_notice_count: number | null
+          status: string | null
+          status_changed_at: string | null
+          status_label: string | null
+          trigger_reason: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_default_reviews_collections_case_id_fkey"
+            columns: ["collections_case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_collections_case_id_fkey"
+            columns: ["collections_case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
       v_credit_schedule_reconciliation_anomalies: {
         Row: {
           anomaly_id: string | null
@@ -9206,6 +9756,79 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_credit_default_review: {
+        Args: {
+          p_assigned_to?: string
+          p_default_review_id: string
+          p_idempotency_key?: string
+          p_note?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          days_past_due: number
+          decision_due_at: string | null
+          default_review_id: string
+          driver_id: string
+          evidence_status: string
+          idempotency_key: string
+          opened_at: string
+          past_due_amount: number
+          product_id: string
+          request_hash: string | null
+          status: string
+          status_changed_at: string
+          trigger_reason: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      attach_credit_default_evidence: {
+        Args: {
+          p_default_review_id: string
+          p_evidence_summary: string
+          p_evidence_type: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_source_reference_id?: string
+          p_source_reference_type?: string
+        }
+        Returns: {
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          default_review_id: string
+          evidence_id: string
+          evidence_summary: string
+          evidence_type: string
+          idempotency_key: string
+          locked_at: string | null
+          request_hash: string | null
+          source_reference_id: string | null
+          source_reference_type: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_evidence"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       break_promise_to_pay: {
         Args: {
           p_idempotency_key?: string
@@ -9282,6 +9905,47 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "credit_collections_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      close_credit_default_review: {
+        Args: {
+          p_closure_reason: string
+          p_default_review_id: string
+          p_final_status?: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          days_past_due: number
+          decision_due_at: string | null
+          default_review_id: string
+          driver_id: string
+          evidence_status: string
+          idempotency_key: string
+          opened_at: string
+          past_due_amount: number
+          product_id: string
+          request_hash: string | null
+          status: string
+          status_changed_at: string
+          trigger_reason: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_reviews"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -9599,6 +10263,42 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      create_credit_default_decision: {
+        Args: {
+          p_decision: string
+          p_decision_reason: string
+          p_decision_summary?: string
+          p_default_review_id: string
+          p_driver_notice_required?: boolean
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_second_approver_id?: string
+        }
+        Returns: {
+          approved_by: string | null
+          created_at: string
+          credit_account_id: string
+          customer_id: string | null
+          decision: string
+          decision_reason: string
+          decision_summary: string | null
+          decision_timestamp: string
+          default_decision_id: string
+          default_review_id: string
+          driver_notice_required: boolean
+          driver_notice_sent_at: string | null
+          idempotency_key: string
+          request_hash: string | null
+          second_approver_id: string | null
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_decisions"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       create_credit_down_payment_invoice: {
         Args: { p_application_id: string; p_idempotency_key?: string }
         Returns: {
@@ -9650,6 +10350,38 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "invoice"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      create_credit_recovery_plan: {
+        Args: {
+          p_approved_by?: string
+          p_default_review_id: string
+          p_due_date: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_required_action_json: Json
+        }
+        Returns: {
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          default_review_id: string
+          driver_id: string
+          due_date: string
+          idempotency_key: string
+          plan_status: string
+          recovery_plan_id: string
+          request_hash: string | null
+          required_action_json: Json
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_recovery_plans"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -9742,7 +10474,70 @@ export type Database = {
       current_driver_customer_id: { Args: never; Returns: string }
       current_driver_id: { Args: never; Returns: string }
       current_driver_is_active: { Args: never; Returns: boolean }
+      declare_credit_formal_default: {
+        Args: {
+          p_default_review_id: string
+          p_idempotency_key?: string
+          p_reason: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          days_past_due: number
+          decision_due_at: string | null
+          default_review_id: string
+          driver_id: string
+          evidence_status: string
+          idempotency_key: string
+          opened_at: string
+          past_due_amount: number
+          product_id: string
+          request_hash: string | null
+          status: string
+          status_changed_at: string
+          trigger_reason: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      default_audit: {
+        Args: {
+          p_after?: Json
+          p_before?: Json
+          p_credit_account_id: string
+          p_customer_id: string
+          p_default_review_id: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_reason?: string
+          p_request_hash?: string
+        }
+        Returns: string
+      }
       default_collections_rules: { Args: never; Returns: Json }
+      default_notice_type_label: {
+        Args: { p_notice_type: string }
+        Returns: string
+      }
+      default_rules_for_account: {
+        Args: { p_credit_account_id: string }
+        Returns: Json
+      }
+      default_status_label: { Args: { p_status: string }; Returns: string }
       disable_rental_vehicle: {
         Args: { p_reason: string; p_rental_id: string }
         Returns: {
@@ -10343,6 +11138,24 @@ export type Database = {
           summary_json: Json
         }[]
       }
+      get_driver_default_status: {
+        Args: never
+        Returns: {
+          amount_affected: number
+          credit_account_id: string
+          currency_code: string
+          days_past_due: number
+          deadline_at: string
+          default_review_id: string
+          driver_message: string
+          latest_notice_json: Json
+          primary_action_label: string
+          product_name: string
+          recovery_plan_json: Json
+          status_label: string
+          status_tone: string
+        }[]
+      }
       get_driver_displayed_score: {
         Args: { p_driver_id: string }
         Returns: number
@@ -10534,6 +11347,39 @@ export type Database = {
         Returns: number
       }
       normalize_license_plate: { Args: { p: string }; Returns: string }
+      open_credit_asset_protection_review: {
+        Args: {
+          p_asset_id?: string
+          p_default_review_id: string
+          p_idempotency_key?: string
+          p_inspection_due_at?: string
+          p_inspection_required?: boolean
+          p_request_hash?: string
+          p_trigger_reason: string
+        }
+        Returns: {
+          asset_id: string | null
+          asset_review_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          default_review_id: string
+          idempotency_key: string
+          inspection_due_at: string | null
+          inspection_required: boolean
+          request_hash: string | null
+          status: string
+          trigger_reason: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_asset_protection_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       open_credit_collections_case: {
         Args: {
           p_credit_account_id: string
@@ -10578,6 +11424,48 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "credit_collections_cases"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      open_credit_default_review: {
+        Args: {
+          p_collections_case_id?: string
+          p_credit_account_id: string
+          p_decision_due_at?: string
+          p_idempotency_key?: string
+          p_request_hash?: string
+          p_trigger_reason?: string
+        }
+        Returns: {
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          days_past_due: number
+          decision_due_at: string | null
+          default_review_id: string
+          driver_id: string
+          evidence_status: string
+          idempotency_key: string
+          opened_at: string
+          past_due_amount: number
+          product_id: string
+          request_hash: string | null
+          status: string
+          status_changed_at: string
+          trigger_reason: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_reviews"
           isOneToOne: true
           isSetofReturn: false
         }
@@ -10923,6 +11811,47 @@ export type Database = {
         Args: { p_invoice_id: string }
         Returns: Json
       }
+      reverse_credit_formal_default: {
+        Args: {
+          p_default_review_id: string
+          p_idempotency_key?: string
+          p_new_account_status?: string
+          p_reason: string
+          p_request_hash?: string
+        }
+        Returns: {
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          days_past_due: number
+          decision_due_at: string | null
+          default_review_id: string
+          driver_id: string
+          evidence_status: string
+          idempotency_key: string
+          opened_at: string
+          past_due_amount: number
+          product_id: string
+          request_hash: string | null
+          status: string
+          status_changed_at: string
+          trigger_reason: string
+          updated_at: string
+          updated_by: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_reviews"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       review_credit_application: {
         Args: {
           p_application_id: string
@@ -11080,6 +12009,48 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "credit_contracts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
+      send_credit_default_notice: {
+        Args: {
+          p_channel?: string
+          p_deadline_at?: string
+          p_default_review_id: string
+          p_idempotency_key?: string
+          p_notice_summary: string
+          p_notice_type: string
+          p_reason: string
+          p_request_hash?: string
+          p_required_action: string
+        }
+        Returns: {
+          amount_affected: number
+          channel: string
+          created_at: string
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          deadline_at: string | null
+          default_review_id: string
+          driver_id: string
+          idempotency_key: string
+          notice_id: string
+          notice_status: string
+          notice_summary: string
+          notice_type: string
+          notification_id: string | null
+          reason: string
+          request_hash: string | null
+          required_action: string
+          sent_at: string | null
+          support_instruction: string
+          updated_at: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_default_notices"
           isOneToOne: true
           isSetofReturn: false
         }
