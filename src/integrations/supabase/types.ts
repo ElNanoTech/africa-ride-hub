@@ -2723,6 +2723,200 @@ export type Database = {
           },
         ]
       }
+      credit_default_evidence: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          customer_id: string | null
+          default_review_id: string
+          evidence_id: string
+          evidence_summary: string
+          evidence_type: string
+          idempotency_key: string
+          locked_at: string | null
+          request_hash: string | null
+          source_reference_id: string | null
+          source_reference_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          customer_id?: string | null
+          default_review_id: string
+          evidence_id?: string
+          evidence_summary: string
+          evidence_type: string
+          idempotency_key: string
+          locked_at?: string | null
+          request_hash?: string | null
+          source_reference_id?: string | null
+          source_reference_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          customer_id?: string | null
+          default_review_id?: string
+          evidence_id?: string
+          evidence_summary?: string
+          evidence_type?: string
+          idempotency_key?: string
+          locked_at?: string | null
+          request_hash?: string | null
+          source_reference_id?: string | null
+          source_reference_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_default_evidence_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_evidence_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_evidence_default_review_id_fkey"
+            columns: ["default_review_id"]
+            isOneToOne: false
+            referencedRelation: "credit_default_reviews"
+            referencedColumns: ["default_review_id"]
+          },
+        ]
+      }
+      credit_default_reviews: {
+        Row: {
+          assigned_reviewer: string | null
+          closed_at: string | null
+          closure_reason: string | null
+          collections_case_id: string
+          created_at: string
+          created_by: string | null
+          credit_account_id: string
+          currency_code: string
+          customer_id: string | null
+          days_past_due: number
+          decision_due_at: string | null
+          default_review_id: string
+          driver_id: string
+          evidence_status: string
+          idempotency_key: string
+          opened_at: string
+          past_due_amount: number
+          product_id: string
+          request_hash: string | null
+          status: string
+          status_changed_at: string
+          trigger_reason: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assigned_reviewer?: string | null
+          closed_at?: string | null
+          closure_reason?: string | null
+          collections_case_id: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id: string
+          currency_code?: string
+          customer_id?: string | null
+          days_past_due?: number
+          decision_due_at?: string | null
+          default_review_id?: string
+          driver_id: string
+          evidence_status?: string
+          idempotency_key: string
+          opened_at?: string
+          past_due_amount?: number
+          product_id: string
+          request_hash?: string | null
+          status?: string
+          status_changed_at?: string
+          trigger_reason: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assigned_reviewer?: string | null
+          closed_at?: string | null
+          closure_reason?: string | null
+          collections_case_id?: string
+          created_at?: string
+          created_by?: string | null
+          credit_account_id?: string
+          currency_code?: string
+          customer_id?: string | null
+          days_past_due?: number
+          decision_due_at?: string | null
+          default_review_id?: string
+          driver_id?: string
+          evidence_status?: string
+          idempotency_key?: string
+          opened_at?: string
+          past_due_amount?: number
+          product_id?: string
+          request_hash?: string | null
+          status?: string
+          status_changed_at?: string
+          trigger_reason?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_default_reviews_collections_case_id_fkey"
+            columns: ["collections_case_id"]
+            isOneToOne: false
+            referencedRelation: "credit_collections_cases"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_collections_case_id_fkey"
+            columns: ["collections_case_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_collections_queue"
+            referencedColumns: ["case_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
       credit_exposure_profiles: {
         Row: {
           available_exposure: number
@@ -6040,6 +6234,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           customer_id: string | null
+          default_rules_json: Json
           effective_from: string
           effective_to: string | null
           product_id: string
@@ -6057,6 +6252,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          default_rules_json?: Json
           effective_from?: string
           effective_to?: string | null
           product_id: string
@@ -6074,6 +6270,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           customer_id?: string | null
+          default_rules_json?: Json
           effective_from?: string
           effective_to?: string | null
           product_id?: string
@@ -10245,6 +10442,7 @@ export type Database = {
         Returns: boolean
       }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
+      has_default_permission: { Args: { permission: string }; Returns: boolean }
       has_repayment_permission: {
         Args: { permission: string }
         Returns: boolean
