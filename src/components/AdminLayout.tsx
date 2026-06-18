@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Car, FileText, Wallet, CreditCard, 
   Settings, LogOut, Menu, ChevronLeft, BarChart3, MessageSquare,
-  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock, MessageCircleWarning
+  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock, MessageCircleWarning, BadgeCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -77,6 +77,12 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/repayment',
   '/admin/credit-collections',
   '/admin/collections',
+  '/admin/default-recovery',
+  '/admin/default-reviews',
+  '/admin/defaults',
+  '/admin/ownership-completion',
+  '/admin/asset-transfers',
+  '/admin/ownership-certificates',
   '/admin/trust-risk',
   '/admin/scoring',
   '/admin/driving-behavior',
@@ -319,6 +325,22 @@ const sidebarItems: SidebarItem[] = [
     label: 'Collections',
     aliases: ['/admin/collections'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret', 'agent_support'],
+    section: 'growth_ownership',
+  },
+  {
+    to: '/admin/default-recovery',
+    icon: ShieldAlert,
+    label: 'Default Recovery',
+    aliases: ['/admin/default-reviews', '/admin/defaults'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
+    section: 'growth_ownership',
+  },
+  {
+    to: '/admin/ownership-completion',
+    icon: BadgeCheck,
+    label: 'Ownership Completion',
+    aliases: ['/admin/asset-transfers', '/admin/ownership-certificates'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
   },
   { 

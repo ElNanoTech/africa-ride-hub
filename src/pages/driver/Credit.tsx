@@ -86,6 +86,14 @@ import {
   type DriverCollectionsStatusRow,
 } from '@/hooks/useCreditCollectionsData';
 import {
+  useDriverDefaultStatus,
+  type DriverDefaultStatusRow,
+} from '@/hooks/useCreditDefaultsData';
+import {
+  useDriverOwnershipCompletionStatus,
+  type DriverOwnershipCompletionStatusRow,
+} from '@/hooks/useOwnershipCompletionData';
+import {
   useDriverContractStatuses,
   useDriverDeclineCreditContract,
   useDriverSignCreditContract,
@@ -878,6 +886,156 @@ function CollectionsStatusCard({
   );
 }
 
+function DefaultStatusCard({
+  statuses,
+  isError,
+}: {
+  statuses: DriverDefaultStatusRow[];
+  isError: boolean;
+}) {
+  const status = statuses[0] ?? null;
+
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+        Statut de suivi DAM indisponible pour le moment.
+      </div>
+    );
+  }
+
+  if (!status) return null;
+
+  const toneClass = status.status_tone === 'danger'
+    ? 'border-destructive/40 bg-destructive/5'
+    : status.status_tone === 'success'
+      ? 'border-emerald-500/25 bg-emerald-500/5'
+      : 'border-warning/40 bg-warning/5';
+  const badgeVariant = status.status_tone === 'danger'
+    ? 'destructive'
+    : status.status_tone === 'success'
+      ? 'verified'
+      : 'secondary';
+  const voiceText = `${status.status_label}. ${status.driver_message} Action: ${status.primary_action_label}.`;
+
+  return (
+    <div className={cn('rounded-lg border p-3 text-sm', toneClass)}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Suivi DAM</p>
+          <p className="mt-1 text-xs text-muted-foreground">{status.product_name ?? 'Produit crédit'}</p>
+        </div>
+        <Badge variant={badgeVariant as never}>{status.status_label}</Badge>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Montant concerné</p>
+          <p className="text-lg font-bold tabular-nums">{formatCurrency(status.amount_affected)}</p>
+          <p className="text-xs text-muted-foreground">{status.days_past_due > 0 ? `${status.days_past_due} jour(s)` : 'À jour'}</p>
+        </div>
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Prochaine action</p>
+          <p className="text-sm font-semibold">{status.primary_action_label}</p>
+          {status.deadline_at && <p className="text-xs text-muted-foreground">{formatDateShort(status.deadline_at)}</p>}
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-lg border bg-background/80 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">{status.driver_message}</p>
+            <p className="mt-1 text-muted-foreground">Contactez l'équipe DAM si vous avez besoin d'aide ou si une information est incorrecte.</p>
+          </div>
+          <KiraVoiceButton text={voiceText} compact />
+        </div>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Button asChild size="sm">
+          <Link to="/driver/finance">
+            <Wallet className="h-4 w-4" />
+            Voir finance
+          </Link>
+        </Button>
+        <Button asChild size="sm" variant="outline">
+          <Link to="/driver/support">
+            <MessageCircle className="h-4 w-4" />
+            Contacter DAM
+          </Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function OwnershipCompletionStatusCard({
+  statuses,
+  isError,
+}: {
+  statuses: DriverOwnershipCompletionStatusRow[];
+  isError: boolean;
+}) {
+  const status = statuses[0] ?? null;
+
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+        Statut de propriété indisponible pour le moment.
+      </div>
+    );
+  }
+
+  if (!status) return null;
+
+  const complete = status.status_tone === 'success';
+  const voiceText = `${status.status_label}. ${status.driver_message}${status.certificate_number ? ` Certificat ${status.certificate_number}.` : ''}`;
+
+  return (
+    <div className={cn('rounded-lg border p-3 text-sm', complete ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-primary/30 bg-primary/5')}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Propriété du véhicule</p>
+          <p className="mt-1 text-xs text-muted-foreground">{status.product_name ?? 'Actif financé'}</p>
+        </div>
+        <Badge variant={complete ? 'verified' : 'secondary'}>{status.status_label}</Badge>
+      </div>
+
+      <div className="mt-3 rounded-lg border bg-background/80 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">{status.driver_message}</p>
+            {status.certificate_number && (
+              <p className="mt-1 text-sm font-semibold">Certificat {status.certificate_number}</p>
+            )}
+            {status.ownership_date && (
+              <p className="mt-1 text-xs text-muted-foreground">Date propriété : {formatDateShort(status.ownership_date)}</p>
+            )}
+          </div>
+          <KiraVoiceButton text={voiceText} compact />
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Actif</p>
+          <p className="text-sm font-semibold">{status.asset_type ?? 'Véhicule'}</p>
+        </div>
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Preuve</p>
+          <p className="text-sm font-semibold">{status.certificate_number ? 'Certificat émis' : 'En validation'}</p>
+        </div>
+      </div>
+
+      <Button asChild size="sm" className="mt-3">
+        <Link to="/driver/finance">
+          <Wallet className="h-4 w-4" />
+          Voir finance
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 function CreditEngineFoundationCard({
   products,
   applications,
@@ -1300,6 +1458,8 @@ export default function DriverCredit() {
   const contractStatusesQuery = useDriverContractStatuses(!!driverId);
   const repaymentSchedulesQuery = useDriverRepaymentSchedules(!!driverId);
   const collectionsStatusQuery = useDriverCollectionsStatus(!!driverId);
+  const defaultStatusQuery = useDriverDefaultStatus(!!driverId);
+  const ownershipCompletionQuery = useDriverOwnershipCompletionStatus(!!driverId);
   const scoreSnapshots = creditScores as DriverCreditScoreSnapshot[];
   const latestScore = scoreSnapshots[0];
   const driverLoans = loans as DriverLoan[];
@@ -1323,6 +1483,8 @@ export default function DriverCredit() {
   const contractStatuses = contractStatusesQuery.data ?? [];
   const repaymentSchedules = repaymentSchedulesQuery.data ?? [];
   const collectionsStatuses = collectionsStatusQuery.data ?? [];
+  const defaultStatuses = defaultStatusQuery.data ?? [];
+  const ownershipCompletionStatuses = ownershipCompletionQuery.data ?? [];
   const selectedProductType = selectedOffer ? offerTypeToProductType[selectedOffer.type] : null;
   const selectedProduct = selectedProductType
     ? creditProducts.find((product) => product.product_type === selectedProductType && product.status === 'ACTIVE') ?? null
@@ -1419,6 +1581,10 @@ export default function DriverCredit() {
           />
 
           <CollectionsStatusCard statuses={collectionsStatuses} isError={collectionsStatusQuery.isError} />
+
+          <DefaultStatusCard statuses={defaultStatuses} isError={defaultStatusQuery.isError} />
+
+          <OwnershipCompletionStatusCard statuses={ownershipCompletionStatuses} isError={ownershipCompletionQuery.isError} />
 
           <NextUnlockCard offer={nextUnlock} score={score} weeksHistory={weeksHistory} paymentRate={paymentRate} />
 

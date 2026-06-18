@@ -1,0 +1,67 @@
+{
+  "passed": 11,
+  "failed": 0,
+  "workflow": {
+    "mutationCoverage": "skipped",
+    "skippedReason": "no eligible row in v_ownership_completion_queue",
+    "driverOwned": false
+  },
+  "checks": [
+    {
+      "name": "sync_ownership_completion_candidates runs",
+      "passed": true,
+      "detail": "26d5c59f-b526-40f3-b5da-34760f665a66 | NOT_ELIGIBLE"
+    },
+    {
+      "name": "RPC mutation coverage skipped when no qualifying completion seed exists",
+      "passed": true,
+      "detail": "no eligible row in v_ownership_completion_queue"
+    },
+    {
+      "name": "driver credit ownership surface loads",
+      "passed": true,
+      "detail": "Credit"
+    },
+    {
+      "name": "driver credit hides raw ownership enums",
+      "passed": true,
+      "detail": "masked"
+    },
+    {
+      "name": "driver finance ownership surface loads",
+      "passed": true,
+      "detail": "Finance"
+    },
+    {
+      "name": "driver finance hides raw ownership enums",
+      "passed": true,
+      "detail": "masked"
+    },
+    {
+      "name": "admin ownership completion page loads",
+      "passed": true,
+      "detail": "Ownership Completion"
+    },
+    {
+      "name": "admin review screen renders ownership controls",
+      "passed": true,
+      "detail": "Review"
+    },
+    {
+      "name": "admin transfer certificate view renders",
+      "passed": true,
+      "detail": "Transfer"
+    },
+    {
+      "name": "driver 360 ownership status remains reachable",
+      "passed": true,
+      "detail": "Ownership"
+    },
+    {
+      "name": "no unexpected console/network findings",
+      "passed": true
+    }
+  ],
+  "findings": [],
+  "ignoredFindings": []
+}

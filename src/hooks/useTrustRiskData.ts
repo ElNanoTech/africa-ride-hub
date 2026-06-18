@@ -15,6 +15,7 @@ import {
   buildVehicleRiskProfiles,
   type AccidentTrustLike,
   type CreditScoreTrustLike,
+  type DefaultReviewTrustLike,
   type DriverScoreEventTrustLike,
   type DriverRiskProfile,
   type DriverTrustLike,
@@ -22,6 +23,7 @@ import {
   type PaymentTrustLike,
   type TrustEvent,
   type TrustOverviewMetrics,
+  type OwnershipCompletionTrustLike,
   type VehicleRiskProfile,
   type ViolationTrustLike,
 } from '@/lib/trustRisk';
@@ -36,6 +38,13 @@ const TRUST_REALTIME_TABLES: RealtimeTableName[] = [
   'vehicle_inspections',
   'traffic_violations',
   'accidents',
+  'credit_default_reviews',
+  'credit_default_decisions',
+  'credit_asset_protection_reviews',
+  'credit_default_audit_events',
+  'ownership_completion_reviews',
+  'asset_transfer_records',
+  'ownership_certificates',
 ];
 
 const EMPTY_DRIVERS: DriverTrustLike[] = [];
@@ -45,6 +54,8 @@ const EMPTY_PAYMENTS: PaymentTrustLike[] = [];
 const EMPTY_VIOLATIONS: ViolationTrustLike[] = [];
 const EMPTY_ACCIDENTS: AccidentTrustLike[] = [];
 const EMPTY_CONTROLS: FleetControlTrustLike[] = [];
+const EMPTY_DEFAULT_REVIEWS: DefaultReviewTrustLike[] = [];
+const EMPTY_OWNERSHIP_COMPLETIONS: OwnershipCompletionTrustLike[] = [];
 
 export type TrustRiskData = {
   today: string;
@@ -55,6 +66,8 @@ export type TrustRiskData = {
   violations: ViolationTrustLike[];
   accidents: AccidentTrustLike[];
   controls: FleetControlTrustLike[];
+  defaultReviews: DefaultReviewTrustLike[];
+  ownershipCompletions: OwnershipCompletionTrustLike[];
   driverProfiles: DriverRiskProfile[];
   vehicleProfiles: VehicleRiskProfile[];
   events: TrustEvent[];
@@ -202,6 +215,38 @@ export function useTrustRiskData(enabled = true): TrustRiskData {
     },
   });
 
+  const defaultReviewsQuery = useQuery({
+    queryKey: ['trust-risk', 'credit-default-reviews'],
+    enabled,
+    queryFn: async () => {
+      const rows = await fetchAllRows<DefaultReviewTrustLike>((from, to) =>
+        supabase
+          .from('v_credit_default_review_queue')
+          .select('default_review_id, driver_id, status, status_label, latest_decision, past_due_amount, days_past_due, open_asset_review_id, opened_at, decision_due_at, updated_at')
+          .order('opened_at', { ascending: false })
+          .order('default_review_id', { ascending: true })
+          .range(from, to),
+      );
+      return rows;
+    },
+  });
+
+  const ownershipCompletionsQuery = useQuery({
+    queryKey: ['trust-risk', 'ownership-completions'],
+    enabled,
+    queryFn: async () => {
+      const rows = await fetchAllRows<OwnershipCompletionTrustLike>((from, to) =>
+        supabase
+          .from('v_ownership_completion_queue')
+          .select('review_id, driver_id, status, status_label, certificate_number, completed_at, updated_at, created_at')
+          .order('updated_at', { ascending: false })
+          .order('review_id', { ascending: true })
+          .range(from, to),
+      );
+      return rows;
+    },
+  });
+
   const drivers = driversQuery.data ?? EMPTY_DRIVERS;
   const scores = scoresQuery.data ?? EMPTY_SCORES;
   const scoreEvents = scoreEventsQuery.data ?? EMPTY_SCORE_EVENTS;
@@ -209,6 +254,8 @@ export function useTrustRiskData(enabled = true): TrustRiskData {
   const violations = violationsQuery.data ?? EMPTY_VIOLATIONS;
   const accidents = accidentsQuery.data ?? EMPTY_ACCIDENTS;
   const controls = controlsQuery.data ?? EMPTY_CONTROLS;
+  const defaultReviews = defaultReviewsQuery.data ?? EMPTY_DEFAULT_REVIEWS;
+  const ownershipCompletions = ownershipCompletionsQuery.data ?? EMPTY_OWNERSHIP_COMPLETIONS;
 
   const events = useMemo(() => buildTrustEvents({
     drivers,
@@ -218,8 +265,10 @@ export function useTrustRiskData(enabled = true): TrustRiskData {
     violations,
     accidents,
     controls,
+    defaultReviews,
+    ownershipCompletions,
     today,
-  }), [accidents, controls, drivers, payments, scoreEvents, scores, today, violations]);
+  }), [accidents, controls, defaultReviews, drivers, ownershipCompletions, payments, scoreEvents, scores, today, violations]);
 
   const driverProfiles = useMemo(() => buildDriverRiskProfiles({
     drivers,
@@ -228,9 +277,10 @@ export function useTrustRiskData(enabled = true): TrustRiskData {
     violations,
     accidents,
     controls,
+    defaultReviews,
     events,
     today,
-  }), [accidents, controls, drivers, events, payments, scores, today, violations]);
+  }), [accidents, controls, defaultReviews, drivers, events, payments, scores, today, violations]);
 
   const vehicleProfiles = useMemo(
     () => buildVehicleRiskProfiles(vehicleOps.rows),
@@ -269,7 +319,7 @@ export function useTrustRiskData(enabled = true): TrustRiskData {
     return map;
   }, [riskSummary.data]);
 
-  const queries = [driversQuery, scoresQuery, scoreEventsQuery, paymentsQuery, violationsQuery, accidentsQuery, controlsQuery];
+  const queries = [driversQuery, scoresQuery, scoreEventsQuery, paymentsQuery, violationsQuery, accidentsQuery, controlsQuery, defaultReviewsQuery, ownershipCompletionsQuery];
   const isLoading = vehicleOps.isLoading || queries.some((query) => query.isLoading);
   const isError = vehicleOps.isError || queries.some((query) => query.isError);
   const error = vehicleOps.error ?? queries.map((query) => query.error).find(Boolean) ?? null;
@@ -283,6 +333,8 @@ export function useTrustRiskData(enabled = true): TrustRiskData {
     violations,
     accidents,
     controls,
+    defaultReviews,
+    ownershipCompletions,
     driverProfiles,
     vehicleProfiles,
     events,

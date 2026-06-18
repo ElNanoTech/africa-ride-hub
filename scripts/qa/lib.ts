@@ -132,10 +132,16 @@ export async function driverLogin(h: Harness, creds: Creds) {
   // otherwise click the phone button.
   const phoneInput = p.locator('input[type="tel"]');
   try {
-    await phoneInput.waitFor({ timeout: 12000 });
+    await phoneInput.waitFor({ timeout: 25000 });
   } catch {
-    await p.getByText(/Connexion avec téléphone/i).click();
-    await phoneInput.waitFor({ timeout: 8000 });
+    const phoneButton = p.getByRole("button", { name: /Connexion avec téléphone|Connexion avec telephone/i });
+    if (await phoneButton.isVisible().catch(() => false)) {
+      await phoneButton.click();
+    } else {
+      const body = await p.locator("body").innerText({ timeout: 3000 }).catch(() => "");
+      throw new Error(`driver login phone form unavailable; url=${p.url()}; body=${body.slice(0, 500)}`);
+    }
+    await phoneInput.waitFor({ timeout: 12000 });
   }
   const localDigits = creds.driver_phone.replace(/\D/g, "").replace(/^225/, "");
   await phoneInput.fill(localDigits);
@@ -164,7 +170,8 @@ export async function driverLogin(h: Harness, creds: Creds) {
 export async function adminLogin(h: Harness, creds: Creds) {
   const p = h.page;
   h.label("admin/login");
-  await p.goto(`${APP_URL}/admin/login`, { waitUntil: "networkidle" });
+  await p.goto(`${APP_URL}/admin/login`, { waitUntil: "domcontentloaded", timeout: 30000 });
+  await settle(p, 1000);
   await p.locator('input[type="email"]').fill(creds.admin_email);
   await p.locator('input[type="password"]').fill(creds.admin_password);
   await p.getByRole("button", { name: /Se connecter|Connexion/i }).click();

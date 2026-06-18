@@ -40,6 +40,13 @@ const GROWTH_REALTIME_TABLES: RealtimeTableName[] = [
   'rentals',
   'rent_to_own_contracts',
   'vehicles',
+  'credit_default_reviews',
+  'credit_default_decisions',
+  'credit_recovery_plans',
+  'credit_asset_protection_reviews',
+  'ownership_completion_reviews',
+  'asset_transfer_records',
+  'ownership_certificates',
 ];
 
 const EMPTY_DRIVERS: GrowthDriverLike[] = [];
@@ -53,6 +60,28 @@ const EMPTY_VIOLATIONS: GrowthViolationLike[] = [];
 const EMPTY_ACCIDENTS: GrowthAccidentLike[] = [];
 const EMPTY_CONTROLS: GrowthFleetControlLike[] = [];
 const EMPTY_VEHICLES: GrowthVehicleLike[] = [];
+
+type GrowthDefaultReviewRow = {
+  default_review_id: string;
+  driver_id: string | null;
+  status: string | null;
+  status_label: string | null;
+  past_due_amount: number | null;
+};
+
+const EMPTY_DEFAULT_REVIEWS: GrowthDefaultReviewRow[] = [];
+
+type GrowthOwnershipCompletionRow = {
+  review_id: string;
+  driver_id: string | null;
+  asset_id: string | null;
+  status: string | null;
+  outstanding_balance: number | null;
+  completed_at: string | null;
+  created_at: string | null;
+};
+
+const EMPTY_OWNERSHIP_COMPLETIONS: GrowthOwnershipCompletionRow[] = [];
 
 export type GrowthOwnershipData = {
   today: string;
@@ -236,6 +265,32 @@ export function useGrowthOwnershipData(enabled = true): GrowthOwnershipData {
     ),
   });
 
+  const defaultReviewsQuery = useQuery({
+    queryKey: ['growth-ownership', 'credit-default-reviews'],
+    enabled,
+    queryFn: async () => fetchAllRows<GrowthDefaultReviewRow>((from, to) =>
+      supabase
+        .from('v_credit_default_review_queue')
+        .select('default_review_id, driver_id, status, status_label, past_due_amount')
+        .order('opened_at', { ascending: false })
+        .order('default_review_id', { ascending: true })
+        .range(from, to),
+    ),
+  });
+
+  const ownershipCompletionsQuery = useQuery({
+    queryKey: ['growth-ownership', 'ownership-completions'],
+    enabled,
+    queryFn: async () => fetchAllRows<GrowthOwnershipCompletionRow>((from, to) =>
+      supabase
+        .from('v_ownership_completion_queue')
+        .select('review_id, driver_id, asset_id, status, outstanding_balance, completed_at, created_at')
+        .order('updated_at', { ascending: false })
+        .order('review_id', { ascending: true })
+        .range(from, to),
+    ),
+  });
+
   const drivers = driversQuery.data ?? EMPTY_DRIVERS;
   const scores = scoresQuery.data ?? EMPTY_SCORES;
   const payments = paymentsQuery.data ?? EMPTY_PAYMENTS;
@@ -247,11 +302,47 @@ export function useGrowthOwnershipData(enabled = true): GrowthOwnershipData {
   const accidents = accidentsQuery.data ?? EMPTY_ACCIDENTS;
   const controls = controlsQuery.data ?? EMPTY_CONTROLS;
   const vehicles = vehiclesQuery.data ?? EMPTY_VEHICLES;
-  const risks = useMemo<GrowthRiskLike[]>(() => (riskSummary.data ?? []).map((row) => ({
-    driver_id: row.driver_id,
-    level: row.level,
-    reasons: row.reasons,
-  })), [riskSummary.data]);
+  const defaultReviews = defaultReviewsQuery.data ?? EMPTY_DEFAULT_REVIEWS;
+  const ownershipCompletions = ownershipCompletionsQuery.data ?? EMPTY_OWNERSHIP_COMPLETIONS;
+  const completionContracts = useMemo<GrowthContractLike[]>(() => ownershipCompletions
+    .filter((row) => row.driver_id && row.status === 'COMPLETED')
+    .map((row) => ({
+      id: `ownership-completion-${row.review_id}`,
+      driver_id: row.driver_id!,
+      vehicle_id: row.asset_id,
+      status: 'completed',
+      ownership_percentage: 100,
+      total_paid: 0,
+      total_price: 0,
+      weekly_payment: 0,
+      weeks_completed: null,
+      contract_duration_weeks: null,
+      start_date: row.created_at,
+      expected_end_date: row.completed_at,
+      completed_at: row.completed_at,
+    })), [ownershipCompletions]);
+  const allContracts = useMemo(() => [...contracts, ...completionContracts], [completionContracts, contracts]);
+  const risks = useMemo<GrowthRiskLike[]>(() => {
+    const byDriver = new Map<string, GrowthRiskLike>();
+    for (const row of riskSummary.data ?? []) {
+      byDriver.set(row.driver_id, {
+        driver_id: row.driver_id,
+        level: row.level,
+        reasons: row.reasons,
+      });
+    }
+    for (const review of defaultReviews) {
+      if (!review.driver_id) continue;
+      const existing = byDriver.get(review.driver_id);
+      const reason = `Default Recovery active: ${review.status_label ?? review.status ?? 'Dossier DAM'}`;
+      byDriver.set(review.driver_id, {
+        driver_id: review.driver_id,
+        level: 'critique',
+        reasons: [...(existing?.reasons ?? []), reason],
+      });
+    }
+    return [...byDriver.values()];
+  }, [defaultReviews, riskSummary.data]);
 
   const profiles = useMemo(() => buildGrowthProfiles({
     drivers,
@@ -259,7 +350,7 @@ export function useGrowthOwnershipData(enabled = true): GrowthOwnershipData {
     payments,
     wallets,
     loans,
-    contracts,
+    contracts: allContracts,
     rentals,
     vehicles,
     violations,
@@ -267,10 +358,10 @@ export function useGrowthOwnershipData(enabled = true): GrowthOwnershipData {
     controls,
     risks,
     today,
-  }), [accidents, contracts, controls, drivers, loans, payments, rentals, risks, scores, today, vehicles, violations, wallets]);
+  }), [accidents, allContracts, controls, drivers, loans, payments, rentals, risks, scores, today, vehicles, violations, wallets]);
 
   const overview = useMemo(() => buildGrowthOverview(profiles), [profiles]);
-  const queries = [driversQuery, scoresQuery, paymentsQuery, walletsQuery, loansQuery, contractsQuery, rentalsQuery, violationsQuery, accidentsQuery, controlsQuery, vehiclesQuery];
+  const queries = [driversQuery, scoresQuery, paymentsQuery, walletsQuery, loansQuery, contractsQuery, rentalsQuery, violationsQuery, accidentsQuery, controlsQuery, vehiclesQuery, defaultReviewsQuery, ownershipCompletionsQuery];
   const isLoading = queries.some((query) => query.isLoading);
   const isError = queries.some((query) => query.isError);
   const error = queries.map((query) => query.error).find(Boolean) ?? null;
@@ -282,7 +373,7 @@ export function useGrowthOwnershipData(enabled = true): GrowthOwnershipData {
     payments,
     wallets,
     loans,
-    contracts,
+    contracts: allContracts,
     rentals,
     violations,
     accidents,

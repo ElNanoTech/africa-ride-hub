@@ -552,11 +552,13 @@ export function useEscalateCreditRisk() {
 export function useOpenDefaultReview() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ caseId, reason }: { caseId: string; reason: string }) => {
+    mutationFn: async ({ creditAccountId, caseId, reason }: { creditAccountId: string; caseId: string; reason: string }) => {
       const idempotencyKey = makeCreditIdempotencyKey('collections-default-review');
-      const { data, error } = await collectionsClient.rpc('open_default_review', {
-        p_case_id: caseId,
-        p_reason: reason,
+      const { data, error } = await collectionsClient.rpc('open_credit_default_review', {
+        p_credit_account_id: creditAccountId,
+        p_collections_case_id: caseId,
+        p_trigger_reason: reason,
+        p_decision_due_at: null,
         p_idempotency_key: idempotencyKey,
         p_request_hash: idempotencyKey,
       });
@@ -565,6 +567,7 @@ export function useOpenDefaultReview() {
     },
     onSuccess: () => {
       invalidateCollections(queryClient);
+      queryClient.invalidateQueries({ queryKey: ['admin-credit-defaults'] });
       toast.success('Revue prioritaire ouverte.');
     },
     onError: (error: Error) => toast.error(error.message || 'Erreur revue prioritaire'),
