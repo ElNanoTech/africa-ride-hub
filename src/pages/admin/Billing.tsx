@@ -203,7 +203,7 @@ export default function AdminBilling() {
     enabled: activeTab === "unresolved",
     refetchInterval: 30_000,
     queryFn: async () => {
-      let q = (supabase as unknown as { from: (t: string) => ReturnType<typeof supabase.from> })
+      let q: any = (supabase as any)
         .from("v_wallet_settlement_anomalies")
         .select("*")
         .order("created_at", { ascending: false })
