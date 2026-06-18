@@ -71,6 +71,16 @@ type DefaultReviewRow = {
   active_recovery_plan_id: string | null;
   open_asset_review_id: string | null;
 };
+type OwnershipCompletionRow = {
+  review_id: string;
+  driver_id: string;
+  status: string;
+  status_label: string | null;
+  asset_description: string | null;
+  certificate_number: string | null;
+  completed_at: string | null;
+  priority_score: number | null;
+};
 
 type DriverOpsQueryBuilder<T = unknown> = PromiseLike<{ data: T | null; error: Error | null }> & {
   select: (columns?: string, options?: Record<string, unknown>) => DriverOpsQueryBuilder<T>;
@@ -249,6 +259,21 @@ export function DriverOperationsHub({
     },
   });
 
+  const ownershipCompletions = useQuery({
+    queryKey: ['driver-ops-ownership-completion', driver.id],
+    staleTime: 60_000,
+    queryFn: async (): Promise<OwnershipCompletionRow[]> => {
+      const { data, error } = await driverOpsClient
+        .from<OwnershipCompletionRow[]>('v_ownership_completion_queue')
+        .select('review_id, driver_id, status, status_label, asset_description, certificate_number, completed_at, priority_score')
+        .eq('driver_id', driver.id)
+        .order('priority_score', { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const inspections = useQuery({
     queryKey: ['driver-ops-inspections', driver.id],
     staleTime: 60_000,
@@ -323,6 +348,8 @@ export function DriverOperationsHub({
   const openDefaultReviews = defaultReviews.data ?? [];
   const defaultExposure = openDefaultReviews.reduce((sum, row) => sum + row.past_due_amount, 0);
   const primaryDefaultReview = openDefaultReviews[0] ?? null;
+  const ownershipCompletionRows = ownershipCompletions.data ?? [];
+  const primaryOwnershipCompletion = ownershipCompletionRows[0] ?? null;
   const weeksHistory = scores.data?.length ?? 0;
   const ownership = buildOwnershipReadiness({
     score: latestScore,
@@ -436,6 +463,13 @@ export function DriverOperationsHub({
                   icon={ShieldCheck}
                   loading={defaultReviews.isLoading}
                 />
+                <Signal
+                  label="Ownership Completion"
+                  value={ownershipCompletionRows.filter((row) => row.status === 'COMPLETED').length}
+                  detail={primaryOwnershipCompletion ? `${primaryOwnershipCompletion.status_label ?? 'Ownership review'}${primaryOwnershipCompletion.certificate_number ? ` · ${primaryOwnershipCompletion.certificate_number}` : ''}` : 'No completion review'}
+                  icon={CheckCircle2}
+                  loading={ownershipCompletions.isLoading}
+                />
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -545,6 +579,7 @@ export function DriverOperationsHub({
               <ActionLine active={ownership.vehicleScoreGap > 0 || ownership.vehicleWeeksGap > 0} label={`Ownership: ${ownership.progress}% ready`} to={`/admin/drivers/${driver.id}?tab=growth`} />
               <ActionLine active={openCollectionsCases.length > 0} label={primaryCollectionsCase ? `Collections: ${primaryCollectionsCase.delinquency_status_label ?? 'active'} · ${formatCurrency(collectionsPastDue)}` : 'No active collections case'} to={`/admin/credit-collections?driver=${driver.id}`} />
               <ActionLine active={openDefaultReviews.length > 0} label={primaryDefaultReview ? `Default Recovery: ${primaryDefaultReview.status_label ?? 'active'} · ${formatCurrency(defaultExposure)}` : 'No active default review'} to={primaryDefaultReview ? `/admin/default-recovery?review=${primaryDefaultReview.default_review_id}` : '/admin/default-recovery'} />
+              <ActionLine active={!!primaryOwnershipCompletion} label={primaryOwnershipCompletion ? `Ownership Completion: ${primaryOwnershipCompletion.status_label ?? 'in review'}` : 'No ownership completion review'} to={primaryOwnershipCompletion ? `/admin/ownership-completion?review=${primaryOwnershipCompletion.review_id}` : '/admin/ownership-completion'} />
             </div>
           </CardContent>
         </Card>

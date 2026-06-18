@@ -6,6 +6,7 @@ import {
   ArrowDownCircle,
   ArrowRight,
   ArrowUpCircle,
+  BadgeCheck,
   CalendarClock,
   CreditCard,
   FileText,
@@ -29,6 +30,7 @@ import { useDriverInvoices } from '@/hooks/useBilling';
 import { useFinancialRealtime } from '@/hooks/useFinancialRealtime';
 import { useDriverCollectionsStatus } from '@/hooks/useCreditCollectionsData';
 import { useDriverDefaultStatus } from '@/hooks/useCreditDefaultsData';
+import { useDriverOwnershipCompletionStatus } from '@/hooks/useOwnershipCompletionData';
 import { supabase } from '@/integrations/supabase/routeClient';
 import { getInvoiceRemainingDue, getPaymentRemaining } from '@/lib/financeAmounts';
 import { formatCurrency, formatDateShort } from '@/lib/format';
@@ -123,6 +125,7 @@ export default function DriverFinance() {
   const { data: invoices = [], isLoading: invoicesLoading, refetch: refetchInvoices } = useDriverInvoices(driver?.id);
   const { data: collectionsStatuses = [] } = useDriverCollectionsStatus(!!driverId);
   const { data: defaultStatuses = [] } = useDriverDefaultStatus(!!driverId);
+  const { data: ownershipStatuses = [] } = useDriverOwnershipCompletionStatus(!!driverId);
 
   const walletQuery = useQuery({
     queryKey: ['driver-finance-wallet', driverId],
@@ -166,6 +169,7 @@ export default function DriverFinance() {
   const nextInvoice = openInvoices[0] ?? null;
   const collectionsStatus = collectionsStatuses[0] ?? null;
   const defaultStatus = defaultStatuses[0] ?? null;
+  const ownershipStatus = ownershipStatuses[0] ?? null;
   const overduePayments = (payments as DriverPaymentSummary[]).filter((payment) => payment.status === 'overdue');
   const activeLoans = (loans as DriverLoanSummary[]).filter((loan) => ['active', 'approved', 'pending'].includes(loan.status ?? ''));
   const nextPayment = (payments as NextPaymentSummary[])
@@ -340,6 +344,37 @@ export default function DriverFinance() {
               <Button asChild className="mt-4 min-h-12 w-full">
                 <Link to="/driver/credit">
                   {defaultStatus.primary_action_label}
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {ownershipStatus && (
+          <Card className={cn(ownershipStatus.status_tone === 'success' ? 'border-success/50 bg-success/5' : 'border-primary/40 bg-primary/5')}>
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <BadgeCheck className="mt-0.5 h-5 w-5 text-primary" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold">Propriété du véhicule</p>
+                    <Badge variant={ownershipStatus.status_tone === 'success' ? 'verified' : 'secondary'}>
+                      {ownershipStatus.status_label}
+                    </Badge>
+                  </div>
+                  <p className="mt-1 text-sm text-muted-foreground">{ownershipStatus.driver_message}</p>
+                  {ownershipStatus.certificate_number && (
+                    <p className="mt-1 text-sm font-semibold">Certificat {ownershipStatus.certificate_number}</p>
+                  )}
+                  {ownershipStatus.ownership_date && (
+                    <p className="mt-1 text-xs text-muted-foreground">Date propriété : {formatDateShort(ownershipStatus.ownership_date)}</p>
+                  )}
+                </div>
+              </div>
+              <Button asChild className="mt-4 min-h-12 w-full">
+                <Link to="/driver/credit">
+                  Voir mon parcours
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>

@@ -1,7 +1,7 @@
 export type TrustRiskLevel = 'Low' | 'Moderate' | 'High' | 'Critical';
 export type TrustHealthState = 'Healthy' | 'Warning' | 'Critical';
 export type TrustScoreBand = 'Excellent' | 'Good' | 'Average' | 'At Risk' | 'Critical';
-export type TrustEventSource = 'score' | 'payment' | 'kyc' | 'fleet_control' | 'contravention' | 'sinistre' | 'vehicle' | 'credit_default' | 'system';
+export type TrustEventSource = 'score' | 'payment' | 'kyc' | 'fleet_control' | 'contravention' | 'sinistre' | 'vehicle' | 'credit_default' | 'ownership_completion' | 'system';
 
 export type DriverTrustLike = {
   id: string;
@@ -109,6 +109,17 @@ export type DefaultReviewTrustLike = {
   opened_at?: string | null;
   decision_due_at?: string | null;
   updated_at?: string | null;
+};
+
+export type OwnershipCompletionTrustLike = {
+  review_id: string;
+  driver_id?: string | null;
+  status?: string | null;
+  status_label?: string | null;
+  certificate_number?: string | null;
+  completed_at?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
 };
 
 export type VehicleOperationRiskLike = {
@@ -623,6 +634,7 @@ export function buildTrustEvents(input: {
   accidents: AccidentTrustLike[];
   controls: FleetControlTrustLike[];
   defaultReviews?: DefaultReviewTrustLike[];
+  ownershipCompletions?: OwnershipCompletionTrustLike[];
   today: string;
 }): TrustEvent[] {
   const driverById = new Map(input.drivers.map((driver) => [driver.id, driver]));
@@ -729,6 +741,22 @@ export function buildTrustEvents(input: {
       timestamp: review.decision_due_at ?? review.updated_at ?? review.opened_at ?? input.today,
       source: 'credit_default',
       route: `/admin/default-recovery?review=${review.default_review_id}`,
+    });
+  });
+
+  (input.ownershipCompletions ?? []).forEach((completion) => {
+    if (!completion.driver_id) return;
+    const completed = completion.status === 'COMPLETED';
+    events.push({
+      id: `ownership-completion-${completion.review_id}`,
+      event: completed ? 'Ownership Completed' : 'Ownership Completion Review',
+      driverId: completion.driver_id,
+      driverName: driverName(driverById.get(completion.driver_id)),
+      entity: completion.certificate_number ?? completion.status_label ?? 'Ownership Completion',
+      scoreImpact: completed ? 15 : 5,
+      timestamp: completion.completed_at ?? completion.updated_at ?? completion.created_at ?? input.today,
+      source: 'ownership_completion',
+      route: `/admin/ownership-completion?review=${completion.review_id}`,
     });
   });
 

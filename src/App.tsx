@@ -94,6 +94,7 @@ const AdminGrowthOwnership = lazy(() => import("./pages/admin/GrowthOwnership"))
 const AdminRepaymentOperations = lazy(() => import("./pages/admin/RepaymentOperations"));
 const AdminCreditCollections = lazy(() => import("./pages/admin/CreditCollections"));
 const AdminCreditDefaultRecovery = lazy(() => import("./pages/admin/CreditDefaultRecovery"));
+const AdminOwnershipCompletion = lazy(() => import("./pages/admin/OwnershipCompletion"));
 const AdminPayments = lazy(() => import("./pages/admin/Payments"));
 const AdminSupport = lazy(() => import("./pages/admin/Support"));
 const AdminScoringConfig = lazy(() => import("./pages/admin/ScoringConfig"));
@@ -298,6 +299,9 @@ const App = () => {
                     <Route path="/admin/default-recovery" element={<AdminCreditDefaultRecovery />} />
                     <Route path="/admin/default-reviews" element={<AdminCreditDefaultRecovery />} />
                     <Route path="/admin/defaults" element={<AdminCreditDefaultRecovery />} />
+                    <Route path="/admin/ownership-completion" element={<AdminOwnershipCompletion />} />
+                    <Route path="/admin/asset-transfers" element={<AdminOwnershipCompletion />} />
+                    <Route path="/admin/ownership-certificates" element={<AdminOwnershipCompletion />} />
                     <Route path="/admin/payments" element={<AdminPayments />} />
                     <Route path="/admin/finance" element={<AdminFinancialOperations />} />
                     <Route path="/admin/financial-operations" element={<AdminFinancialOperations />} />

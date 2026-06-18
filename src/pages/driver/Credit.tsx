@@ -90,6 +90,10 @@ import {
   type DriverDefaultStatusRow,
 } from '@/hooks/useCreditDefaultsData';
 import {
+  useDriverOwnershipCompletionStatus,
+  type DriverOwnershipCompletionStatusRow,
+} from '@/hooks/useOwnershipCompletionData';
+import {
   useDriverContractStatuses,
   useDriverDeclineCreditContract,
   useDriverSignCreditContract,
@@ -964,6 +968,74 @@ function DefaultStatusCard({
   );
 }
 
+function OwnershipCompletionStatusCard({
+  statuses,
+  isError,
+}: {
+  statuses: DriverOwnershipCompletionStatusRow[];
+  isError: boolean;
+}) {
+  const status = statuses[0] ?? null;
+
+  if (isError) {
+    return (
+      <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 text-sm text-warning">
+        Statut de propriété indisponible pour le moment.
+      </div>
+    );
+  }
+
+  if (!status) return null;
+
+  const complete = status.status_tone === 'success';
+  const voiceText = `${status.status_label}. ${status.driver_message}${status.certificate_number ? ` Certificat ${status.certificate_number}.` : ''}`;
+
+  return (
+    <div className={cn('rounded-lg border p-3 text-sm', complete ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-primary/30 bg-primary/5')}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold">Propriété du véhicule</p>
+          <p className="mt-1 text-xs text-muted-foreground">{status.product_name ?? 'Actif financé'}</p>
+        </div>
+        <Badge variant={complete ? 'verified' : 'secondary'}>{status.status_label}</Badge>
+      </div>
+
+      <div className="mt-3 rounded-lg border bg-background/80 p-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">{status.driver_message}</p>
+            {status.certificate_number && (
+              <p className="mt-1 text-sm font-semibold">Certificat {status.certificate_number}</p>
+            )}
+            {status.ownership_date && (
+              <p className="mt-1 text-xs text-muted-foreground">Date propriété : {formatDateShort(status.ownership_date)}</p>
+            )}
+          </div>
+          <KiraVoiceButton text={voiceText} compact />
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Actif</p>
+          <p className="text-sm font-semibold">{status.asset_type ?? 'Véhicule'}</p>
+        </div>
+        <div className="rounded-lg bg-background/80 p-3">
+          <p className="text-xs text-muted-foreground">Preuve</p>
+          <p className="text-sm font-semibold">{status.certificate_number ? 'Certificat émis' : 'En validation'}</p>
+        </div>
+      </div>
+
+      <Button asChild size="sm" className="mt-3">
+        <Link to="/driver/finance">
+          <Wallet className="h-4 w-4" />
+          Voir finance
+        </Link>
+      </Button>
+    </div>
+  );
+}
+
 function CreditEngineFoundationCard({
   products,
   applications,
@@ -1387,6 +1459,7 @@ export default function DriverCredit() {
   const repaymentSchedulesQuery = useDriverRepaymentSchedules(!!driverId);
   const collectionsStatusQuery = useDriverCollectionsStatus(!!driverId);
   const defaultStatusQuery = useDriverDefaultStatus(!!driverId);
+  const ownershipCompletionQuery = useDriverOwnershipCompletionStatus(!!driverId);
   const scoreSnapshots = creditScores as DriverCreditScoreSnapshot[];
   const latestScore = scoreSnapshots[0];
   const driverLoans = loans as DriverLoan[];
@@ -1411,6 +1484,7 @@ export default function DriverCredit() {
   const repaymentSchedules = repaymentSchedulesQuery.data ?? [];
   const collectionsStatuses = collectionsStatusQuery.data ?? [];
   const defaultStatuses = defaultStatusQuery.data ?? [];
+  const ownershipCompletionStatuses = ownershipCompletionQuery.data ?? [];
   const selectedProductType = selectedOffer ? offerTypeToProductType[selectedOffer.type] : null;
   const selectedProduct = selectedProductType
     ? creditProducts.find((product) => product.product_type === selectedProductType && product.status === 'ACTIVE') ?? null
@@ -1509,6 +1583,8 @@ export default function DriverCredit() {
           <CollectionsStatusCard statuses={collectionsStatuses} isError={collectionsStatusQuery.isError} />
 
           <DefaultStatusCard statuses={defaultStatuses} isError={defaultStatusQuery.isError} />
+
+          <OwnershipCompletionStatusCard statuses={ownershipCompletionStatuses} isError={ownershipCompletionQuery.isError} />
 
           <NextUnlockCard offer={nextUnlock} score={score} weeksHistory={weeksHistory} paymentRate={paymentRate} />
 

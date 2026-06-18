@@ -27,6 +27,11 @@ export type RealtimeTableName =
   | 'credit_asset_protection_reviews'
   | 'credit_default_notices'
   | 'credit_default_audit_events'
+  | 'ownership_completion_reviews'
+  | 'ownership_completion_decisions'
+  | 'asset_transfer_records'
+  | 'ownership_certificates'
+  | 'ownership_completion_audit_events'
   | 'support_tickets'
   | 'kyc_submissions'
   | 'maintenance_orders'
@@ -67,6 +72,11 @@ const tableToQueryKeyMap: Record<RealtimeTableName, string[]> = {
   credit_asset_protection_reviews: ['admin-credit-defaults', 'admin-attention-center', 'trust-risk', 'vehicle-operations'],
   credit_default_notices: ['admin-credit-defaults', 'admin-attention-center'],
   credit_default_audit_events: ['admin-credit-defaults', 'admin-attention-center', 'trust-risk'],
+  ownership_completion_reviews: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk', 'driver-ownership-completion-status'],
+  ownership_completion_decisions: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk'],
+  asset_transfer_records: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk', 'driver-ownership-completion-status'],
+  ownership_certificates: ['admin-ownership-completion', 'growth-ownership', 'driver-ownership-completion-status'],
+  ownership_completion_audit_events: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk'],
   support_tickets: ['admin-tickets', 'admin-stats'],
   kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats', 'trust-risk', 'growth-ownership'],
   maintenance_orders: ['maintenance', 'vehicle-operations'],
@@ -102,6 +112,11 @@ const tableLabels: Record<RealtimeTableName, string> = {
   credit_asset_protection_reviews: 'Revue protection actif',
   credit_default_notices: 'Notification defaut',
   credit_default_audit_events: 'Audit defaut',
+  ownership_completion_reviews: 'Completion propriete',
+  ownership_completion_decisions: 'Decision propriete',
+  asset_transfer_records: 'Transfert actif',
+  ownership_certificates: 'Certificat propriete',
+  ownership_completion_audit_events: 'Audit propriete',
   support_tickets: 'Ticket',
   kyc_submissions: 'KYC',
   maintenance_orders: 'Maintenance',

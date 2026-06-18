@@ -238,6 +238,25 @@ type DefaultReviewRow = {
   opened_at: string;
 };
 
+type OwnershipCompletionRow = {
+  review_id: string;
+  credit_account_id: string;
+  driver_id: string;
+  driver_name: string | null;
+  product_name: string | null;
+  asset_description: string | null;
+  status: string;
+  status_label: string | null;
+  is_eligible: boolean;
+  blocker_count: number | null;
+  outstanding_balance: number | null;
+  transfer_id: string | null;
+  certificate_id: string | null;
+  review_due_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+};
+
 type QueryWarning = { label: string; message: string };
 type QueryLike<T> = PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
 
@@ -349,6 +368,7 @@ export function useAttentionCenter() {
         riskResult,
         collectionsResult,
         defaultsResult,
+        ownershipCompletionResult,
       ] = await Promise.all([
         safeRows<PaymentRow>('Paiements', supabase
           .from('payments')
@@ -421,6 +441,12 @@ export function useAttentionCenter() {
           .select('default_review_id, credit_account_id, collections_case_id, driver_id, driver_name, product_name, status, status_label, trigger_reason, past_due_amount, days_past_due, evidence_status, evidence_count, latest_decision, active_recovery_plan_id, open_asset_review_id, sent_notice_count, formal_default_notice_sent, decision_due_at, opened_at')
           .order('decision_due_at', { ascending: true, nullsFirst: false })
           .limit(80) as unknown as QueryLike<DefaultReviewRow>),
+        safeRows<OwnershipCompletionRow>('Ownership Completion', supabase
+          .from('v_ownership_completion_queue')
+          .select('review_id, credit_account_id, driver_id, driver_name, product_name, asset_description, status, status_label, is_eligible, blocker_count, outstanding_balance, transfer_id, certificate_id, review_due_at, completed_at, created_at')
+          .in('status', ['ELIGIBLE_FOR_COMPLETION', 'UNDER_COMPLETION_REVIEW', 'AWAITING_FINAL_APPROVAL', 'COMPLETED'])
+          .order('review_due_at', { ascending: true, nullsFirst: false })
+          .limit(80) as unknown as QueryLike<OwnershipCompletionRow>),
       ]);
 
       const actions: AttentionAction[] = [];
@@ -439,6 +465,7 @@ export function useAttentionCenter() {
         riskResult.warning,
         collectionsResult.warning,
         defaultsResult.warning,
+        ownershipCompletionResult.warning,
       ]
         .filter((w): w is QueryWarning => !!w)
         .map((w) => `${w.label}: ${w.message}`);
@@ -818,6 +845,48 @@ export function useAttentionCenter() {
         });
       }
 
+      for (const completion of ownershipCompletionResult.rows) {
+        const certificateMissing = completion.status === 'COMPLETED' && !completion.certificate_id;
+        const finalApproval = completion.status === 'AWAITING_FINAL_APPROVAL';
+        const due = isPastDate(completion.review_due_at);
+        const blocked = Number(completion.blocker_count ?? 0) > 0;
+        const priority: AttentionPriority = certificateMissing
+          ? 'critical'
+          : finalApproval || due
+            ? 'high'
+            : blocked
+              ? 'medium'
+              : 'info';
+        actions.push({
+          id: `ownership-completion-${completion.review_id}`,
+          priority,
+          category: certificateMissing ? 'risk' : 'growth',
+          filterTags: ['pending_requests'],
+          issueType: certificateMissing
+            ? 'Certificat propriété manquant'
+            : finalApproval
+              ? 'Validation finale propriété'
+              : blocked
+                ? 'Blocage completion propriété'
+                : 'Completion propriété à vérifier',
+          subject: completion.driver_name || completion.driver_id,
+          impact: `${completion.status_label || 'Completion propriété'} · ${completion.asset_description || completion.product_name || 'Actif finance'}`,
+          age: ageLabel(completion.review_due_at ?? completion.created_at),
+          recommendedAction: certificateMissing
+            ? 'Emettre le certificat ou vérifier l exception'
+            : finalApproval
+              ? 'Finaliser transfert et certificat'
+              : 'Ouvrir Ownership Completion',
+          ctaLabel: 'Ouvrir completion',
+          href: `/admin/ownership-completion?review=${completion.review_id}`,
+          entityType: 'ownership_completion_review',
+          entityId: completion.review_id,
+          permission: certificateMissing ? 'risk' : 'growth',
+          createdAt: completion.review_due_at ?? completion.created_at,
+          sortValue: actionSort(priority, completion.review_due_at ?? completion.created_at),
+        });
+      }
+
       const uniqueActions = Array.from(new Map(actions.map((a) => [a.id, a])).values())
         .sort((a, b) => a.sortValue - b.sortValue)
         .slice(0, 80);
@@ -839,9 +908,11 @@ export function useAttentionCenter() {
         kycResult.rows.filter((k) => k.status === 'pending').length +
         loansResult.rows.filter((l) => l.status === 'pending').length +
         rentalsResult.rows.filter((r) => r.status === 'pending').length +
-        defaultsResult.rows.filter((r) => ['DEFAULT_REVIEW', 'EVIDENCE_GATHERING', 'RECOVERY_PLAN_PENDING'].includes(r.status)).length;
+        defaultsResult.rows.filter((r) => ['DEFAULT_REVIEW', 'EVIDENCE_GATHERING', 'RECOVERY_PLAN_PENDING'].includes(r.status)).length +
+        ownershipCompletionResult.rows.filter((r) => ['ELIGIBLE_FOR_COMPLETION', 'UNDER_COMPLETION_REVIEW', 'AWAITING_FINAL_APPROVAL'].includes(r.status)).length;
       const openCollections = collectionsResult.rows.length;
       const openDefaults = defaultsResult.rows.length;
+      const openOwnershipCompletions = ownershipCompletionResult.rows.filter((r) => r.status !== 'COMPLETED' || !r.certificate_id).length;
 
       const kpis: AttentionKpi[] = [
         { key: 'today_cash', label: "À encaisser aujourd'hui", value: currency(todayCash), hint: 'Paiements dus aujourd’hui', filter: 'today_cash', tone: 'green' },
@@ -849,7 +920,7 @@ export function useAttentionCenter() {
         { key: 'fleet_control', label: 'Contrôles à valider', value: controlsToReview, hint: 'Soumis par les chauffeurs', filter: 'fleet_control', tone: 'blue' },
         { key: 'vehicles', label: 'Véhicules indisponibles', value: unavailableVehicles, hint: 'Maintenance, blocage ou GPS', filter: 'vehicles', tone: 'purple' },
         { key: 'drivers_risk', label: 'Chauffeurs à risque', value: riskyDrivers, hint: `${openCollections} collections · ${openDefaults} default`, filter: 'drivers_risk', tone: 'yellow' },
-        { key: 'pending_requests', label: 'Demandes en attente', value: pendingRequests, hint: 'KYC, prêts, locations', filter: 'pending_requests', tone: 'slate' },
+        { key: 'pending_requests', label: 'Demandes en attente', value: pendingRequests, hint: `KYC, prêts, locations · ${openOwnershipCompletions} propriété`, filter: 'pending_requests', tone: 'slate' },
       ];
 
       const categories: AttentionCategorySummary[] = ([
@@ -858,7 +929,7 @@ export function useAttentionCenter() {
         ['drivers', '/admin/drivers'],
         ['vehicles', '/admin/vehicles'],
         ['risk', '/admin/scoring'],
-        ['growth', '/admin/credit-collections'],
+        ['growth', '/admin/ownership-completion'],
       ] as Array<[AttentionCategory, string]>).map(([key, href]) => ({
         key,
         label: categoryLabel(key),
