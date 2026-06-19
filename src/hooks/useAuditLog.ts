@@ -60,6 +60,12 @@ interface AuditLogParams {
   details?: Json;
 }
 
+function reportAuditLogFailure(message: string, error?: unknown): void {
+  if (import.meta.env.DEV) {
+    console.debug(message, error);
+  }
+}
+
 // Get the current admin user ID
 async function getCurrentAdminUserId(): Promise<string | null> {
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,7 +85,7 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
   try {
     const adminUserId = await getCurrentAdminUserId();
     if (!adminUserId) {
-      console.warn('No admin user found for audit log');
+      reportAuditLogFailure('No admin user found for audit log');
       return;
     }
 
@@ -95,10 +101,10 @@ export async function logAdminAction(params: AuditLogParams): Promise<void> {
       }]);
 
     if (error) {
-      console.error('Failed to log admin action:', error);
+      reportAuditLogFailure('Failed to log admin action', error);
     }
   } catch (error) {
-    console.error('Error logging admin action:', error);
+    reportAuditLogFailure('Error logging admin action', error);
   }
 }
 
@@ -116,5 +122,7 @@ export function useLogAdminAction() {
 
 // Convenience function to log without waiting
 export function logAction(params: AuditLogParams): void {
-  logAdminAction(params).catch(console.error);
+  logAdminAction(params).catch((error) => {
+    reportAuditLogFailure('Error logging admin action', error);
+  });
 }
