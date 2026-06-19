@@ -1106,6 +1106,204 @@ export type Database = {
           },
         ]
       }
+      analytics_audit_events: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          audit_event_id: string
+          created_at: string
+          customer_id: string | null
+          event_type: string
+          export_reference: string | null
+          filters_json: Json
+          report_type: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          audit_event_id?: string
+          created_at?: string
+          customer_id?: string | null
+          event_type: string
+          export_reference?: string | null
+          filters_json?: Json
+          report_type?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          audit_event_id?: string
+          created_at?: string
+          customer_id?: string | null
+          event_type?: string
+          export_reference?: string | null
+          filters_json?: Json
+          report_type?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_audit_events_export_reference_fkey"
+            columns: ["export_reference"]
+            isOneToOne: false
+            referencedRelation: "analytics_exports"
+            referencedColumns: ["export_id"]
+          },
+        ]
+      }
+      analytics_exports: {
+        Row: {
+          confidentiality_label: string
+          created_at: string
+          customer_id: string | null
+          export_id: string
+          export_type: string
+          filters_json: Json
+          generated_at: string
+          generated_by: string | null
+          source_timestamp: string
+          storage_reference: string | null
+        }
+        Insert: {
+          confidentiality_label?: string
+          created_at?: string
+          customer_id?: string | null
+          export_id?: string
+          export_type: string
+          filters_json?: Json
+          generated_at?: string
+          generated_by?: string | null
+          source_timestamp?: string
+          storage_reference?: string | null
+        }
+        Update: {
+          confidentiality_label?: string
+          created_at?: string
+          customer_id?: string | null
+          export_id?: string
+          export_type?: string
+          filters_json?: Json
+          generated_at?: string
+          generated_by?: string | null
+          source_timestamp?: string
+          storage_reference?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_exports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_exports_generated_by_fkey"
+            columns: ["generated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics_metric_definitions: {
+        Row: {
+          created_at: string
+          formula_description: string
+          known_limitations: string
+          metric_category: string
+          metric_id: string
+          metric_name: string
+          owner_role: string
+          refresh_cadence: string
+          source_view: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          formula_description: string
+          known_limitations?: string
+          metric_category: string
+          metric_id: string
+          metric_name: string
+          owner_role: string
+          refresh_cadence?: string
+          source_view: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          formula_description?: string
+          known_limitations?: string
+          metric_category?: string
+          metric_id?: string
+          metric_name?: string
+          owner_role?: string
+          refresh_cadence?: string
+          source_view?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      analytics_snapshots: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          data_freshness_status: string
+          generated_at: string
+          metric_payload_json: Json
+          snapshot_date: string
+          snapshot_id: string
+          snapshot_type: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          data_freshness_status?: string
+          generated_at?: string
+          metric_payload_json?: Json
+          snapshot_date?: string
+          snapshot_id?: string
+          snapshot_type: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          data_freshness_status?: string
+          generated_at?: string
+          metric_payload_json?: Json
+          snapshot_date?: string
+          snapshot_id?: string
+          snapshot_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       asset_transfer_records: {
         Row: {
           approved_by: string | null
@@ -1180,6 +1378,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -1864,6 +2069,13 @@ export type Database = {
             referencedColumns: ["product_id"]
           },
           {
+            foreignKeyName: "contract_templates_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "contract_templates_product_version_id_fkey"
             columns: ["product_version_id"]
             isOneToOne: false
@@ -1958,6 +2170,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -2162,6 +2381,13 @@ export type Database = {
             referencedColumns: ["product_id"]
           },
           {
+            foreignKeyName: "credit_applications_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "credit_applications_product_version_id_fkey"
             columns: ["product_version_id"]
             isOneToOne: false
@@ -2233,6 +2459,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_assignments_account_fk"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -2320,6 +2553,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_protection_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -2525,6 +2765,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_collections_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_collections_audit_events_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -2649,6 +2896,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_collections_cases_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_collections_cases_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -2681,6 +2935,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -2834,6 +3095,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_contracts_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_contracts_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -2859,6 +3127,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -2996,6 +3271,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_default_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_default_audit_events_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3082,6 +3364,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_default_decisions_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_default_decisions_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3156,6 +3445,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_evidence_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -3257,6 +3553,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -3398,6 +3701,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_default_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_default_reviews_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3416,6 +3726,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
         ]
@@ -3542,6 +3859,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_policy_sets_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
         ]
@@ -3768,6 +4092,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_recovery_plans_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_recovery_plans_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -3963,6 +4294,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -5185,6 +5523,65 @@ export type Database = {
           },
         ]
       }
+      executive_attention_items: {
+        Row: {
+          assigned_owner_role: string
+          attention_item_id: string
+          created_at: string
+          customer_id: string | null
+          description: string
+          item_type: string
+          recommended_action: string
+          severity: string
+          source_data_json: Json
+          source_reference_id: string | null
+          source_reference_type: string | null
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_owner_role?: string
+          attention_item_id?: string
+          created_at?: string
+          customer_id?: string | null
+          description: string
+          item_type: string
+          recommended_action: string
+          severity?: string
+          source_data_json?: Json
+          source_reference_id?: string | null
+          source_reference_type?: string | null
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_owner_role?: string
+          attention_item_id?: string
+          created_at?: string
+          customer_id?: string | null
+          description?: string
+          item_type?: string
+          recommended_action?: string
+          severity?: string
+          source_data_json?: Json
+          source_reference_id?: string | null
+          source_reference_type?: string | null
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "executive_attention_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feature_flag_audit_log: {
         Row: {
           actor_email: string | null
@@ -5898,6 +6295,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "invoice_source_credit_account_id_fkey"
+            columns: ["source_credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "invoice_source_obligation_id_fkey"
             columns: ["source_obligation_id"]
             isOneToOne: false
@@ -5909,6 +6313,13 @@ export type Database = {
             columns: ["source_product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "invoice_source_product_id_fkey"
+            columns: ["source_product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -6649,6 +7060,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "ownership_certificates_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "ownership_certificates_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -6775,6 +7193,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "ownership_completion_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "ownership_completion_audit_events_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -6869,6 +7294,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -7015,6 +7447,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "ownership_completion_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -7033,6 +7472,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -7275,6 +7721,13 @@ export type Database = {
             referencedColumns: ["product_id"]
           },
           {
+            foreignKeyName: "product_underwriting_extensions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "product_underwriting_extensions_product_version_id_fkey"
             columns: ["product_version_id"]
             isOneToOne: false
@@ -7354,6 +7807,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "product_versions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
         ]
@@ -7737,6 +8197,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "repayment_audit_events_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "repayment_audit_events_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -7802,6 +8269,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -7959,6 +8433,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "repayment_schedules_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "repayment_schedules_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -7970,6 +8451,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -8211,6 +8699,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
           {
@@ -9593,6 +10088,45 @@ export type Database = {
       }
     }
     Views: {
+      v_credit_analytics_freshness: {
+        Row: {
+          checked_at: string | null
+          customer_id: string | null
+          data_freshness_note: string | null
+          data_freshness_status: string | null
+          last_updated_at: string | null
+          source_name: string | null
+        }
+        Relationships: []
+      }
+      v_credit_branch_performance: {
+        Row: {
+          active_accounts: number | null
+          branch_name: string | null
+          calculation_logic: string | null
+          city: string | null
+          completed_ownership_count: number | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          default_review_accounts: number | null
+          delinquency_rate: number | null
+          deployed_exposure: number | null
+          last_updated_at: string | null
+          outstanding_balance: number | null
+          past_due_amount: number | null
+          risk_signal: string | null
+          source_records_json: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_credit_collections_queue: {
         Row: {
           active_promise_id: string | null
@@ -9643,6 +10177,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_collections_cases_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_collections_cases_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -9678,6 +10219,13 @@ export type Database = {
             referencedColumns: ["product_id"]
           },
           {
+            foreignKeyName: "credit_collections_cases_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "credit_collections_cases_schedule_id_fkey"
             columns: ["schedule_id"]
             isOneToOne: false
@@ -9700,6 +10248,33 @@ export type Database = {
           severity: string | null
         }
         Relationships: []
+      }
+      v_credit_collector_performance: {
+        Row: {
+          active_promises: number | null
+          broken_promises: number | null
+          calculation_logic: string | null
+          collector_id: string | null
+          collector_name: string | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          last_updated_at: string | null
+          open_cases: number | null
+          recovered_case_amount: number | null
+          recovery_rate: number | null
+          resolved_cases: number | null
+          source_records_json: Json | null
+          total_case_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       v_credit_default_reconciliation_anomalies: {
         Row: {
@@ -9773,6 +10348,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "credit_default_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "credit_default_reviews_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -9792,6 +10374,243 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "credit_products"
             referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
+            referencedColumns: ["product_id"]
+          },
+        ]
+      }
+      v_credit_executive_attention_items: {
+        Row: {
+          assigned_owner_role: string | null
+          attention_item_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          description: string | null
+          item_type: string | null
+          recommended_action: string | null
+          record_link: string | null
+          severity: string | null
+          source_data_json: Json | null
+          source_reference_id: string | null
+          source_reference_type: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
+      v_credit_growth_ownership_funnel: {
+        Row: {
+          calculation_logic: string | null
+          conversion_rate: number | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          last_updated_at: string | null
+          record_count: number | null
+          source_records_json: Json | null
+          source_tables: string | null
+          stage_key: string | null
+          stage_label: string | null
+          stage_order: number | null
+        }
+        Relationships: []
+      }
+      v_credit_portfolio_account_facts: {
+        Row: {
+          account_status: string | null
+          activated_at: string | null
+          asset_transferred: boolean | null
+          branch_name: string | null
+          certificate_issued: boolean | null
+          city: string | null
+          created_at: string | null
+          credit_account_id: string | null
+          currency_code: string | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          days_past_due: number | null
+          default_review_amount: number | null
+          default_reviews_open: number | null
+          driver_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          driver_score: number | null
+          driver_tier: string | null
+          formal_default_amount: number | null
+          formula_description: string | null
+          last_refreshed_at: string | null
+          obligation_count: number | null
+          open_collections_cases: number | null
+          outstanding_balance: number | null
+          ownership_completed_at: string | null
+          ownership_status: string | null
+          paid_amount: number | null
+          past_due_amount: number | null
+          principal_amount: number | null
+          product_id: string | null
+          product_name: string | null
+          product_status: string | null
+          product_type: string | null
+          product_version_id: string | null
+          risk_segment: string | null
+          source_records_json: Json | null
+          source_tables: string | null
+          source_updated_at: string | null
+          total_scheduled_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_product_version_id_fkey"
+            columns: ["product_version_id"]
+            isOneToOne: false
+            referencedRelation: "product_versions"
+            referencedColumns: ["version_id"]
+          },
+        ]
+      }
+      v_credit_portfolio_health: {
+        Row: {
+          active_credit_accounts: number | null
+          active_product_count: number | null
+          calculation_logic: string | null
+          completed_ownership_count: number | null
+          current_outstanding_balance: number | null
+          customer_id: string | null
+          data_freshness_note: string | null
+          data_freshness_status: string | null
+          default_review_amount: number | null
+          filters_applied: string | null
+          formally_defaulted_amount: number | null
+          last_updated_at: string | null
+          portfolio_at_risk_amount: number | null
+          portfolio_at_risk_rate: number | null
+          source_records_json: Json | null
+          source_view: string | null
+          total_deployed_exposure: number | null
+          total_paid_to_date: number | null
+          total_past_due_amount: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_credit_product_performance: {
+        Row: {
+          activated_accounts: number | null
+          activation_rate: number | null
+          applications_submitted: number | null
+          approval_rate: number | null
+          average_down_payment: number | null
+          average_financed_amount: number | null
+          average_repayment_performance: number | null
+          calculation_logic: string | null
+          completion_rate: number | null
+          contracts_signed: number | null
+          conversion_from_eligibility_to_activation: number | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          default_review_rate: number | null
+          delinquency_rate: number | null
+          exposure_outstanding: number | null
+          last_updated_at: string | null
+          performance_trend: string | null
+          product_id: string | null
+          product_name: string | null
+          product_status: string | null
+          product_type: string | null
+          recommended_action: string | null
+          revenue_collected: number | null
+          risk_signal: string | null
+          source_records_json: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_products_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_credit_reconciliation_summary: {
+        Row: {
+          anomaly_id: string | null
+          anomaly_type: string | null
+          calculation_logic: string | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          details_json: Json | null
+          detected_at: string | null
+          severity: string | null
+          source_reference_id: string | null
+        }
+        Relationships: []
+      }
+      v_credit_risk_delinquency_summary: {
+        Row: {
+          account_count: number | null
+          asset_protection_reviews: number | null
+          calculation_logic: string | null
+          collections_cases_open: number | null
+          customer_id: string | null
+          data_freshness_status: string | null
+          default_reviews_open: number | null
+          last_updated_at: string | null
+          max_days_past_due: number | null
+          outstanding_amount: number | null
+          past_due_amount: number | null
+          segment_key: string | null
+          segment_label: string | null
+          segment_order: number | null
+          source_records_json: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -9846,6 +10665,13 @@ export type Database = {
             columns: ["credit_account_id"]
             isOneToOne: false
             referencedRelation: "credit_accounts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
             referencedColumns: ["credit_account_id"]
           },
         ]
@@ -9939,6 +10765,13 @@ export type Database = {
             referencedColumns: ["credit_account_id"]
           },
           {
+            foreignKeyName: "ownership_completion_reviews_credit_account_id_fkey"
+            columns: ["credit_account_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_portfolio_account_facts"
+            referencedColumns: ["credit_account_id"]
+          },
+          {
             foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
             columns: ["customer_id"]
             isOneToOne: false
@@ -9957,6 +10790,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "credit_products"
+            referencedColumns: ["product_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_credit_product_performance"
             referencedColumns: ["product_id"]
           },
           {
@@ -12109,6 +12949,10 @@ export type Database = {
           }
         | { Args: { role: string }; Returns: boolean }
       has_admin_role_in: { Args: { roles: string[] }; Returns: boolean }
+      has_analytics_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_collections_permission: {
         Args: { permission: string }
         Returns: boolean
@@ -12569,6 +13413,25 @@ export type Database = {
           new_status: string
           paid_at: string
         }[]
+      }
+      record_analytics_audit_event: {
+        Args: {
+          p_event_type: string
+          p_export_reference?: string
+          p_filters_json?: Json
+          p_report_type?: string
+          p_target_id?: string
+          p_target_type: string
+        }
+        Returns: string
+      }
+      record_analytics_export: {
+        Args: {
+          p_confidentiality_label?: string
+          p_export_type: string
+          p_filters_json?: Json
+        }
+        Returns: string
       }
       record_driver_deposit: {
         Args: {
