@@ -60,6 +60,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accident_activity_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_activity_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       accident_determinations: {
@@ -128,6 +142,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accident_determinations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_determinations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -204,6 +232,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accident_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       accident_investigations: {
@@ -267,6 +309,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accident_investigations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_investigations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       accident_notes: {
@@ -311,6 +367,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accident_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -365,6 +435,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accident_notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -432,6 +516,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "accident_parties_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_parties_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       accident_status_history: {
@@ -479,6 +577,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accident_status_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accident_status_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -589,6 +701,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "accidents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "accidents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "accidents_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -681,6 +807,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activation_packages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "activation_packages_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "activation_packages_down_payment_invoice_id_fkey"
@@ -874,6 +1014,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "admin_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "admin_users_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       ai_explanations: {
@@ -986,6 +1140,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ai_usage_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ai_usage_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "ai_usage_logs_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -1077,6 +1245,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "alerts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "alerts_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -1162,6 +1344,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "analytics_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "analytics_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "analytics_audit_events_export_reference_fkey"
             columns: ["export_reference"]
             isOneToOne: false
@@ -1214,6 +1410,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_exports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "analytics_exports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "analytics_exports_generated_by_fkey"
@@ -1301,6 +1511,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "analytics_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "analytics_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1393,6 +1617,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "asset_transfer_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "asset_transfer_records_decision_id_fkey"
@@ -1700,6 +1938,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "broadcasts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "broadcasts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       contract_audit_events: {
@@ -1757,6 +2009,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contract_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "contract_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       contract_files: {
@@ -1804,6 +2070,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "contract_files_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -1981,6 +2261,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "contract_signature_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "contract_signature_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       contract_templates: {
@@ -2060,6 +2354,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contract_templates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "contract_templates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "contract_templates_product_id_fkey"
@@ -2157,6 +2465,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_accounts_driver_id_fkey"
@@ -2280,6 +2602,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_agreements_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_agreements_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       credit_applications: {
@@ -2365,6 +2701,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_applications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_applications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_applications_driver_id_fkey"
@@ -2489,6 +2839,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_asset_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       credit_asset_protection_reviews: {
@@ -2570,6 +2934,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_asset_protection_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_asset_protection_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_asset_protection_reviews_default_review_id_fkey"
             columns: ["default_review_id"]
             isOneToOne: false
@@ -2636,6 +3014,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       credit_collection_actions: {
@@ -2693,6 +3085,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collection_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_collection_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -2777,6 +3183,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_collections_audit_events_obligation_id_fkey"
@@ -2908,6 +3328,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_collections_cases_driver_id_fkey"
@@ -3109,6 +3543,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_contracts_decision_id_fkey"
             columns: ["decision_id"]
             isOneToOne: false
@@ -3217,6 +3665,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       credit_default_audit_events: {
@@ -3283,6 +3745,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_default_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_default_audit_events_default_review_id_fkey"
@@ -3378,6 +3854,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_default_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_default_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_default_decisions_default_review_id_fkey"
             columns: ["default_review_id"]
             isOneToOne: false
@@ -3460,6 +3950,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_evidence_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_default_evidence_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_default_evidence_default_review_id_fkey"
@@ -3568,6 +4072,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_default_notices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_default_notices_default_review_id_fkey"
@@ -3715,6 +4233,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_default_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_default_reviews_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -3778,6 +4310,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_exposure_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_exposure_profiles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_exposure_profiles_driver_id_fkey"
@@ -3853,6 +4399,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_policy_sets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_policy_sets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_policy_sets_product_id_fkey"
@@ -3943,6 +4503,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_products_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_products_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_products_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -4026,6 +4600,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_promises_to_pay_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_promises_to_pay_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_promises_to_pay_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -4104,6 +4692,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_recovery_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_recovery_plans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_recovery_plans_default_review_id_fkey"
@@ -4198,6 +4800,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_reminders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_reminders_driver_id_fkey"
@@ -4309,6 +4925,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_risk_escalations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_risk_escalations_driver_id_fkey"
@@ -4431,6 +5061,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_scores_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -4478,6 +5122,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_snapshots_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -4658,6 +5316,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driver_access_codes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_access_codes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "driver_access_codes_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -4739,6 +5411,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "driver_ads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_ads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       driver_audit: {
@@ -4779,6 +5465,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "driver_audit_driver_id_fkey"
@@ -4877,6 +5577,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driver_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_documents_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "driver_documents_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -4943,6 +5657,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driver_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_notes_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "driver_notes_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -4998,6 +5726,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driver_score_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_score_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "driver_score_events_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -5035,6 +5777,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "driver_scores_driver_id_fkey"
@@ -5095,6 +5851,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_vehicle_reports_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "driver_vehicle_reports_driver_id_fkey"
@@ -5193,6 +5963,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driver_wallet_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_wallet_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "driver_wallet_transactions_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -5260,6 +6044,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_wallets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_wallets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "driver_wallets_driver_id_fkey"
@@ -5391,6 +6189,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "drivers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "drivers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "fk_driver_active_vehicle"
             columns: ["active_vehicle_id"]
             isOneToOne: false
@@ -5494,6 +6306,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driving_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driving_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "driving_events_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -5580,6 +6406,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "executive_attention_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "executive_attention_items_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       feature_flag_audit_log: {
@@ -5630,46 +6470,82 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "feature_flag_audit_log_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "feature_flag_audit_log_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       feature_flags: {
         Row: {
           category: string
           created_at: string
+          created_by: string | null
           customer_id: string | null
           description: string | null
+          feature_id: string | null
+          feature_state: string
           flag_key: string
           flag_value: boolean
           id: string
           is_platform_only: boolean
+          rollout_rules_json: Json
+          status_changed_at: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           category?: string
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           description?: string | null
+          feature_id?: string | null
+          feature_state?: string
           flag_key: string
           flag_value?: boolean
           id?: string
           is_platform_only?: boolean
+          rollout_rules_json?: Json
+          status_changed_at?: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           category?: string
           created_at?: string
+          created_by?: string | null
           customer_id?: string | null
           description?: string | null
+          feature_id?: string | null
+          feature_state?: string
           flag_key?: string
           flag_value?: boolean
           id?: string
           is_platform_only?: boolean
+          rollout_rules_json?: Json
+          status_changed_at?: string
           updated_at?: string
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "feature_flags_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "feature_flags_customer_id_fkey"
             columns: ["customer_id"]
@@ -5678,7 +6554,167 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "feature_flags_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "feature_flags_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "feature_flags_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "platform_features"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "feature_flags_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "feature_flags_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_upgrade_catalog"
+            referencedColumns: ["feature_id"]
+          },
+          {
             foreignKeyName: "feature_flags_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feature_trials: {
+        Row: {
+          activated_by: string | null
+          created_at: string
+          created_by: string | null
+          ended_by: string | null
+          expires_at: string
+          feature_id: string
+          reason: string | null
+          starts_at: string
+          status: string
+          status_changed_at: string
+          tenant_id: string
+          trial_id: string
+          updated_at: string
+          updated_by: string | null
+          usage_snapshot_json: Json
+        }
+        Insert: {
+          activated_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          ended_by?: string | null
+          expires_at?: string
+          feature_id: string
+          reason?: string | null
+          starts_at?: string
+          status?: string
+          status_changed_at?: string
+          tenant_id: string
+          trial_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          usage_snapshot_json?: Json
+        }
+        Update: {
+          activated_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          ended_by?: string | null
+          expires_at?: string
+          feature_id?: string
+          reason?: string | null
+          starts_at?: string
+          status?: string
+          status_changed_at?: string
+          tenant_id?: string
+          trial_id?: string
+          updated_at?: string
+          updated_by?: string | null
+          usage_snapshot_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_trials_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_trials_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_trials_ended_by_fkey"
+            columns: ["ended_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_trials_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "platform_features"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "feature_trials_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "feature_trials_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_upgrade_catalog"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "feature_trials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_trials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "feature_trials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "feature_trials_updated_by_fkey"
             columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
@@ -5762,6 +6798,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "financed_assets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "financed_assets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "financed_assets_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
@@ -5814,6 +6864,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fleet_control_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "fleet_control_audit_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "fleet_control_audit_driver_id_fkey"
@@ -5924,6 +6988,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fulfillment_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "fulfillment_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "fulfillment_records_vendor_id_fkey"
@@ -6056,6 +7134,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "geofence_zones_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "geofence_zones_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       income_records: {
@@ -6123,6 +7215,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "income_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "income_records_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "income_records_driver_id_fkey"
@@ -6536,6 +7642,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "kyc_submissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "kyc_submissions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "kyc_submissions_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -6611,6 +7731,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "loans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "loans_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "loans_driver_id_fkey"
@@ -6912,6 +8046,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "notifications_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "notifications_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -7074,6 +8222,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ownership_certificates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ownership_certificates_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "ownership_certificates_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -7207,6 +8369,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ownership_completion_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "ownership_completion_audit_events_review_id_fkey"
             columns: ["review_id"]
             isOneToOne: false
@@ -7309,6 +8485,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "ownership_completion_decisions_review_id_fkey"
@@ -7461,6 +8651,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "ownership_completion_reviews_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -7595,6 +8799,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "payments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "payments_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -7613,6 +8831,379 @@ export type Database = {
             columns: ["rental_id"]
             isOneToOne: false
             referencedRelation: "rentals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_features: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          feature_id: string
+          feature_state: string
+          limits_json: Json
+          plan_feature_id: string
+          plan_id: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          feature_id: string
+          feature_state?: string
+          limits_json?: Json
+          plan_feature_id?: string
+          plan_id: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          feature_id?: string
+          feature_state?: string
+          limits_json?: Json
+          plan_feature_id?: string
+          plan_id?: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_features_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "platform_features"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "plan_features_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_upgrade_catalog"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_plans"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "plan_features_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "plan_features_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_add_ons: {
+        Row: {
+          add_on_id: string
+          add_on_key: string
+          add_on_name: string
+          commercial_metadata_json: Json
+          created_at: string
+          created_by: string | null
+          description: string
+          feature_id: string | null
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          add_on_id?: string
+          add_on_key: string
+          add_on_name: string
+          commercial_metadata_json?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          feature_id?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          add_on_id?: string
+          add_on_key?: string
+          add_on_name?: string
+          commercial_metadata_json?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          feature_id?: string | null
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_add_ons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_add_ons_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "platform_features"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "platform_add_ons_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "platform_add_ons_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_upgrade_catalog"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "platform_add_ons_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_audit_events: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          created_at: string
+          event_type: string
+          idempotency_key: string | null
+          reason: string | null
+          target_id: string | null
+          target_type: string
+          tenant_id: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          event_type: string
+          idempotency_key?: string | null
+          reason?: string | null
+          target_id?: string | null
+          target_type: string
+          tenant_id?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          event_type?: string
+          idempotency_key?: string | null
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "platform_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      platform_features: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          default_flag_state: string
+          description: string
+          feature_id: string
+          feature_key: string
+          feature_name: string
+          module_key: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+          upgrade_copy_json: Json
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          default_flag_state?: string
+          description?: string
+          feature_id?: string
+          feature_key: string
+          feature_name: string
+          module_key: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          upgrade_copy_json?: Json
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          default_flag_state?: string
+          description?: string
+          feature_id?: string
+          feature_key?: string
+          feature_name?: string
+          module_key?: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+          upgrade_copy_json?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_features_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_features_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platform_plans: {
+        Row: {
+          commercial_metadata_json: Json
+          created_at: string
+          created_by: string | null
+          description: string
+          is_base_plan: boolean
+          plan_id: string
+          plan_key: string
+          plan_name: string
+          status: string
+          status_changed_at: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          commercial_metadata_json?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          is_base_plan?: boolean
+          plan_id?: string
+          plan_key: string
+          plan_name: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          commercial_metadata_json?: Json
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          is_base_plan?: boolean
+          plan_id?: string
+          plan_key?: string
+          plan_name?: string
+          status?: string
+          status_changed_at?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_plans_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_plans_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
         ]
@@ -7705,6 +9296,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "product_underwriting_extensions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "product_underwriting_extensions_policy_set_id_fkey"
@@ -7801,6 +9406,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_versions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "product_versions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "product_versions_product_id_fkey"
@@ -7921,6 +9540,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rent_to_own_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "rent_to_own_contracts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "rent_to_own_contracts_driver_id_fkey"
@@ -8120,6 +9753,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rentals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "rentals_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "rentals_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -8211,6 +9858,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "repayment_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "repayment_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "repayment_audit_events_obligation_id_fkey"
             columns: ["obligation_id"]
             isOneToOne: false
@@ -8284,6 +9945,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedule_amendments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "repayment_schedule_amendments_new_schedule_id_fkey"
@@ -8447,6 +10122,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "repayment_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "repayment_schedules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "repayment_schedules_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
@@ -8547,6 +10236,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "reunderwriting_triggers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "reunderwriting_triggers_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "reunderwriting_triggers_prior_decision_id_fkey"
             columns: ["prior_decision_id"]
             isOneToOne: false
@@ -8622,6 +10325,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "review_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "review_assignments_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "review_assignments_reviewer_id_fkey"
@@ -8714,6 +10431,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "scheduled_obligations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "scheduled_obligations_invoice_id_fkey"
@@ -8939,6 +10670,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "support_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "support_tickets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "support_tickets_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -9008,6 +10753,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "telemetry_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "telemetry_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "telemetry_events_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -9026,6 +10785,331 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_add_ons: {
+        Row: {
+          add_on_id: string
+          assigned_by: string | null
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          reason: string | null
+          starts_at: string
+          status: string
+          status_changed_at: string
+          tenant_add_on_id: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          add_on_id: string
+          assigned_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          reason?: string | null
+          starts_at?: string
+          status?: string
+          status_changed_at?: string
+          tenant_add_on_id?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          add_on_id?: string
+          assigned_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          reason?: string | null
+          starts_at?: string
+          status?: string
+          status_changed_at?: string
+          tenant_add_on_id?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_add_ons_add_on_id_fkey"
+            columns: ["add_on_id"]
+            isOneToOne: false
+            referencedRelation: "platform_add_ons"
+            referencedColumns: ["add_on_id"]
+          },
+          {
+            foreignKeyName: "tenant_add_ons_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_add_ons_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_add_ons_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_add_ons_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_add_ons_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_add_ons_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_entitlements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          entitlement_id: string
+          entitlement_status: string
+          expires_at: string | null
+          feature_id: string
+          override_reason: string | null
+          plan_id: string | null
+          source: string
+          starts_at: string
+          status_changed_at: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          entitlement_id?: string
+          entitlement_status?: string
+          expires_at?: string | null
+          feature_id: string
+          override_reason?: string | null
+          plan_id?: string | null
+          source?: string
+          starts_at?: string
+          status_changed_at?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          entitlement_id?: string
+          entitlement_status?: string
+          expires_at?: string | null
+          feature_id?: string
+          override_reason?: string | null
+          plan_id?: string | null
+          source?: string
+          starts_at?: string
+          status_changed_at?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_entitlements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "platform_features"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_upgrade_catalog"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_plans"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_entitlements_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_plan_assignments: {
+        Row: {
+          assigned_by: string | null
+          assignment_id: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          plan_id: string
+          reason: string | null
+          starts_at: string
+          status: string
+          status_changed_at: string
+          tenant_id: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          assigned_by?: string | null
+          assignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          plan_id: string
+          reason?: string | null
+          starts_at?: string
+          status?: string
+          status_changed_at?: string
+          tenant_id: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          assigned_by?: string | null
+          assignment_id?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          plan_id?: string
+          reason?: string | null
+          starts_at?: string
+          status?: string
+          status_changed_at?: string
+          tenant_id?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_plan_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_plans"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_plan_assignments_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
         ]
@@ -9190,6 +11274,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "training_modules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "training_modules_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       training_progress: {
@@ -9302,6 +11400,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "underwriting_conditions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "underwriting_conditions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "underwriting_conditions_decision_id_fkey"
@@ -9450,6 +11562,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "underwriting_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "underwriting_decisions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "underwriting_decisions_evaluated_policy_set_id_fkey"
             columns: ["evaluated_policy_set_id"]
             isOneToOne: false
@@ -9526,6 +11652,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "underwriting_overrides_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "underwriting_overrides_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "underwriting_overrides_decision_id_fkey"
             columns: ["decision_id"]
             isOneToOne: false
@@ -9542,6 +11682,134 @@ export type Database = {
           {
             foreignKeyName: "underwriting_overrides_second_approver_id_fkey"
             columns: ["second_approver_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_limits: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          feature_id: string | null
+          hard_limit: boolean
+          limit_key: string
+          limit_name: string
+          limit_period: string
+          limit_value: number | null
+          plan_id: string | null
+          source: string
+          status: string
+          status_changed_at: string
+          tenant_id: string | null
+          updated_at: string
+          updated_by: string | null
+          usage_limit_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          feature_id?: string | null
+          hard_limit?: boolean
+          limit_key: string
+          limit_name: string
+          limit_period?: string
+          limit_value?: number | null
+          plan_id?: string | null
+          source?: string
+          status?: string
+          status_changed_at?: string
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          usage_limit_id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          feature_id?: string | null
+          hard_limit?: boolean
+          limit_key?: string
+          limit_name?: string
+          limit_period?: string
+          limit_value?: number | null
+          plan_id?: string | null
+          source?: string
+          status?: string
+          status_changed_at?: string
+          tenant_id?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          usage_limit_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_limits_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_limits_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "platform_features"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_feature_id_fkey"
+            columns: ["feature_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_upgrade_catalog"
+            referencedColumns: ["feature_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "platform_plans"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["plan_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_limits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "usage_limits_updated_by_fkey"
+            columns: ["updated_by"]
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
@@ -9601,6 +11869,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_immobilization_commands_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicle_immobilization_commands_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "vehicle_immobilization_commands_inspection_id_fkey"
@@ -9690,6 +11972,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspection_photos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspection_photos_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "vehicle_inspection_photos_driver_id_fkey"
@@ -9818,6 +12114,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "vehicle_inspections_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicle_inspections_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "vehicle_inspections_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -9898,6 +12208,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicle_location_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicle_location_history_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       vehicle_positions: {
@@ -9962,6 +12286,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_positions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicle_positions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -10040,6 +12378,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       vendors: {
@@ -10084,6 +12436,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vendors_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vendors_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
     }
@@ -10124,6 +12490,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -10189,6 +12569,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_collections_cases_driver_id_fkey"
@@ -10273,6 +12667,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_collections_cases_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -10360,6 +12768,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_default_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "credit_default_reviews_driver_id_fkey"
@@ -10472,6 +12894,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "credit_accounts_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -10531,6 +12967,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       v_credit_product_performance: {
@@ -10569,6 +13019,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_products_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_products_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -10611,6 +13075,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "credit_accounts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -10779,6 +13257,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "ownership_completion_reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
             foreignKeyName: "ownership_completion_reviews_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
@@ -10808,6 +13300,165 @@ export type Database = {
           },
         ]
       }
+      v_platform_audit_timeline: {
+        Row: {
+          actor_email: string | null
+          actor_id: string | null
+          actor_role: string | null
+          after_json: Json | null
+          audit_event_id: string | null
+          before_json: Json | null
+          created_at: string | null
+          event_type: string | null
+          reason: string | null
+          target_id: string | null
+          target_type: string | null
+          tenant_id: string | null
+          tenant_name: string | null
+          tenant_slug: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_audit_events_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "platform_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "platform_audit_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      v_platform_entitlement_matrix: {
+        Row: {
+          access_state: string | null
+          category: string | null
+          description: string | null
+          entitlement_status: string | null
+          expires_at: string | null
+          feature_catalog_status: string | null
+          feature_id: string | null
+          feature_key: string | null
+          feature_name: string | null
+          feature_state: string | null
+          last_updated_at: string | null
+          module_key: string | null
+          override_reason: string | null
+          plan_feature_state: string | null
+          plan_id: string | null
+          plan_key: string | null
+          plan_name: string | null
+          source: string | null
+          starts_at: string | null
+          tenant_id: string | null
+          tenant_name: string | null
+          tenant_slug: string | null
+          upgrade_copy_json: Json | null
+        }
+        Relationships: []
+      }
+      v_platform_trial_status: {
+        Row: {
+          activated_by: string | null
+          activated_by_email: string | null
+          category: string | null
+          created_at: string | null
+          expires_at: string | null
+          feature_key: string | null
+          feature_name: string | null
+          reason: string | null
+          starts_at: string | null
+          tenant_id: string | null
+          tenant_name: string | null
+          tenant_slug: string | null
+          trial_id: string | null
+          trial_status: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feature_trials_activated_by_fkey"
+            columns: ["activated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_trials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feature_trials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "feature_trials_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      v_platform_upgrade_catalog: {
+        Row: {
+          available_add_ons: string[] | null
+          available_in_plans: string[] | null
+          category: string | null
+          default_flag_state: string | null
+          description: string | null
+          feature_id: string | null
+          feature_key: string | null
+          feature_name: string | null
+          module_key: string | null
+          status: string | null
+          upgrade_copy_json: Json | null
+        }
+        Relationships: []
+      }
+      v_platform_usage_limit_status: {
+        Row: {
+          current_usage: number | null
+          feature_id: string | null
+          hard_limit: boolean | null
+          limit_key: string | null
+          limit_name: string | null
+          limit_status: string | null
+          limit_value: number | null
+          source: string | null
+          status: string | null
+          tenant_id: string | null
+          tenant_name: string | null
+          tenant_slug: string | null
+          usage_limit_id: string | null
+        }
+        Relationships: []
+      }
       v_wallet_settlement_anomalies: {
         Row: {
           created_at: string | null
@@ -10832,6 +13483,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_wallet_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_wallet_transactions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "driver_wallet_transactions_driver_id_fkey"
@@ -10910,6 +13575,20 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "vehicles_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
         ]
       }
       wallet_balance_view: {
@@ -10930,6 +13609,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "customers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_wallets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "driver_wallets_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
           {
             foreignKeyName: "driver_wallets_driver_id_fkey"
@@ -11443,6 +14136,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      assign_platform_plan: {
+        Args: {
+          p_customer_id: string
+          p_expires_at?: string
+          p_plan_key: string
+          p_reason: string
+          p_starts_at?: string
+        }
+        Returns: string
+      }
       attach_credit_default_evidence: {
         Args: {
           p_default_review_id: string
@@ -11505,6 +14208,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      check_feature_entitlement: {
+        Args: { p_customer_id?: string; p_feature_key: string }
+        Returns: Json
+      }
+      check_usage_limit: {
+        Args: {
+          p_customer_id?: string
+          p_increment?: number
+          p_limit_key: string
+        }
+        Returns: Json
       }
       classify_adjustment: { Args: { actor_id: string }; Returns: string }
       cleanup_vehicle_history: { Args: never; Returns: undefined }
@@ -12462,6 +15177,10 @@ export type Database = {
           reasons: string[]
         }[]
       }
+      end_feature_trial: {
+        Args: { p_reason?: string; p_trial_id: string }
+        Returns: string
+      }
       escalate_credit_risk: {
         Args: {
           p_case_id: string
@@ -12925,6 +15644,24 @@ export type Database = {
         Args: { p_end: string; p_start: string }
         Returns: Json
       }
+      get_tenant_entitlements: {
+        Args: { p_customer_id?: string }
+        Returns: {
+          access_state: string
+          category: string
+          entitlement_status: string
+          expires_at: string
+          feature_key: string
+          feature_name: string
+          feature_state: string
+          module_key: string
+          plan_key: string
+          plan_name: string
+          source: string
+          tenant_id: string
+          tenant_name: string
+        }[]
+      }
       get_visible_feature_flags: {
         Args: never
         Returns: {
@@ -12938,6 +15675,17 @@ export type Database = {
           is_platform_only: boolean
           updated_at: string
         }[]
+      }
+      grant_tenant_entitlement: {
+        Args: {
+          p_customer_id: string
+          p_expires_at?: string
+          p_feature_key: string
+          p_reason?: string
+          p_source?: string
+          p_status?: string
+        }
+        Returns: string
       }
       has_admin_role:
         | {
@@ -12964,6 +15712,10 @@ export type Database = {
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
       has_default_permission: { Args: { permission: string }; Returns: boolean }
       has_ownership_completion_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
+      has_platform_permission: {
         Args: { permission: string }
         Returns: boolean
       }
@@ -13492,6 +16244,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      record_platform_audit_event: {
+        Args: {
+          p_after_json?: Json
+          p_before_json?: Json
+          p_event_type: string
+          p_idempotency_key?: string
+          p_reason?: string
+          p_target_id?: string
+          p_target_type: string
+          p_tenant_id?: string
+        }
+        Returns: string
+      }
       reissue_credit_contract: {
         Args: {
           p_contract_id: string
@@ -13618,6 +16383,14 @@ export type Database = {
         Returns: string
       }
       repayment_status_label: { Args: { p_status: string }; Returns: string }
+      request_feature_upgrade: {
+        Args: { p_feature_key: string; p_reason?: string }
+        Returns: string
+      }
+      require_feature_entitlement: {
+        Args: { p_customer_id?: string; p_feature_key: string }
+        Returns: Json
+      }
       return_rental: {
         Args: { p_rental_id: string }
         Returns: {
@@ -13836,6 +16609,10 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      revoke_tenant_entitlement: {
+        Args: { p_customer_id: string; p_feature_key: string; p_reason: string }
+        Returns: string
+      }
       send_credit_collection_reminder: {
         Args: {
           p_case_id: string
@@ -13955,6 +16732,26 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      set_feature_flag_state: {
+        Args: {
+          p_customer_id?: string
+          p_feature_key: string
+          p_feature_state: string
+          p_reason?: string
+        }
+        Returns: string
+      }
+      set_usage_limit: {
+        Args: {
+          p_customer_id: string
+          p_feature_key?: string
+          p_hard_limit?: boolean
+          p_limit_key: string
+          p_limit_value: number
+          p_reason: string
+        }
+        Returns: string
+      }
       settle_rental_payment: {
         Args: {
           p_amount: number
@@ -14001,6 +16798,15 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      start_feature_trial: {
+        Args: {
+          p_customer_id: string
+          p_expires_at?: string
+          p_feature_key: string
+          p_reason?: string
+        }
+        Returns: string
       }
       storage_first_path_customer_id: {
         Args: { p_name: string }
@@ -14056,6 +16862,7 @@ export type Database = {
           obligation_id: string
         }[]
       }
+      sync_expired_feature_trials: { Args: never; Returns: number }
       sync_ownership_completion_candidates: {
         Args: {
           p_credit_account_id?: string
