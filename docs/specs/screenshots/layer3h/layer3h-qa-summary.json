@@ -1,0 +1,124 @@
+{
+  "appUrl": "http://127.0.0.1:8082",
+  "shotDir": "docs/specs/screenshots/layer3h",
+  "generatedAt": "2026-06-19T03:11:39.405Z",
+  "checks": [
+    {
+      "name": "v_credit_portfolio_account_facts is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_portfolio_health is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_product_performance is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_risk_delinquency_summary is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_growth_ownership_funnel is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_executive_attention_items is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_branch_performance is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_collector_performance is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_reconciliation_summary is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_credit_analytics_freshness is queryable",
+      "passed": true
+    },
+    {
+      "name": "metric library is source-linked",
+      "passed": true,
+      "detail": "10 definitions"
+    },
+    {
+      "name": "analytics audit RPC records drilldown access",
+      "passed": true,
+      "detail": "b6514090-c655-46ef-8301-7f1de0ca86ad"
+    },
+    {
+      "name": "analytics export RPC is permissioned and audited",
+      "passed": true,
+      "detail": "6ba0d1d2-c502-44a8-8242-47dbdd7740a3"
+    },
+    {
+      "name": "portfolio analytics page loads",
+      "passed": true,
+      "detail": "Credit Portfolio Analytics"
+    },
+    {
+      "name": "executive narrative renders",
+      "passed": true,
+      "detail": "Executive narrative"
+    },
+    {
+      "name": "source drilldown renders",
+      "passed": true,
+      "detail": "Source records"
+    },
+    {
+      "name": "KPI drilldown filters source records",
+      "passed": true,
+      "detail": "Past-due accounts"
+    },
+    {
+      "name": "product performance dashboard renders",
+      "passed": true,
+      "detail": "Product performance"
+    },
+    {
+      "name": "risk dashboard renders",
+      "passed": true,
+      "detail": "Risk segmentation"
+    },
+    {
+      "name": "growth ownership funnel renders",
+      "passed": true,
+      "detail": "Growth and ownership funnel"
+    },
+    {
+      "name": "data quality dashboard renders",
+      "passed": true,
+      "detail": "Data quality warnings"
+    },
+    {
+      "name": "metric formula explanation available",
+      "passed": true,
+      "detail": "Metric library"
+    },
+    {
+      "name": "export audit dashboard renders",
+      "passed": true,
+      "detail": "Export history"
+    },
+    {
+      "name": "no fake/mock metrics shown",
+      "passed": true,
+      "detail": "production labels checked"
+    },
+    {
+      "name": "no unexpected console/network findings",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": 25,
+  "failed": 0
+}

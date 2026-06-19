@@ -15,6 +15,12 @@ export type RealtimeTableName =
   | 'driver_score_events'
   | 'driver_wallets'
   | 'driver_wallet_transactions'
+  | 'credit_accounts'
+  | 'credit_applications'
+  | 'underwriting_decisions'
+  | 'credit_contracts'
+  | 'repayment_schedules'
+  | 'scheduled_obligations'
   | 'credit_collections_cases'
   | 'credit_collection_actions'
   | 'credit_promises_to_pay'
@@ -32,6 +38,9 @@ export type RealtimeTableName =
   | 'asset_transfer_records'
   | 'ownership_certificates'
   | 'ownership_completion_audit_events'
+  | 'executive_attention_items'
+  | 'analytics_exports'
+  | 'analytics_audit_events'
   | 'support_tickets'
   | 'kyc_submissions'
   | 'maintenance_orders'
@@ -60,23 +69,32 @@ const tableToQueryKeyMap: Record<RealtimeTableName, string[]> = {
   driver_score_events: ['driver-score-events', 'trust-risk', 'growth-ownership'],
   driver_wallets: ['wallets', 'financial-operations', 'growth-ownership'],
   driver_wallet_transactions: ['wallets', 'financial-operations', 'growth-ownership'],
-  credit_collections_cases: ['admin-credit-collections', 'financial-operations', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
+  credit_accounts: ['admin-credit-portfolio-analytics', 'admin-credit-operations', 'financial-operations', 'growth-ownership'],
+  credit_applications: ['admin-credit-portfolio-analytics', 'admin-credit-operations', 'growth-ownership'],
+  underwriting_decisions: ['admin-credit-portfolio-analytics', 'admin-underwriting-operations', 'growth-ownership', 'trust-risk'],
+  credit_contracts: ['admin-credit-portfolio-analytics', 'admin-contracts', 'growth-ownership'],
+  repayment_schedules: ['admin-credit-portfolio-analytics', 'admin-repayment-operations', 'financial-operations', 'growth-ownership'],
+  scheduled_obligations: ['admin-credit-portfolio-analytics', 'admin-repayment-operations', 'financial-operations', 'growth-ownership'],
+  credit_collections_cases: ['admin-credit-portfolio-analytics', 'admin-credit-collections', 'financial-operations', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
   credit_collection_actions: ['admin-credit-collections', 'admin-attention-center', 'growth-ownership'],
-  credit_promises_to_pay: ['admin-credit-collections', 'admin-attention-center', 'financial-operations', 'growth-ownership'],
+  credit_promises_to_pay: ['admin-credit-portfolio-analytics', 'admin-credit-collections', 'admin-attention-center', 'financial-operations', 'growth-ownership'],
   credit_reminders: ['admin-credit-collections', 'admin-attention-center', 'growth-ownership'],
-  credit_risk_escalations: ['admin-credit-collections', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
-  credit_default_reviews: ['admin-credit-defaults', 'admin-credit-collections', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
+  credit_risk_escalations: ['admin-credit-portfolio-analytics', 'admin-credit-collections', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
+  credit_default_reviews: ['admin-credit-portfolio-analytics', 'admin-credit-defaults', 'admin-credit-collections', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
   credit_default_evidence: ['admin-credit-defaults', 'admin-attention-center'],
-  credit_default_decisions: ['admin-credit-defaults', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
+  credit_default_decisions: ['admin-credit-portfolio-analytics', 'admin-credit-defaults', 'admin-attention-center', 'trust-risk', 'growth-ownership'],
   credit_recovery_plans: ['admin-credit-defaults', 'admin-attention-center', 'growth-ownership'],
   credit_asset_protection_reviews: ['admin-credit-defaults', 'admin-attention-center', 'trust-risk', 'vehicle-operations'],
   credit_default_notices: ['admin-credit-defaults', 'admin-attention-center'],
   credit_default_audit_events: ['admin-credit-defaults', 'admin-attention-center', 'trust-risk'],
-  ownership_completion_reviews: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk', 'driver-ownership-completion-status'],
-  ownership_completion_decisions: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk'],
-  asset_transfer_records: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk', 'driver-ownership-completion-status'],
-  ownership_certificates: ['admin-ownership-completion', 'growth-ownership', 'driver-ownership-completion-status'],
+  ownership_completion_reviews: ['admin-credit-portfolio-analytics', 'admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk', 'driver-ownership-completion-status'],
+  ownership_completion_decisions: ['admin-credit-portfolio-analytics', 'admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk'],
+  asset_transfer_records: ['admin-credit-portfolio-analytics', 'admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk', 'driver-ownership-completion-status'],
+  ownership_certificates: ['admin-credit-portfolio-analytics', 'admin-ownership-completion', 'growth-ownership', 'driver-ownership-completion-status'],
   ownership_completion_audit_events: ['admin-ownership-completion', 'admin-attention-center', 'growth-ownership', 'trust-risk'],
+  executive_attention_items: ['admin-credit-portfolio-analytics', 'admin-attention-center'],
+  analytics_exports: ['admin-credit-portfolio-analytics'],
+  analytics_audit_events: ['admin-credit-portfolio-analytics'],
   support_tickets: ['admin-tickets', 'admin-stats'],
   kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats', 'trust-risk', 'growth-ownership'],
   maintenance_orders: ['maintenance', 'vehicle-operations'],
@@ -100,6 +118,12 @@ const tableLabels: Record<RealtimeTableName, string> = {
   driver_score_events: 'Evenement score',
   driver_wallets: 'Portefeuille',
   driver_wallet_transactions: 'Transaction portefeuille',
+  credit_accounts: 'Compte credit',
+  credit_applications: 'Demande credit',
+  underwriting_decisions: 'Decision underwriting',
+  credit_contracts: 'Contrat credit',
+  repayment_schedules: 'Echeancier credit',
+  scheduled_obligations: 'Obligation credit',
   credit_collections_cases: 'Dossier collections',
   credit_collection_actions: 'Action collections',
   credit_promises_to_pay: 'Promesse de paiement',
@@ -117,6 +141,9 @@ const tableLabels: Record<RealtimeTableName, string> = {
   asset_transfer_records: 'Transfert actif',
   ownership_certificates: 'Certificat propriete',
   ownership_completion_audit_events: 'Audit propriete',
+  executive_attention_items: 'Attention executive',
+  analytics_exports: 'Export analytics',
+  analytics_audit_events: 'Audit analytics',
   support_tickets: 'Ticket',
   kyc_submissions: 'KYC',
   maintenance_orders: 'Maintenance',
