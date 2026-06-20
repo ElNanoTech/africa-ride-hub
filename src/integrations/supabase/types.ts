@@ -1030,6 +1030,70 @@ export type Database = {
           },
         ]
       }
+      adoption_metrics: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          dimensions_json: Json
+          feature_key: string | null
+          metric_date: string
+          metric_id: string
+          metric_name: string
+          metric_value: number
+          module_key: string | null
+          role_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          dimensions_json?: Json
+          feature_key?: string | null
+          metric_date?: string
+          metric_id?: string
+          metric_name: string
+          metric_value?: number
+          module_key?: string | null
+          role_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          dimensions_json?: Json
+          feature_key?: string | null
+          metric_date?: string
+          metric_id?: string
+          metric_name?: string
+          metric_value?: number
+          module_key?: string | null
+          role_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "adoption_metrics_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "adoption_metrics_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "adoption_metrics_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       ai_explanations: {
         Row: {
           content: string
@@ -7150,6 +7214,138 @@ export type Database = {
           },
         ]
       }
+      guided_workflows: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          description: string
+          owner_role_key: string
+          required_permissions: string[]
+          status: string
+          steps_json: Json
+          target_route: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          workflow_id: string
+          workflow_key: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          owner_role_key: string
+          required_permissions?: string[]
+          status?: string
+          steps_json?: Json
+          target_route?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          workflow_id?: string
+          workflow_key: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          owner_role_key?: string
+          required_permissions?: string[]
+          status?: string
+          steps_json?: Json
+          target_route?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          workflow_id?: string
+          workflow_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guided_workflows_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "guided_workflows_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      help_content: {
+        Row: {
+          body_md: string
+          created_at: string
+          created_by: string | null
+          example_json: Json
+          faq_json: Json
+          help_id: string
+          quick_tips_json: Json
+          route_pattern: string
+          screen_key: string
+          status: string
+          title: string
+          tooltip_json: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body_md?: string
+          created_at?: string
+          created_by?: string | null
+          example_json?: Json
+          faq_json?: Json
+          help_id?: string
+          quick_tips_json?: Json
+          route_pattern: string
+          screen_key: string
+          status?: string
+          title: string
+          tooltip_json?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body_md?: string
+          created_at?: string
+          created_by?: string | null
+          example_json?: Json
+          faq_json?: Json
+          help_id?: string
+          quick_tips_json?: Json
+          route_pattern?: string
+          screen_key?: string
+          status?: string
+          title?: string
+          tooltip_json?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "help_content_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "help_content_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       income_records: {
         Row: {
           customer_id: string | null
@@ -7590,6 +7786,75 @@ export type Database = {
         }
         Relationships: []
       }
+      knowledge_articles: {
+        Row: {
+          article_id: string
+          article_key: string
+          body_md: string
+          category: string
+          created_at: string
+          created_by: string | null
+          related_routes: string[]
+          role_keys: string[]
+          search_vector: unknown
+          status: string
+          summary: string
+          tags: string[]
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          article_id?: string
+          article_key: string
+          body_md?: string
+          category: string
+          created_at?: string
+          created_by?: string | null
+          related_routes?: string[]
+          role_keys?: string[]
+          search_vector?: unknown
+          status?: string
+          summary?: string
+          tags?: string[]
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          article_id?: string
+          article_key?: string
+          body_md?: string
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          related_routes?: string[]
+          role_keys?: string[]
+          search_vector?: unknown
+          status?: string
+          summary?: string
+          tags?: string[]
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "knowledge_articles_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "knowledge_articles_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kyc_submissions: {
         Row: {
           bank_account_number: string
@@ -7668,6 +7933,185 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_modules: {
+        Row: {
+          audience_role_keys: string[]
+          category: string
+          checklist_json: Json
+          content_md: string
+          created_at: string
+          created_by: string | null
+          description: string
+          estimated_minutes: number
+          is_driver_education: boolean
+          module_id: string
+          module_key: string
+          sort_order: number
+          status: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          audience_role_keys?: string[]
+          category: string
+          checklist_json?: Json
+          content_md?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          estimated_minutes?: number
+          is_driver_education?: boolean
+          module_id?: string
+          module_key: string
+          sort_order?: number
+          status?: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          audience_role_keys?: string[]
+          category?: string
+          checklist_json?: Json
+          content_md?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          estimated_minutes?: number
+          is_driver_education?: boolean
+          module_id?: string
+          module_key?: string
+          sort_order?: number
+          status?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_modules_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_modules_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_progress: {
+        Row: {
+          admin_user_id: string | null
+          assigned_at: string
+          assigned_role_key: string | null
+          completed_at: string | null
+          created_at: string
+          customer_id: string | null
+          driver_id: string | null
+          due_at: string | null
+          evidence_json: Json
+          module_id: string
+          progress_id: string
+          progress_percent: number
+          score: number | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_user_id?: string | null
+          assigned_at?: string
+          assigned_role_key?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          due_at?: string | null
+          evidence_json?: Json
+          module_id: string
+          progress_id?: string
+          progress_percent?: number
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_user_id?: string | null
+          assigned_at?: string
+          assigned_role_key?: string | null
+          completed_at?: string | null
+          created_at?: string
+          customer_id?: string | null
+          driver_id?: string | null
+          due_at?: string | null
+          evidence_json?: Json
+          module_id?: string
+          progress_id?: string
+          progress_percent?: number
+          score?: number | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_progress_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "learning_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "learning_progress_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "learning_modules"
+            referencedColumns: ["module_id"]
+          },
+          {
+            foreignKeyName: "learning_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "v_learning_center_progress"
+            referencedColumns: ["module_id"]
           },
         ]
       }
@@ -7985,6 +8429,91 @@ export type Database = {
         }
         Relationships: []
       }
+      next_best_actions: {
+        Row: {
+          action_id: string
+          action_type: string
+          created_at: string
+          cta_label: string
+          customer_id: string
+          description: string
+          due_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          href: string
+          metadata_json: Json
+          priority_score: number
+          role_key: string
+          source: string
+          status: string
+          title: string
+          updated_at: string
+          urgency: string
+        }
+        Insert: {
+          action_id?: string
+          action_type: string
+          created_at?: string
+          cta_label?: string
+          customer_id: string
+          description: string
+          due_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          href?: string
+          metadata_json?: Json
+          priority_score?: number
+          role_key?: string
+          source?: string
+          status?: string
+          title: string
+          updated_at?: string
+          urgency?: string
+        }
+        Update: {
+          action_id?: string
+          action_type?: string
+          created_at?: string
+          cta_label?: string
+          customer_id?: string
+          description?: string
+          due_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          href?: string
+          metadata_json?: Json
+          priority_score?: number
+          role_key?: string
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          urgency?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "next_best_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "next_best_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "next_best_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           channel: string | null
@@ -8064,6 +8593,159 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      operating_guidance_audit_events: {
+        Row: {
+          actor_admin_user_id: string | null
+          actor_driver_id: string | null
+          actor_role: string | null
+          after_json: Json
+          audit_event_id: string
+          before_json: Json
+          created_at: string
+          customer_id: string | null
+          event_type: string
+          idempotency_key: string | null
+          reason: string | null
+          target_id: string | null
+          target_type: string
+        }
+        Insert: {
+          actor_admin_user_id?: string | null
+          actor_driver_id?: string | null
+          actor_role?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          customer_id?: string | null
+          event_type: string
+          idempotency_key?: string | null
+          reason?: string | null
+          target_id?: string | null
+          target_type: string
+        }
+        Update: {
+          actor_admin_user_id?: string | null
+          actor_driver_id?: string | null
+          actor_role?: string | null
+          after_json?: Json
+          audit_event_id?: string
+          before_json?: Json
+          created_at?: string
+          customer_id?: string | null
+          event_type?: string
+          idempotency_key?: string | null
+          reason?: string | null
+          target_id?: string | null
+          target_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_guidance_audit_events_actor_admin_user_id_fkey"
+            columns: ["actor_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_actor_driver_id_fkey"
+            columns: ["actor_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      operating_playbooks: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          disabled_state_json: Json
+          empty_state_json: Json
+          owner_role_key: string
+          playbook_id: string
+          playbook_key: string
+          purpose: string
+          status: string
+          steps_json: Json
+          title: string
+          trigger_conditions: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          created_by?: string | null
+          disabled_state_json?: Json
+          empty_state_json?: Json
+          owner_role_key: string
+          playbook_id?: string
+          playbook_key: string
+          purpose: string
+          status?: string
+          steps_json?: Json
+          title: string
+          trigger_conditions?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          disabled_state_json?: Json
+          empty_state_json?: Json
+          owner_role_key?: string
+          playbook_id?: string
+          playbook_key?: string
+          purpose?: string
+          status?: string
+          steps_json?: Json
+          title?: string
+          trigger_conditions?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_playbooks_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_playbooks_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
             referencedColumns: ["id"]
           },
         ]
@@ -10349,6 +11031,51 @@ export type Database = {
           },
         ]
       }
+      role_experiences: {
+        Row: {
+          created_at: string
+          dashboard_cards_json: Json
+          experience_id: string
+          focus_area: string
+          homepage_path: string
+          navigation_json: Json
+          primary_actions_json: Json
+          role_key: string
+          role_name: string
+          status: string
+          training_track_keys: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dashboard_cards_json?: Json
+          experience_id?: string
+          focus_area: string
+          homepage_path?: string
+          navigation_json?: Json
+          primary_actions_json?: Json
+          role_key: string
+          role_name: string
+          status?: string
+          training_track_keys?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dashboard_cards_json?: Json
+          experience_id?: string
+          focus_area?: string
+          homepage_path?: string
+          navigation_json?: Json
+          primary_actions_json?: Json
+          role_key?: string
+          role_name?: string
+          status?: string
+          training_track_keys?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       scheduled_obligations: {
         Row: {
           amount: number
@@ -11006,6 +11733,79 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "admin_users"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_health_scores: {
+        Row: {
+          collections_efficiency_score: number
+          created_at: string
+          customer_id: string
+          driver_adoption_score: number
+          feature_adoption_score: number
+          generated_at: string
+          health_score: number
+          next_review_at: string
+          score_id: string
+          score_status: string
+          scoring_json: Json
+          training_completion_score: number
+          updated_at: string
+          workflow_completion_score: number
+        }
+        Insert: {
+          collections_efficiency_score?: number
+          created_at?: string
+          customer_id: string
+          driver_adoption_score?: number
+          feature_adoption_score?: number
+          generated_at?: string
+          health_score?: number
+          next_review_at?: string
+          score_id?: string
+          score_status?: string
+          scoring_json?: Json
+          training_completion_score?: number
+          updated_at?: string
+          workflow_completion_score?: number
+        }
+        Update: {
+          collections_efficiency_score?: number
+          created_at?: string
+          customer_id?: string
+          driver_adoption_score?: number
+          feature_adoption_score?: number
+          generated_at?: string
+          health_score?: number
+          next_review_at?: string
+          score_id?: string
+          score_status?: string
+          scoring_json?: Json
+          training_completion_score?: number
+          updated_at?: string
+          workflow_completion_score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_health_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_health_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_health_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
           },
         ]
       }
@@ -12452,8 +13252,128 @@ export type Database = {
           },
         ]
       }
+      workflow_progress: {
+        Row: {
+          actor_admin_user_id: string | null
+          completed_at: string | null
+          context_json: Json
+          created_at: string
+          current_step_key: string
+          customer_id: string
+          driver_id: string | null
+          progress_id: string
+          progress_percent: number
+          started_at: string
+          status: string
+          subject_id: string | null
+          subject_type: string
+          updated_at: string
+          workflow_id: string
+        }
+        Insert: {
+          actor_admin_user_id?: string | null
+          completed_at?: string | null
+          context_json?: Json
+          created_at?: string
+          current_step_key: string
+          customer_id: string
+          driver_id?: string | null
+          progress_id?: string
+          progress_percent?: number
+          started_at?: string
+          status?: string
+          subject_id?: string | null
+          subject_type?: string
+          updated_at?: string
+          workflow_id: string
+        }
+        Update: {
+          actor_admin_user_id?: string | null
+          completed_at?: string | null
+          context_json?: Json
+          created_at?: string
+          current_step_key?: string
+          customer_id?: string
+          driver_id?: string | null
+          progress_id?: string
+          progress_percent?: number
+          started_at?: string
+          status?: string
+          subject_id?: string | null
+          subject_type?: string
+          updated_at?: string
+          workflow_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_progress_actor_admin_user_id_fkey"
+            columns: ["actor_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "guided_workflows"
+            referencedColumns: ["workflow_id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_workflow_id_fkey"
+            columns: ["workflow_id"]
+            isOneToOne: false
+            referencedRelation: "v_guided_workflow_status"
+            referencedColumns: ["workflow_id"]
+          },
+        ]
+      }
     }
     Views: {
+      v_contextual_help_catalog: {
+        Row: {
+          body_md: string | null
+          example_json: Json | null
+          faq_json: Json | null
+          help_id: string | null
+          quick_tips_json: Json | null
+          related_articles_json: Json | null
+          route_pattern: string | null
+          screen_key: string | null
+          status: string | null
+          title: string | null
+          tooltip_json: Json | null
+        }
+        Relationships: []
+      }
       v_credit_analytics_freshness: {
         Row: {
           checked_at: string | null
@@ -13154,6 +14074,247 @@ export type Database = {
           },
         ]
       }
+      v_guided_workflow_status: {
+        Row: {
+          category: string | null
+          completed_at: string | null
+          current_step_key: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_slug: string | null
+          description: string | null
+          owner_role_key: string | null
+          progress_id: string | null
+          progress_percent: number | null
+          progress_status: string | null
+          required_permissions: string[] | null
+          started_at: string | null
+          steps_json: Json | null
+          subject_id: string | null
+          subject_type: string | null
+          target_route: string | null
+          title: string | null
+          updated_at: string | null
+          workflow_id: string | null
+          workflow_key: string | null
+          workflow_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "workflow_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      v_learning_center_progress: {
+        Row: {
+          admin_user_email: string | null
+          admin_user_id: string | null
+          admin_user_name: string | null
+          assigned_role_key: string | null
+          audience_role_keys: string[] | null
+          category: string | null
+          checklist_json: Json | null
+          completed_at: string | null
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_slug: string | null
+          description: string | null
+          driver_id: string | null
+          driver_name: string | null
+          due_at: string | null
+          estimated_minutes: number | null
+          is_driver_education: boolean | null
+          module_id: string | null
+          module_key: string | null
+          module_status: string | null
+          progress_id: string | null
+          progress_percent: number | null
+          progress_status: string | null
+          score: number | null
+          sort_order: number | null
+          started_at: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_progress_admin_user_id_fkey"
+            columns: ["admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "learning_progress_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "learning_progress_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_operating_guidance_audit_timeline: {
+        Row: {
+          actor_admin_user_id: string | null
+          actor_driver_id: string | null
+          actor_email: string | null
+          actor_name: string | null
+          actor_role: string | null
+          after_json: Json | null
+          audit_event_id: string | null
+          before_json: Json | null
+          created_at: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_slug: string | null
+          driver_name: string | null
+          event_type: string | null
+          reason: string | null
+          target_id: string | null
+          target_type: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operating_guidance_audit_events_actor_admin_user_id_fkey"
+            columns: ["actor_admin_user_id"]
+            isOneToOne: false
+            referencedRelation: "admin_users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_actor_driver_id_fkey"
+            columns: ["actor_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "operating_guidance_audit_events_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      v_operating_next_best_actions: {
+        Row: {
+          action_id: string | null
+          action_type: string | null
+          created_at: string | null
+          cta_label: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_slug: string | null
+          description: string | null
+          due_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          href: string | null
+          metadata_json: Json | null
+          priority_score: number | null
+          role_key: string | null
+          source: string | null
+          status: string | null
+          title: string | null
+          updated_at: string | null
+          urgency: string | null
+          urgency_label: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "next_best_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "next_best_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "next_best_actions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
+      }
+      v_operating_search_index: {
+        Row: {
+          category: string | null
+          description: string | null
+          object_id: string | null
+          object_key: string | null
+          object_type: string | null
+          routes: string[] | null
+          search_vector: unknown
+          status: string | null
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       v_ownership_completion_exceptions: {
         Row: {
           asset_id: string | null
@@ -13458,6 +14619,65 @@ export type Database = {
           usage_limit_id: string | null
         }
         Relationships: []
+      }
+      v_role_experience_homepages: {
+        Row: {
+          dashboard_cards_json: Json | null
+          experience_id: string | null
+          focus_area: string | null
+          homepage_path: string | null
+          navigation_json: Json | null
+          primary_actions_json: Json | null
+          role_key: string | null
+          role_name: string | null
+          status: string | null
+          training_module_count: number | null
+          training_track_keys: string[] | null
+        }
+        Relationships: []
+      }
+      v_tenant_health_dashboard: {
+        Row: {
+          collections_efficiency_score: number | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_slug: string | null
+          driver_adoption_score: number | null
+          feature_adoption_score: number | null
+          generated_at: string | null
+          health_score: number | null
+          next_review_at: string | null
+          open_action_count: number | null
+          score_id: string | null
+          score_status: string | null
+          scoring_json: Json | null
+          training_completion_score: number | null
+          urgent_action_count: number | null
+          workflow_completion_score: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_health_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_health_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_platform_entitlement_matrix"
+            referencedColumns: ["tenant_id"]
+          },
+          {
+            foreignKeyName: "tenant_health_scores_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: true
+            referencedRelation: "v_platform_usage_limit_status"
+            referencedColumns: ["tenant_id"]
+          },
+        ]
       }
       v_wallet_settlement_anomalies: {
         Row: {
@@ -13817,6 +15037,18 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      advance_guided_workflow: {
+        Args: {
+          p_context_json?: Json
+          p_current_step_key: string
+          p_customer_id?: string
+          p_status?: string
+          p_subject_id?: string
+          p_subject_type?: string
+          p_workflow_key: string
+        }
+        Returns: string
       }
       amend_repayment_schedule: {
         Args: {
@@ -15711,6 +16943,10 @@ export type Database = {
       }
       has_credit_permission: { Args: { permission: string }; Returns: boolean }
       has_default_permission: { Args: { permission: string }; Returns: boolean }
+      has_operating_experience_permission: {
+        Args: { permission: string }
+        Returns: boolean
+      }
       has_ownership_completion_permission: {
         Args: { permission: string }
         Returns: boolean
@@ -16154,6 +17390,10 @@ export type Database = {
         }
       }
       pending_adjustments_count: { Args: never; Returns: number }
+      recalculate_tenant_health_score: {
+        Args: { p_customer_id?: string }
+        Returns: string
+      }
       recompute_driver_current_score: {
         Args: { p_customer_id?: string; p_driver_id: string }
         Returns: number
@@ -16244,6 +17484,19 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      record_operating_guidance_audit_event: {
+        Args: {
+          p_after_json?: Json
+          p_before_json?: Json
+          p_customer_id?: string
+          p_event_type: string
+          p_idempotency_key?: string
+          p_reason?: string
+          p_target_id?: string
+          p_target_type: string
+        }
+        Returns: string
+      }
       record_platform_audit_event: {
         Args: {
           p_after_json?: Json
@@ -16256,6 +17509,10 @@ export type Database = {
           p_tenant_id?: string
         }
         Returns: string
+      }
+      refresh_next_best_actions: {
+        Args: { p_customer_id?: string }
+        Returns: number
       }
       reissue_credit_contract: {
         Args: {
@@ -16613,6 +17870,20 @@ export type Database = {
         Args: { p_customer_id: string; p_feature_key: string; p_reason: string }
         Returns: string
       }
+      search_operating_knowledge: {
+        Args: { p_limit?: number; p_query: string }
+        Returns: {
+          category: string
+          description: string
+          object_id: string
+          object_key: string
+          object_type: string
+          rank: number
+          routes: string[]
+          tags: string[]
+          title: string
+        }[]
+      }
       send_credit_collection_reminder: {
         Args: {
           p_case_id: string
@@ -16738,6 +18009,17 @@ export type Database = {
           p_feature_key: string
           p_feature_state: string
           p_reason?: string
+        }
+        Returns: string
+      }
+      set_learning_progress: {
+        Args: {
+          p_customer_id?: string
+          p_evidence_json?: Json
+          p_module_key: string
+          p_progress_percent?: number
+          p_score?: number
+          p_status?: string
         }
         Returns: string
       }
