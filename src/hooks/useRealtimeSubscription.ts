@@ -41,6 +41,29 @@ export type RealtimeTableName =
   | 'executive_attention_items'
   | 'analytics_exports'
   | 'analytics_audit_events'
+  | 'platform_plans'
+  | 'platform_features'
+  | 'plan_features'
+  | 'tenant_plan_assignments'
+  | 'tenant_entitlements'
+  | 'feature_trials'
+  | 'feature_flags'
+  | 'usage_limits'
+  | 'platform_add_ons'
+  | 'tenant_add_ons'
+  | 'platform_audit_events'
+  | 'role_experiences'
+  | 'learning_modules'
+  | 'learning_progress'
+  | 'knowledge_articles'
+  | 'operating_playbooks'
+  | 'guided_workflows'
+  | 'workflow_progress'
+  | 'next_best_actions'
+  | 'tenant_health_scores'
+  | 'adoption_metrics'
+  | 'help_content'
+  | 'operating_guidance_audit_events'
   | 'support_tickets'
   | 'kyc_submissions'
   | 'maintenance_orders'
@@ -95,6 +118,29 @@ const tableToQueryKeyMap: Record<RealtimeTableName, string[]> = {
   executive_attention_items: ['admin-credit-portfolio-analytics', 'admin-attention-center'],
   analytics_exports: ['admin-credit-portfolio-analytics'],
   analytics_audit_events: ['admin-credit-portfolio-analytics'],
+  platform_plans: ['platform-licensing', 'tenant-entitlements', 'feature-entitlement'],
+  platform_features: ['platform-licensing', 'tenant-entitlements', 'feature-entitlement'],
+  plan_features: ['platform-licensing', 'tenant-entitlements', 'feature-entitlement'],
+  tenant_plan_assignments: ['platform-licensing', 'tenant-entitlements', 'feature-entitlement', 'tenant-entitlement-map'],
+  tenant_entitlements: ['platform-licensing', 'tenant-entitlements', 'feature-entitlement', 'tenant-entitlement-map'],
+  feature_trials: ['platform-licensing', 'tenant-entitlements', 'feature-entitlement', 'tenant-entitlement-map'],
+  feature_flags: ['platform-licensing', 'feature-flags', 'tenant-entitlements', 'feature-entitlement', 'tenant-entitlement-map'],
+  usage_limits: ['platform-licensing'],
+  platform_add_ons: ['platform-licensing'],
+  tenant_add_ons: ['platform-licensing'],
+  platform_audit_events: ['platform-licensing'],
+  role_experiences: ['operating-experience'],
+  learning_modules: ['operating-experience', 'operating-knowledge-search'],
+  learning_progress: ['operating-experience'],
+  knowledge_articles: ['operating-experience', 'operating-knowledge-search'],
+  operating_playbooks: ['operating-experience', 'operating-knowledge-search'],
+  guided_workflows: ['operating-experience', 'operating-knowledge-search'],
+  workflow_progress: ['operating-experience'],
+  next_best_actions: ['operating-experience', 'admin-attention-center'],
+  tenant_health_scores: ['operating-experience'],
+  adoption_metrics: ['operating-experience'],
+  help_content: ['operating-experience', 'operating-knowledge-search'],
+  operating_guidance_audit_events: ['operating-experience'],
   support_tickets: ['admin-tickets', 'admin-stats'],
   kyc_submissions: ['admin-kyc', 'admin-drivers', 'admin-stats', 'trust-risk', 'growth-ownership'],
   maintenance_orders: ['maintenance', 'vehicle-operations'],
@@ -144,6 +190,29 @@ const tableLabels: Record<RealtimeTableName, string> = {
   executive_attention_items: 'Attention executive',
   analytics_exports: 'Export analytics',
   analytics_audit_events: 'Audit analytics',
+  platform_plans: 'Plan plateforme',
+  platform_features: 'Feature plateforme',
+  plan_features: 'Package feature',
+  tenant_plan_assignments: 'Plan tenant',
+  tenant_entitlements: 'Entitlement tenant',
+  feature_trials: 'Trial feature',
+  feature_flags: 'Feature flag',
+  usage_limits: 'Usage limit',
+  platform_add_ons: 'Add-on plateforme',
+  tenant_add_ons: 'Add-on tenant',
+  platform_audit_events: 'Audit plateforme',
+  role_experiences: 'Experience role',
+  learning_modules: 'Module formation',
+  learning_progress: 'Progression formation',
+  knowledge_articles: 'Article aide',
+  operating_playbooks: 'Playbook operationnel',
+  guided_workflows: 'Workflow guide',
+  workflow_progress: 'Progression workflow',
+  next_best_actions: 'Next best action',
+  tenant_health_scores: 'Score sante tenant',
+  adoption_metrics: 'Adoption',
+  help_content: 'Aide contextuelle',
+  operating_guidance_audit_events: 'Audit guidance',
   support_tickets: 'Ticket',
   kyc_submissions: 'KYC',
   maintenance_orders: 'Maintenance',

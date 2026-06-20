@@ -35,7 +35,11 @@ export type AuditAction =
   | 'attention_center_refreshed'
   | 'attention_center_exported_report'
   | 'credit_portfolio_viewed'
-  | 'credit_portfolio_exported';
+  | 'credit_portfolio_exported'
+  | 'platform_licensing_viewed'
+  | 'platform_licensing_exported'
+  | 'operating_experience_viewed'
+  | 'operating_experience_exported';
 
 export type TargetType =
   | 'admin_user'
@@ -53,6 +57,8 @@ export type TargetType =
   | 'support_ticket'
   | 'attention_center'
   | 'analytics'
+  | 'platform_licensing'
+  | 'operating_experience'
   | 'scoring_config'
   | 'session';
 

@@ -19,6 +19,7 @@ import { ChunkUpdateBanner } from "./components/ChunkUpdateBanner";
 import { preloadCommonRoutes } from "./lib/preloadRoutes";
 import { AdminRouteGuard, AdminLoginRedirect } from "./components/AdminRouteGuard";
 import { DriverRouteGuard, DriverLoginRedirect } from "./components/DriverRouteGuard";
+import { EntitlementGate } from "./components/admin/EntitlementGate";
 import { isDriverAppRoute } from "./lib/routeScopes";
 
 // Aggressive caching for low-bandwidth African markets
@@ -106,6 +107,8 @@ const AdminAnalytics = lazy(() => import("./pages/admin/Analytics"));
 const AdminTracking = lazy(() => import("./pages/admin/Tracking"));
 const AdminPlatformSync = lazy(() => import("./pages/admin/PlatformSync"));
 const AdminFeatureFlags = lazy(() => import("./pages/admin/FeatureFlags"));
+const AdminPlatformAdministration = lazy(() => import("./pages/admin/PlatformAdministration"));
+const AdminOperatingExperience = lazy(() => import("./pages/admin/OperatingExperience"));
 const AdminCustomerManagement = lazy(() => import("./pages/admin/CustomerManagement"));
 const AdminManualIncomeEntry = lazy(() => import("./pages/admin/ManualIncomeEntry"));
 const AdminIncomeApprovals = lazy(() => import("./pages/admin/IncomeApprovals"));
@@ -281,33 +284,33 @@ const App = () => {
                     <Route path="/admin/vehicles/:id" element={<AdminVehicleDetail />} />
                     <Route path="/admin/gps-mapping" element={<AdminGpsMapping />} />
                     <Route path="/admin/rentals" element={<AdminRentals />} />
-                    <Route path="/admin/growth" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/growth/pipeline" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/growth/reviews" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/growth/offers" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/growth/ownership" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/growth/analytics" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/growth-ownership" element={<AdminGrowthOwnership />} />
-                    <Route path="/admin/loans" element={<AdminLoans />} />
-                    <Route path="/admin/credit-operations" element={<AdminCreditOperations />} />
-                    <Route path="/admin/credit" element={<AdminCreditOperations />} />
-                    <Route path="/admin/underwriting-operations" element={<AdminUnderwritingOperations />} />
-                    <Route path="/admin/underwriting" element={<AdminUnderwritingOperations />} />
-                    <Route path="/admin/repayment-operations" element={<AdminRepaymentOperations />} />
-                    <Route path="/admin/repayment" element={<AdminRepaymentOperations />} />
-                    <Route path="/admin/credit-collections" element={<AdminCreditCollections />} />
-                    <Route path="/admin/collections" element={<AdminCreditCollections />} />
-                    <Route path="/admin/default-recovery" element={<AdminCreditDefaultRecovery />} />
-                    <Route path="/admin/default-reviews" element={<AdminCreditDefaultRecovery />} />
-                    <Route path="/admin/defaults" element={<AdminCreditDefaultRecovery />} />
-                    <Route path="/admin/ownership-completion" element={<AdminOwnershipCompletion />} />
-                    <Route path="/admin/asset-transfers" element={<AdminOwnershipCompletion />} />
-                    <Route path="/admin/ownership-certificates" element={<AdminOwnershipCompletion />} />
-                    <Route path="/admin/credit-portfolio" element={<AdminCreditPortfolioAnalytics />} />
-                    <Route path="/admin/portfolio-analytics" element={<AdminCreditPortfolioAnalytics />} />
-                    <Route path="/admin/executive-intelligence" element={<AdminCreditPortfolioAnalytics />} />
-                    <Route path="/admin/portfolio-health" element={<AdminCreditPortfolioAnalytics />} />
-                    <Route path="/admin/credit-analytics" element={<AdminCreditPortfolioAnalytics />} />
+                    <Route path="/admin/growth" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/growth/pipeline" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/growth/reviews" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/growth/offers" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/growth/ownership" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/growth/analytics" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/growth-ownership" element={<EntitlementGate featureKey="growth_center" moduleName="KIRA Growth"><AdminGrowthOwnership /></EntitlementGate>} />
+                    <Route path="/admin/loans" element={<EntitlementGate featureKey="credit_products" moduleName="KIRA Credit"><AdminLoans /></EntitlementGate>} />
+                    <Route path="/admin/credit-operations" element={<EntitlementGate featureKey="credit_products" moduleName="KIRA Credit"><AdminCreditOperations /></EntitlementGate>} />
+                    <Route path="/admin/credit" element={<EntitlementGate featureKey="credit_products" moduleName="KIRA Credit"><AdminCreditOperations /></EntitlementGate>} />
+                    <Route path="/admin/underwriting-operations" element={<EntitlementGate featureKey="underwriting" moduleName="KIRA Underwriting"><AdminUnderwritingOperations /></EntitlementGate>} />
+                    <Route path="/admin/underwriting" element={<EntitlementGate featureKey="underwriting" moduleName="KIRA Underwriting"><AdminUnderwritingOperations /></EntitlementGate>} />
+                    <Route path="/admin/repayment-operations" element={<EntitlementGate featureKey="repayment" moduleName="KIRA Repayment"><AdminRepaymentOperations /></EntitlementGate>} />
+                    <Route path="/admin/repayment" element={<EntitlementGate featureKey="repayment" moduleName="KIRA Repayment"><AdminRepaymentOperations /></EntitlementGate>} />
+                    <Route path="/admin/credit-collections" element={<EntitlementGate featureKey="collections" moduleName="KIRA Collections"><AdminCreditCollections /></EntitlementGate>} />
+                    <Route path="/admin/collections" element={<EntitlementGate featureKey="collections" moduleName="KIRA Collections"><AdminCreditCollections /></EntitlementGate>} />
+                    <Route path="/admin/default-recovery" element={<EntitlementGate featureKey="recovery" moduleName="KIRA Recovery"><AdminCreditDefaultRecovery /></EntitlementGate>} />
+                    <Route path="/admin/default-reviews" element={<EntitlementGate featureKey="recovery" moduleName="KIRA Recovery"><AdminCreditDefaultRecovery /></EntitlementGate>} />
+                    <Route path="/admin/defaults" element={<EntitlementGate featureKey="recovery" moduleName="KIRA Recovery"><AdminCreditDefaultRecovery /></EntitlementGate>} />
+                    <Route path="/admin/ownership-completion" element={<EntitlementGate featureKey="ownership_completion" moduleName="KIRA Ownership"><AdminOwnershipCompletion /></EntitlementGate>} />
+                    <Route path="/admin/asset-transfers" element={<EntitlementGate featureKey="asset_transfer" moduleName="KIRA Ownership"><AdminOwnershipCompletion /></EntitlementGate>} />
+                    <Route path="/admin/ownership-certificates" element={<EntitlementGate featureKey="certificates" moduleName="KIRA Ownership"><AdminOwnershipCompletion /></EntitlementGate>} />
+                    <Route path="/admin/credit-portfolio" element={<EntitlementGate featureKey="portfolio_analytics" moduleName="KIRA Intelligence"><AdminCreditPortfolioAnalytics /></EntitlementGate>} />
+                    <Route path="/admin/portfolio-analytics" element={<EntitlementGate featureKey="portfolio_analytics" moduleName="KIRA Intelligence"><AdminCreditPortfolioAnalytics /></EntitlementGate>} />
+                    <Route path="/admin/executive-intelligence" element={<EntitlementGate featureKey="executive_dashboards" moduleName="KIRA Intelligence"><AdminCreditPortfolioAnalytics /></EntitlementGate>} />
+                    <Route path="/admin/portfolio-health" element={<EntitlementGate featureKey="portfolio_analytics" moduleName="KIRA Intelligence"><AdminCreditPortfolioAnalytics /></EntitlementGate>} />
+                    <Route path="/admin/credit-analytics" element={<EntitlementGate featureKey="portfolio_analytics" moduleName="KIRA Intelligence"><AdminCreditPortfolioAnalytics /></EntitlementGate>} />
                     <Route path="/admin/payments" element={<AdminPayments />} />
                     <Route path="/admin/finance" element={<AdminFinancialOperations />} />
                     <Route path="/admin/financial-operations" element={<AdminFinancialOperations />} />
@@ -317,7 +320,7 @@ const App = () => {
                     <Route path="/admin/billing/audit" element={<AdminBillingAudit />} />
                     <Route path="/admin/billing/wallets" element={<AdminWallets />} />
                     <Route path="/admin/support" element={<AdminSupport />} />
-                    <Route path="/admin/scoring" element={<AdminScoringConfig />} />
+                    <Route path="/admin/scoring" element={<EntitlementGate featureKey="advanced_driver_scoring" moduleName="KIRA Trust"><AdminScoringConfig /></EntitlementGate>} />
                     <Route path="/admin/audit" element={<AdminAudit />} />
                     <Route path="/admin/users" element={<AdminUsers />} />
                     <Route path="/admin/settings" element={<AdminSettings />} />
@@ -325,14 +328,23 @@ const App = () => {
                     <Route path="/admin/tracking" element={<AdminTracking />} />
                     <Route path="/admin/platform-sync" element={<AdminPlatformSync />} />
                     <Route path="/admin/feature-flags" element={<AdminFeatureFlags />} />
+                    <Route path="/admin/platform-administration" element={<AdminPlatformAdministration />} />
+                    <Route path="/admin/platform-licensing" element={<AdminPlatformAdministration />} />
+                    <Route path="/admin/licensing" element={<AdminPlatformAdministration />} />
+                    <Route path="/admin/entitlements" element={<AdminPlatformAdministration />} />
+                    <Route path="/admin/operating-experience" element={<AdminOperatingExperience />} />
+                    <Route path="/admin/learning-center" element={<AdminOperatingExperience />} />
+                    <Route path="/admin/knowledge" element={<AdminOperatingExperience />} />
+                    <Route path="/admin/playbooks" element={<AdminOperatingExperience />} />
+                    <Route path="/admin/tenant-health" element={<AdminOperatingExperience />} />
                     <Route path="/admin/customers" element={<AdminCustomerManagement />} />
                     <Route path="/admin/income-entry" element={<AdminManualIncomeEntry />} />
                     <Route path="/admin/income-approvals" element={<AdminIncomeApprovals />} />
                     <Route path="/admin/pricing" element={<AdminPricing />} />
                     <Route path="/admin/ai-usage" element={<AdminAIUsage />} />
-                    <Route path="/admin/contracts" element={<AdminContracts />} />
-                    <Route path="/admin/driving-behavior" element={<AdminDrivingBehavior />} />
-                    <Route path="/admin/trust-risk" element={<AdminTrustRisk />} />
+                    <Route path="/admin/contracts" element={<EntitlementGate featureKey="contracts" moduleName="KIRA Credit"><AdminContracts /></EntitlementGate>} />
+                    <Route path="/admin/driving-behavior" element={<EntitlementGate featureKey="advanced_driver_scoring" moduleName="KIRA Trust"><AdminDrivingBehavior /></EntitlementGate>} />
+                    <Route path="/admin/trust-risk" element={<EntitlementGate featureKey="trust_center" moduleName="KIRA Trust"><AdminTrustRisk /></EntitlementGate>} />
                     <Route path="/admin/sinistres" element={<AdminSinistres />} />
                     <Route path="/admin/incidents" element={<AdminSinistres />} />
                     <Route path="/admin/fleet-control" element={<AdminFleetControl />} />

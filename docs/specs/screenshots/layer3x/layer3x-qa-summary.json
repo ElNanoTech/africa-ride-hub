@@ -1,0 +1,219 @@
+{
+  "appUrl": "http://127.0.0.1:8082",
+  "shotDir": "docs/specs/screenshots/layer3x",
+  "generatedAt": "2026-06-20T16:54:14.707Z",
+  "checks": [
+    {
+      "name": "role_experiences is queryable",
+      "passed": true
+    },
+    {
+      "name": "learning_modules is queryable",
+      "passed": true
+    },
+    {
+      "name": "learning_progress is queryable",
+      "passed": true
+    },
+    {
+      "name": "knowledge_articles is queryable",
+      "passed": true
+    },
+    {
+      "name": "operating_playbooks is queryable",
+      "passed": true
+    },
+    {
+      "name": "guided_workflows is queryable",
+      "passed": true
+    },
+    {
+      "name": "workflow_progress is queryable",
+      "passed": true
+    },
+    {
+      "name": "next_best_actions is queryable",
+      "passed": true
+    },
+    {
+      "name": "tenant_health_scores is queryable",
+      "passed": true
+    },
+    {
+      "name": "adoption_metrics is queryable",
+      "passed": true
+    },
+    {
+      "name": "help_content is queryable",
+      "passed": true
+    },
+    {
+      "name": "operating_guidance_audit_events is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_role_experience_homepages is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_learning_center_progress is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_operating_next_best_actions is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_tenant_health_dashboard is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_guided_workflow_status is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_contextual_help_catalog is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_operating_search_index is queryable",
+      "passed": true
+    },
+    {
+      "name": "v_operating_guidance_audit_timeline is queryable",
+      "passed": true
+    },
+    {
+      "name": "AT-3X-001 role experiences are seeded",
+      "passed": true,
+      "detail": "10 roles"
+    },
+    {
+      "name": "AT-3X-004 learning modules are seeded",
+      "passed": true,
+      "detail": "13 modules"
+    },
+    {
+      "name": "AT-3X-005 knowledge articles are seeded",
+      "passed": true,
+      "detail": "8 articles"
+    },
+    {
+      "name": "AT-3X-006 next-best-actions are present",
+      "passed": true,
+      "detail": "10 actions"
+    },
+    {
+      "name": "QA Layer 3X tenant seed visibility",
+      "passed": true,
+      "detail": "QA tenant is not visible from the admin session; service-role QA can verify the seeded tenant directly"
+    },
+    {
+      "name": "Layer 3X fallback tenant context exists",
+      "passed": true,
+      "detail": "e2e-test-fleet-co (a6c3f74e-dd92-49cd-a51d-e365b606f91a)"
+    },
+    {
+      "name": "cross-tenant acceptance QA scope",
+      "passed": true,
+      "detail": "not run without QA_SUPABASE_SERVICE_ROLE_KEY; using admin-visible tenant for user-facing RPC checks"
+    },
+    {
+      "name": "AT-3X-005 knowledge search works",
+      "passed": true,
+      "detail": "1 result(s)"
+    },
+    {
+      "name": "AT-3X-004 training completion tracked",
+      "passed": true,
+      "detail": "d373760a-9c34-4560-959f-0c56bf9f3a55"
+    },
+    {
+      "name": "guided workflow progress saves",
+      "passed": true,
+      "detail": "23ef5ad6-6584-48ab-9aa5-5e29bb213c5e"
+    },
+    {
+      "name": "AT-3X-006 next-best-action engine generates cards",
+      "passed": true,
+      "detail": "3 generated"
+    },
+    {
+      "name": "AT-3X-008 tenant health score calculated",
+      "passed": true,
+      "detail": "7eb76886-0990-4734-8d28-875cc3b2c72d"
+    },
+    {
+      "name": "Layer 3X audit RPC records guidance events",
+      "passed": true,
+      "detail": "75dd8d7d-669d-4492-9e11-0b61b1ba3004"
+    },
+    {
+      "name": "realtime publishes operating guidance audit inserts",
+      "passed": true,
+      "detail": "observed"
+    },
+    {
+      "name": "operating experience page loads",
+      "passed": true,
+      "detail": "Operating Experience"
+    },
+    {
+      "name": "AT-3X-001 role homepage renders",
+      "passed": true,
+      "detail": "Role Homepage"
+    },
+    {
+      "name": "AT-3X-006 next best action renders",
+      "passed": true,
+      "detail": "What should I do next?"
+    },
+    {
+      "name": "Learning Module renders",
+      "passed": true,
+      "detail": "Learning Module"
+    },
+    {
+      "name": "AT-3X-007 driver education available",
+      "passed": true,
+      "detail": "Driver Education"
+    },
+    {
+      "name": "knowledge search input renders",
+      "passed": true,
+      "detail": "Knowledge Search"
+    },
+    {
+      "name": "guided workflow renders",
+      "passed": true,
+      "detail": "Guided Workflow"
+    },
+    {
+      "name": "AT-3X-003 empty states guide user",
+      "passed": true,
+      "detail": "Empty State"
+    },
+    {
+      "name": "AT-3X-002 disabled actions explain reason",
+      "passed": true,
+      "detail": "Disabled State"
+    },
+    {
+      "name": "tenant health dashboard renders",
+      "passed": true,
+      "detail": "Tenant Health Dashboard"
+    },
+    {
+      "name": "no placeholder or lorem content shown",
+      "passed": true,
+      "detail": "production labels checked"
+    },
+    {
+      "name": "no unexpected console/network findings",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "passed": 46,
+  "failed": 0
+}

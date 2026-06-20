@@ -15,10 +15,10 @@ export interface BreadcrumbItem {
 }
 
 interface AdminBreadcrumbProps {
-  items: BreadcrumbItem[];
+  items?: BreadcrumbItem[];
 }
 
-export function AdminBreadcrumb({ items }: AdminBreadcrumbProps) {
+export function AdminBreadcrumb({ items = [] }: AdminBreadcrumbProps) {
   return (
     <Breadcrumb className="mb-4 animate-fade-in">
       <BreadcrumbList>

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Users, Car, FileText, Wallet, CreditCard, 
   Settings, LogOut, Menu, ChevronLeft, BarChart3, MessageSquare,
-  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock, MessageCircleWarning, BadgeCheck
+  Shield, ShieldCheck, Bell, LucideIcon, UserCog, Sun, Moon, TrendingUp, X, MapPin, RefreshCw, Flag, Building2, Play, Banknote, ShieldAlert, Activity, Smartphone, Wrench, FileSignature, CalendarClock, MessageCircleWarning, BadgeCheck, KeyRound, Lock, Compass
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,6 +27,8 @@ import { useAdminSwipeNavigation } from '@/hooks/useAdminSwipeNavigation';
 import { usePendingKycCount } from '@/hooks/useAdminData';
 import { checkIsAdminWithRetry } from '@/lib/adminAuthCheck';
 import { installFocusRefresh, verifySignOut } from '@/lib/adminSessionGuard';
+import { useTenantEntitlementMap } from '@/hooks/usePlatformLicensingData';
+import { shouldShowNavigationItem } from '@/lib/platformLicensing';
 
 // Role badge configuration
 const getRoleBadgeConfig = (roleKey: string) => {
@@ -109,6 +111,15 @@ const ADMIN_ROUTE_ORDER = [
   '/admin/users',
   '/admin/settings',
   '/admin/feature-flags',
+  '/admin/platform-administration',
+  '/admin/platform-licensing',
+  '/admin/licensing',
+  '/admin/entitlements',
+  '/admin/operating-experience',
+  '/admin/learning-center',
+  '/admin/knowledge',
+  '/admin/playbooks',
+  '/admin/tenant-health',
   '/admin/customers',
   '/admin/platform-sync',
 ];
@@ -138,6 +149,8 @@ interface AdminUser {
   full_name: string;
   is_active: boolean;
   role_key: string;
+  customer_id?: string | null;
+  is_platform_owner?: boolean | null;
   roles: string[]; // For backwards compatibility
 }
 
@@ -160,6 +173,7 @@ interface SidebarItem {
   allowedRoles: AppRole[];
   badgeKey?: 'pendingKyc'; // Key to get badge count
   section?: AdminSidebarSection;
+  featureKey?: string;
 }
 
 const ADMIN_SECTION_LABELS: Record<AdminSidebarSection, string> = {
@@ -228,6 +242,7 @@ const sidebarItems: SidebarItem[] = [
     label: 'Trust & Risk',
     allowedRoles: ['super_admin', 'manager'],
     section: 'trust_risk',
+    featureKey: 'trust_center',
   },
   {
     to: '/admin/driving-behavior', 
@@ -235,6 +250,7 @@ const sidebarItems: SidebarItem[] = [
     label: 'Conduite',
     allowedRoles: ['super_admin', 'manager'],
     section: 'trust_risk',
+    featureKey: 'advanced_driver_scoring',
   },
   {
     to: '/admin/platform-sync', 
@@ -292,6 +308,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/growth'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'growth_center',
   },
   {
     to: '/admin/credit-operations',
@@ -300,6 +317,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/credit'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'credit_products',
   },
   {
     to: '/admin/underwriting-operations',
@@ -308,6 +326,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/underwriting'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'underwriting',
   },
   {
     to: '/admin/contracts',
@@ -315,6 +334,7 @@ const sidebarItems: SidebarItem[] = [
     label: 'Contracting',
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'contracts',
   },
   {
     to: '/admin/repayment-operations',
@@ -323,6 +343,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/repayment'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'repayment',
   },
   {
     to: '/admin/credit-collections',
@@ -331,6 +352,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/collections'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret', 'agent_support'],
     section: 'growth_ownership',
+    featureKey: 'collections',
   },
   {
     to: '/admin/default-recovery',
@@ -339,6 +361,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/default-reviews', '/admin/defaults'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'recovery',
   },
   {
     to: '/admin/ownership-completion',
@@ -347,6 +370,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/asset-transfers', '/admin/ownership-certificates'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'ownership_completion',
   },
   {
     to: '/admin/credit-portfolio',
@@ -355,6 +379,7 @@ const sidebarItems: SidebarItem[] = [
     aliases: ['/admin/portfolio-analytics', '/admin/executive-intelligence', '/admin/portfolio-health', '/admin/credit-analytics'],
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'portfolio_analytics',
   },
   { 
     to: '/admin/loans', 
@@ -362,6 +387,7 @@ const sidebarItems: SidebarItem[] = [
     label: NAV.LOANS,
     allowedRoles: ['super_admin', 'manager', 'agent_pret'],
     section: 'growth_ownership',
+    featureKey: 'credit_products',
   },
   { 
     to: '/admin/payments', 
@@ -405,6 +431,7 @@ const sidebarItems: SidebarItem[] = [
     label: ADMIN.SCORING.TITLE,
     allowedRoles: ['super_admin', 'manager'],
     section: 'trust_risk',
+    featureKey: 'advanced_driver_scoring',
   },
   { 
     to: '/admin/kira', 
@@ -440,6 +467,23 @@ const sidebarItems: SidebarItem[] = [
     label: 'Feature Flags',
     allowedRoles: ['super_admin'],
     section: 'system',
+  },
+  {
+    to: '/admin/platform-administration',
+    icon: KeyRound,
+    label: 'Platform Licensing',
+    aliases: ['/admin/platform-licensing', '/admin/licensing', '/admin/entitlements'],
+    allowedRoles: ['super_admin'],
+    section: 'system',
+  },
+  {
+    to: '/admin/operating-experience',
+    icon: Compass,
+    label: 'Operating Experience',
+    aliases: ['/admin/learning-center', '/admin/knowledge', '/admin/playbooks', '/admin/tenant-health'],
+    allowedRoles: ['super_admin', 'manager', 'agent_pret', 'agent_support'],
+    section: 'system',
+    featureKey: 'operating_experience',
   },
   { 
     to: '/admin/customers', 
@@ -503,6 +547,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   
   // Fetch pending KYC count for badge
   const { data: pendingKycCount = 0 } = usePendingKycCount();
+  const { data: entitlementMap = {} } = useTenantEntitlementMap(adminUser?.customer_id);
   
   // Calculate animation direction based on route
   const currentIndex = getAdminRouteIndex(location.pathname);
@@ -576,7 +621,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
         const { data: adminData } = await supabase
           .from('admin_users')
-          .select('id, email, full_name, is_active, role_key')
+          .select('id, email, full_name, is_active, role_key, customer_id, is_platform_owner')
           .eq('user_id', sessionUser.id)
           .single();
 
@@ -589,6 +634,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             full_name: adminData.full_name,
             is_active: adminData.is_active,
             role_key: adminData.role_key || 'manager',
+            customer_id: adminData.customer_id,
+            is_platform_owner: adminData.is_platform_owner,
             roles: [adminData.role_key || 'manager'],
           });
 
@@ -675,8 +722,18 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Filter menu items based on user role_key
   const filteredSidebarItems = useMemo(() => {
     if (!adminUser?.role_key) return [];
-    return sidebarItems.filter(item => hasAccess(adminUser.role_key, item.allowedRoles));
-  }, [adminUser?.role_key]);
+    return sidebarItems.filter((item) => {
+      if (!hasAccess(adminUser.role_key, item.allowedRoles)) return false;
+      if (!item.featureKey || adminUser.is_platform_owner) return true;
+      const entitlement = entitlementMap[item.featureKey];
+      if (!entitlement) return true;
+      return shouldShowNavigationItem({
+        access_state: entitlement.access_state,
+        feature_state: entitlement.feature_state,
+        code: entitlement.access_state === 'HIDDEN' ? 'FEATURE_HIDDEN' : undefined,
+      });
+    });
+  }, [adminUser?.is_platform_owner, adminUser?.role_key, entitlementMap]);
 
   // Group filtered items by section for the new KIRA-style sidebar layout.
   const groupedSidebarItems = useMemo(() => {
@@ -789,40 +846,55 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     </p>
                   )}
                   <ul className="space-y-1">
-                    {items.map((item) => (
-                      <li key={item.to}>
-                        <Link
-                          to={item.to}
-                          onClick={() => isMobile && setSidebarOpen(false)}
-                          className={cn(
-                            'flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 relative',
-                            'active:scale-[0.98] touch-manipulation',
-                            isActive(item)
-                              ? 'bg-sidebar-accent text-sidebar-primary-foreground shadow-inner ring-1 ring-sidebar-primary/30 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-sidebar-primary'
-                              : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:bg-sidebar-accent'
-                          )}
-                        >
-                          <item.icon className={cn(
-                            'h-[18px] w-[18px] flex-shrink-0',
-                            isActive(item) && 'text-sidebar-primary'
-                          )} />
-                          {(!collapsed || isMobile) && (
-                            <span className="text-[14px] font-medium flex-1">{item.label}</span>
-                          )}
-                          {item.badgeKey === 'pendingKyc' && pendingKycCount > 0 && (
-                            <Badge
-                              variant="destructive"
-                              className={cn(
-                                "h-5 min-w-5 px-1.5 text-xs font-bold animate-pulse",
-                                collapsed && !isMobile && "absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
-                              )}
-                            >
-                              {pendingKycCount > 99 ? '99+' : pendingKycCount}
-                            </Badge>
-                          )}
-                        </Link>
-                      </li>
-                    ))}
+                    {items.map((item) => {
+                      const itemEntitlement = item.featureKey && !adminUser?.is_platform_owner
+                        ? entitlementMap[item.featureKey]
+                        : undefined;
+                      const isEntitlementLocked = itemEntitlement
+                        ? !['ENABLED', 'TRIAL', 'BETA'].includes(itemEntitlement.access_state)
+                        : false;
+
+                      return (
+                        <li key={item.to}>
+                          <Link
+                            to={item.to}
+                            onClick={() => isMobile && setSidebarOpen(false)}
+                            className={cn(
+                              'flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 relative',
+                              'active:scale-[0.98] touch-manipulation',
+                              isActive(item)
+                                ? 'bg-sidebar-accent text-sidebar-primary-foreground shadow-inner ring-1 ring-sidebar-primary/30 before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:h-6 before:w-1 before:rounded-r-full before:bg-sidebar-primary'
+                                : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground active:bg-sidebar-accent'
+                            )}
+                          >
+                            <item.icon className={cn(
+                              'h-[18px] w-[18px] flex-shrink-0',
+                              isActive(item) && 'text-sidebar-primary'
+                            )} />
+                            {(!collapsed || isMobile) && (
+                              <span className="text-[14px] font-medium flex-1">{item.label}</span>
+                            )}
+                            {isEntitlementLocked && (!collapsed || isMobile) && (
+                              <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+                                <Lock className="mr-1 h-3 w-3" />
+                                Locked
+                              </Badge>
+                            )}
+                            {item.badgeKey === 'pendingKyc' && pendingKycCount > 0 && (
+                              <Badge
+                                variant="destructive"
+                                className={cn(
+                                  "h-5 min-w-5 px-1.5 text-xs font-bold animate-pulse",
+                                  collapsed && !isMobile && "absolute -top-1 -right-1 h-4 min-w-4 px-1 text-[10px]"
+                                )}
+                              >
+                                {pendingKycCount > 99 ? '99+' : pendingKycCount}
+                              </Badge>
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 </div>
               );
