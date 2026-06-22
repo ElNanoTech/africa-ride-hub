@@ -235,18 +235,19 @@ export default function PlatformAdministration() {
         <AdminPageHeader
           title="Platform Administration"
           description="Plans, feature entitlements, trials, usage limits, add-ons, and licensing audit"
-        >
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => syncExpiredTrials.mutate()} disabled={syncExpiredTrials.isPending}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Sync trials
-            </Button>
-            <Button onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          </div>
-        </AdminPageHeader>
+          action={
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" onClick={() => syncExpiredTrials.mutate()} disabled={syncExpiredTrials.isPending}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Sync trials
+              </Button>
+              <Button onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            </div>
+          }
+        />
 
         {!isPlatformOwner && (
           <Alert>
