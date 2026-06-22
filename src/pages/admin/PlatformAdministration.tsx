@@ -74,7 +74,7 @@ function LoadingState() {
     <AdminLayout>
       <div className="space-y-6">
         <AdminBreadcrumb />
-        <AdminPageHeader title="Platform Administration" subtitle="Loading licensing state..." />
+        <AdminPageHeader title="Platform Administration" description="Loading licensing state..." />
         <div className="grid gap-4 md:grid-cols-4">
           {[1, 2, 3, 4].map((item) => <Skeleton key={item} className="h-28" />)}
         </div>
@@ -196,7 +196,7 @@ export default function PlatformAdministration() {
       <AdminLayout>
         <div className="space-y-6">
           <AdminBreadcrumb />
-          <AdminPageHeader title="Platform Administration" subtitle="Licensing engine unavailable" />
+          <AdminPageHeader title="Platform Administration" description="Licensing engine unavailable" />
           <Alert variant="destructive">
             <Lock className="h-4 w-4" />
             <AlertTitle>Could not load platform licensing</AlertTitle>
@@ -234,7 +234,7 @@ export default function PlatformAdministration() {
         <AdminBreadcrumb />
         <AdminPageHeader
           title="Platform Administration"
-          subtitle="Plans, feature entitlements, trials, usage limits, add-ons, and licensing audit"
+          description="Plans, feature entitlements, trials, usage limits, add-ons, and licensing audit"
         >
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => syncExpiredTrials.mutate()} disabled={syncExpiredTrials.isPending}>

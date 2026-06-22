@@ -101,7 +101,7 @@ export function EntitlementGate({ featureKey, moduleName, children }: Entitlemen
       <AdminLayout>
         <div className="space-y-6">
           <AdminBreadcrumb />
-          <AdminPageHeader title={moduleName} subtitle="Checking licensing state..." />
+          <AdminPageHeader title={moduleName} description="Checking licensing state..." />
           <Skeleton className="h-48 w-full" />
         </div>
       </AdminLayout>
@@ -113,7 +113,7 @@ export function EntitlementGate({ featureKey, moduleName, children }: Entitlemen
       <AdminLayout>
         <div className="space-y-6">
           <AdminBreadcrumb />
-          <AdminPageHeader title={moduleName} subtitle="Licensing check unavailable" />
+          <AdminPageHeader title={moduleName} description="Licensing check unavailable" />
           <Alert>
             <Lock className="h-4 w-4" />
             <AlertTitle>Licensing check unavailable</AlertTitle>
@@ -135,7 +135,7 @@ export function EntitlementGate({ featureKey, moduleName, children }: Entitlemen
     <AdminLayout>
       <div className="space-y-6">
         <AdminBreadcrumb />
-        <AdminPageHeader title={moduleName} subtitle="Premium module access" />
+        <AdminPageHeader title={moduleName} description="Premium module access" />
         <LockedUpgradeCard featureKey={featureKey} moduleName={moduleName} access={access} customerId={customerId} />
       </div>
     </AdminLayout>
